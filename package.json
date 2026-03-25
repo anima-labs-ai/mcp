@@ -1,0 +1,40 @@
+{
+	"name": "@anima-labs/mcp",
+	"version": "0.1.0",
+	"type": "module",
+	"description": "Anima MCP server — 77 tools for AI agent communication",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/anima-labs-ai/mcp.git"
+	},
+	"homepage": "https://github.com/anima-labs-ai/mcp",
+	"bugs": {
+		"url": "https://github.com/anima-labs-ai/mcp/issues"
+	},
+	"bin": {
+		"anima-mcp": "./src/index.ts"
+	},
+	"exports": {
+		".": "./src/index.ts",
+		"./client": "./src/api-client.ts"
+	},
+	"scripts": {
+		"start": "bun run src/index.ts",
+		"start:http": "bun run src/index.ts --http",
+		"dev": "bun run --watch src/index.ts",
+		"typecheck": "tsc --noEmit",
+		"test": "bun test",
+		"test:unit": "bun test src/__tests__/unit",
+		"test:integration": "bun test src/__tests__/integration"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.12.0",
+		"jose": "^6.1.3",
+		"zod": "^3.24.0"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.2.0",
+		"typescript": "^5.7.0"
+	}
+}

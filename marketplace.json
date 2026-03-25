@@ -1,0 +1,10 @@
+{
+	"name": "Anima MCP Server",
+	"description": "77 tools for managing AI agent email and phone identity",
+	"version": "0.1.0",
+	"author": "Anima",
+	"tools": 77,
+	"domains": ["email", "phone", "sms", "messaging", "identity", "webhooks", "security"],
+	"transport": ["stdio", "http"],
+	"install": "npx @anima/mcp-server --api-key=mk_xxx"
+}

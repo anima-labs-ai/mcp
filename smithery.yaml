@@ -1,0 +1,97 @@
+# Smithery Registry Manifest
+# https://smithery.ai/docs/manifest
+
+name: "@anima-labs/mcp"
+display_name: "Anima — AI Agent Identity Platform"
+description: >
+  Give your AI agents real-world capabilities: email, virtual cards,
+  phone numbers, credential vault, addresses, and more. 133+ tools
+  for autonomous agent operations.
+version: "0.1.0"
+license: "MIT"
+
+author:
+  name: "Anima Labs"
+  url: "https://animalabs.ai"
+  email: "support@animalabs.ai"
+
+repository: "https://github.com/anima-labs-ai/mcp"
+homepage: "https://anima.email"
+documentation: "https://docs.anima.email"
+
+icon: "https://anima.email/icon.png"
+
+categories:
+  - "AI Agent Tools"
+  - "Email"
+  - "Payments"
+  - "Identity"
+  - "Communication"
+
+tags:
+  - ai-agent
+  - email-api
+  - virtual-cards
+  - credential-vault
+  - phone-sms
+  - agent-identity
+  - mcp-server
+  - stripe-issuing
+
+install:
+  command: "npx"
+  args: ["-y", "@anima-labs/mcp"]
+  env:
+    ANIMA_API_KEY:
+      description: "Your Anima API key"
+      required: true
+    ANIMA_BASE_URL:
+      description: "Custom API base URL"
+      required: false
+
+transports:
+  - type: "stdio"
+    description: "Default transport for Claude Desktop, Cursor, and similar tools"
+  - type: "http"
+    description: "HTTP transport for web-based MCP clients"
+    args: ["--transport=http", "--port=3100"]
+
+tool_groups:
+  - name: "agent"
+    description: "Create and manage AI agent identities"
+    tools: ["create_agent", "list_agents", "get_agent", "delete_agent", "rotate_agent_key", "update_agent"]
+  - name: "email"
+    description: "Send, receive, and manage email messages"
+    tools: ["send_email", "get_email", "list_emails", "search_emails", "get_email_headers"]
+  - name: "message"
+    description: "Inbox messaging operations"
+    tools: ["send_message", "list_messages", "get_message", "search_messages"]
+  - name: "cards"
+    description: "Issue and manage virtual debit cards"
+    tools: ["create_card", "list_cards", "get_card", "update_card", "delete_card", "freeze_card", "unfreeze_card", "kill_switch", "list_transactions", "get_transaction", "create_spending_policy", "update_spending_policy", "delete_spending_policy", "list_spending_policies", "create_auto_approve_rule", "list_auto_approve_rules", "list_approvals", "decide_approval"]
+  - name: "vault"
+    description: "Encrypted credential storage"
+    tools: ["provision_vault", "deprovision_vault", "vault_status", "create_credential", "get_credential", "list_credentials", "update_credential", "delete_credential", "search_credentials", "vault_sync", "generate_password", "get_totp"]
+  - name: "phone"
+    description: "Phone numbers and SMS"
+    tools: ["search_phone_numbers", "provision_phone", "release_phone", "send_sms", "list_phones", "get_phone", "update_phone_config"]
+  - name: "webhook"
+    description: "Real-time event subscriptions"
+    tools: ["create_webhook", "list_webhooks", "get_webhook", "delete_webhook", "test_webhook", "list_deliveries"]
+  - name: "domain"
+    description: "Custom email domain management"
+    tools: ["create_domain", "list_domains", "get_domain", "update_domain", "delete_domain", "verify_domain", "domain_zone_file"]
+  - name: "security"
+    description: "Security policy configuration"
+    tools: ["list_security_events", "scan_content", "get_security_policies", "update_security_policies"]
+  - name: "browser-payments"
+    description: "Automated checkout and form filling"
+    tools: ["detect_checkout", "fill_card", "fill_address", "execute_payment"]
+  - name: "x402"
+    description: "HTTP 402 payment protocol"
+    tools: ["fetch_x402"]
+
+features:
+  selective_loading: true
+  selective_loading_flag: "--tools"
+  selective_loading_example: "--tools=email,cards,vault"

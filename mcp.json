@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/registry/main/schema.json",
+  "name": "@anima-labs/mcp",
+  "displayName": "Anima — AI Agent Identity Platform",
+  "description": "Give your AI agents real-world capabilities: email, virtual cards, phone numbers, credential vault, and more. 133+ tools for autonomous agent operations.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Anima Labs",
+    "url": "https://animalabs.ai"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/anima-labs-ai/mcp",
+  "homepage": "https://anima.email",
+  "documentation": "https://docs.anima.email/mcp",
+  "install": {
+    "npm": "@anima-labs/mcp"
+  },
+  "runtime": "node",
+  "transports": ["stdio", "http"],
+  "authentication": {
+    "type": "api_key",
+    "env": "ANIMA_API_KEY",
+    "description": "Get your API key at https://console.anima.email"
+  },
+  "categories": ["communication", "payments", "identity", "productivity"],
+  "tags": ["ai-agent", "email", "virtual-cards", "vault", "phone", "sms", "identity", "stripe"],
+  "tools": {
+    "count": 133,
+    "groups": [
+      "agent", "email", "message", "cards", "vault", "phone",
+      "webhook", "domain", "invoice", "funding", "security",
+      "organization", "browser-payments", "x402", "utility"
+    ]
+  }
+}

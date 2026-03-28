@@ -11,8 +11,12 @@ import { registerOrganizationTools } from "./tools/organization/index.js";
 import { registerAgentTools } from "./tools/agent/index.js";
 import { registerEmailTools } from "./tools/email/index.js";
 import { registerDomainTools } from "./tools/domain/index.js";
+import { registerIdentityTools } from "./tools/identity/index.js";
 import { registerPhoneTools } from "./tools/phone/index.js";
+import { registerPodTools } from "./tools/pod/index.js";
+import { registerRegistryTools } from "./tools/registry/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
+import { registerWalletTools } from "./tools/wallet/index.js";
 import { registerCardTools } from "./tools/cards/index.js";
 import { registerFundingTools } from "./tools/funding/index.js";
 import { registerMessageTools } from "./tools/message/index.js";
@@ -36,8 +40,12 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> = 
 	agent: registerAgentTools,
 	email: registerEmailTools,
 	domain: registerDomainTools,
+	identity: registerIdentityTools,
 	phone: registerPhoneTools,
+	pod: registerPodTools,
+	registry: registerRegistryTools,
 	vault: registerVaultTools,
+	wallet: registerWalletTools,
 	cards: registerCardTools,
 	funding: registerFundingTools,
 	message: registerMessageTools,

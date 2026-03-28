@@ -159,6 +159,58 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
+	const phoneIdSchema = z.object({
+		id: z.string().describe("Phone number ID."),
+	});
+
+	server.tool(
+		"phone_get",
+		"Get full details for a specific provisioned phone number by ID, including status and capabilities. Use this to inspect a single number before operations.",
+		phoneIdSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const path = `/phones/${encodeURIComponent(args.id)}`;
+			const result = await context.client.get<unknown>(path);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	const phoneUpdateConfigSchema = z.object({
+		id: z.string().describe("Phone number ID to update."),
+		sms_enabled: z
+			.boolean()
+			.optional()
+			.describe("Enable or disable SMS capability."),
+		voice_enabled: z
+			.boolean()
+			.optional()
+			.describe("Enable or disable voice capability."),
+		webhook_url: z
+			.string()
+			.optional()
+			.describe("Webhook URL for incoming messages on this number."),
+		friendly_name: z
+			.string()
+			.optional()
+			.describe("Human-readable label for this phone number."),
+	});
+
+	server.tool(
+		"phone_update_config",
+		"Update configuration for a provisioned phone number, such as enabling/disabling capabilities or setting a webhook URL. Use this to modify number behavior after provisioning.",
+		phoneUpdateConfigSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const { id, sms_enabled, voice_enabled, webhook_url, friendly_name } = args;
+			const path = `/phones/${encodeURIComponent(id)}`;
+			const result = await context.client.patch<unknown>(path, {
+				smsEnabled: sms_enabled,
+				voiceEnabled: voice_enabled,
+				webhookUrl: webhook_url,
+				friendlyName: friendly_name,
+			});
+			return toolSuccess(result);
+		}, options.context),
+	);
+
 	server.tool(
 		"phone_send_sms",
 		"Send an SMS message to a destination phone number from an assigned sender number. Use this for outbound notifications or conversational messaging.",

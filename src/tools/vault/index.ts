@@ -286,6 +286,46 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
+	const vaultSearchSchema = z.object({
+		agentId: z.string().describe("Agent ID whose vault to search."),
+		search: z.string().describe("Search text to match against credential names and content."),
+		type: vaultCredentialTypeSchema
+			.optional()
+			.describe("Optional credential type filter."),
+	});
+
+	server.tool(
+		"vault_search",
+		"Search vault credentials by keyword across names and content. Use this for targeted credential lookup when you know part of the name, URL, or username.",
+		vaultSearchSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const params = new URLSearchParams();
+			params.set("agentId", args.agentId);
+			params.set("search", args.search);
+			if (args.type) params.set("type", args.type);
+			const result = await context.client.get<unknown>(
+				`/vault/search?${params.toString()}`,
+			);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	const vaultSyncSchema = z.object({
+		agentId: z.string().describe("Agent ID whose vault should be synced."),
+	});
+
+	server.tool(
+		"vault_sync",
+		"Force a sync of an agent's vault to ensure local and remote credential state are consistent. Use this after bulk credential changes or when stale data is suspected.",
+		vaultSyncSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const result = await context.client.post<unknown>("/vault/sync", {
+				agentId: args.agentId,
+			});
+			return toolSuccess(result);
+		}, options.context),
+	);
+
 	server.tool(
 		"vault_status",
 		"Get current vault status for an agent, including provisioning and readiness information. Use this to verify vault availability before secret operations.",

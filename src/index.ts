@@ -28,7 +28,57 @@ export { marketplaceMetadata } from "./marketplace.js";
 
 const VALID_KEY_PREFIXES = ["ak_", "mk_", "sk_live_", "sk_test_"];
 
-function createConfiguredServer(client: ApiClient): McpServer {
+/** Map of tool group names to their registration functions */
+const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> = {
+	org: registerOrganizationTools,
+	agent: registerAgentTools,
+	email: registerEmailTools,
+	domain: registerDomainTools,
+	phone: registerPhoneTools,
+	vault: registerVaultTools,
+	cards: registerCardTools,
+	funding: registerFundingTools,
+	message: registerMessageTools,
+	webhook: registerWebhookTools,
+	security: registerSecurityTools,
+	utility: registerUtilityTools,
+	browser: registerBrowserPaymentsTools,
+	x402: registerX402Tools,
+	invoice: registerInvoiceTools,
+};
+
+/**
+ * Parse --tools flag from command line args.
+ * Returns null if not provided (register all), or a Set of group names.
+ */
+function parseToolGroups(args: string[] = process.argv): Set<string> | null {
+	const toolsArg = args.find((a) => a.startsWith("--tools=") || a === "--tools");
+	if (!toolsArg) return null;
+
+	let value: string;
+	if (toolsArg === "--tools") {
+		const idx = args.indexOf(toolsArg);
+		value = args[idx + 1] ?? "";
+	} else {
+		value = toolsArg.split("=")[1] ?? "";
+	}
+
+	if (!value) return null;
+
+	const requested = new Set(value.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean));
+	const valid = new Set(Object.keys(TOOL_GROUPS));
+	const invalid = [...requested].filter((g) => !valid.has(g));
+
+	if (invalid.length > 0) {
+		console.error(
+			`Warning: Unknown tool group(s): ${invalid.join(", ")}. Valid groups: ${[...valid].join(", ")}`,
+		);
+	}
+
+	return requested;
+}
+
+function createConfiguredServer(client: ApiClient, toolGroups?: Set<string> | null): McpServer {
 	const server = new McpServer(SERVER_INFO, {
 		capabilities: { tools: {}, resources: {} },
 	});
@@ -38,21 +88,12 @@ function createConfiguredServer(client: ApiClient): McpServer {
 		context: { client, hasMasterKey: client.hasMasterKey() },
 	};
 
-	registerOrganizationTools(context);
-	registerAgentTools(context);
-	registerEmailTools(context);
-	registerDomainTools(context);
-	registerPhoneTools(context);
-	registerVaultTools(context);
-	registerCardTools(context);
-	registerFundingTools(context);
-	registerMessageTools(context);
-	registerWebhookTools(context);
-	registerSecurityTools(context);
-	registerUtilityTools(context);
-	registerBrowserPaymentsTools(context);
-	registerX402Tools(context);
-	registerInvoiceTools(context);
+	for (const [groupName, registrar] of Object.entries(TOOL_GROUPS)) {
+		if (!toolGroups || toolGroups.has(groupName)) {
+			registrar(context);
+		}
+	}
+
 	registerResources(context);
 
 	return server;
@@ -60,12 +101,17 @@ function createConfiguredServer(client: ApiClient): McpServer {
 
 async function main() {
 	const config = loadConfig();
+	const toolGroups = parseToolGroups();
+
+	if (toolGroups) {
+		console.error(`Selective tool loading: ${[...toolGroups].join(", ")}`);
+	}
 
 	if (config.httpMode) {
-		await startHttpServer(config);
+		await startHttpServer(config, toolGroups);
 	} else {
 		const client = createApiClientFromEnv();
-		await startStdioServer(createConfiguredServer(client));
+		await startStdioServer(createConfiguredServer(client, toolGroups));
 	}
 }
 
@@ -85,7 +131,7 @@ async function startStdioServer(server: McpServer) {
 	process.on("SIGINT", shutdown);
 }
 
-async function startHttpServer(config: McpConfig) {
+async function startHttpServer(config: McpConfig, toolGroups?: Set<string> | null) {
 	// Per-session auth: authenticate stores the validated client, factory reads it.
 	// The authenticate→factory sequence is synchronous within a single HTTP request,
 	// so this closure pattern is safe (no race between authenticate and factory).
@@ -98,7 +144,7 @@ async function startHttpServer(config: McpConfig) {
 			}
 			const client = pendingClient;
 			pendingClient = null;
-			return createConfiguredServer(client);
+			return createConfiguredServer(client, toolGroups);
 		},
 		{
 			port: config.httpPort,

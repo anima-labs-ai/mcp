@@ -88,12 +88,47 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
+	const domainUpdateSchema = z.object({
+		id: z.string().describe("Unique domain ID."),
+		catchAll: z
+			.boolean()
+			.optional()
+			.describe("Enable or disable catch-all for this domain."),
+		autoVerify: z
+			.boolean()
+			.optional()
+			.describe("Enable or disable automatic verification."),
+	});
+
+	server.tool(
+		"domain_update",
+		"Update configuration for a domain, such as catch-all behavior or auto-verify settings. Use this to adjust domain behavior after initial setup.",
+		domainUpdateSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const { id, ...payload } = args;
+			const path = `/domains/${encodeURIComponent(id)}`;
+			const result = await context.client.patch<unknown>(path, payload);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
 	server.tool(
 		"domain_deliverability",
 		"Check domain deliverability diagnostics and readiness for outbound email. Use this to troubleshoot sending reputation or setup issues before campaigns.",
 		domainIdSchema.shape,
 		withErrorHandling(async (args, context) => {
 			const path = `/domains/${encodeURIComponent(args.id)}/deliverability`;
+			const result = await context.client.get<unknown>(path);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	server.tool(
+		"domain_zone_file",
+		"Get the full DNS zone file for a domain. Use this for complete DNS export or to verify all records are correctly configured.",
+		domainIdSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const path = `/domains/${encodeURIComponent(args.id)}/zone-file`;
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),

@@ -587,6 +587,193 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
+	// --- Update & Delete Card Tools ---
+
+	const updateCardSchema = z.object({
+		card_id: z.string().describe("Card ID to update."),
+		label: z.string().optional().describe("Updated human-readable card label."),
+		spend_limit_daily: z
+			.number()
+			.int()
+			.nonnegative()
+			.optional()
+			.describe("Updated daily spending limit in cents."),
+		spend_limit_monthly: z
+			.number()
+			.int()
+			.nonnegative()
+			.optional()
+			.describe("Updated monthly spending limit in cents."),
+		spend_limit_weekly: z
+			.number()
+			.int()
+			.nonnegative()
+			.optional()
+			.describe("Updated weekly spending limit in cents."),
+		spend_limit_yearly: z
+			.number()
+			.int()
+			.nonnegative()
+			.optional()
+			.describe("Updated yearly spending limit in cents."),
+		spend_limit_lifetime: z
+			.number()
+			.int()
+			.nonnegative()
+			.optional()
+			.describe("Updated lifetime spending limit in cents."),
+		spend_limit_per_auth: z
+			.number()
+			.int()
+			.nonnegative()
+			.optional()
+			.describe("Updated per-authorization spending limit in cents."),
+	});
+
+	server.tool(
+		"update_card",
+		"Update a card's label or spending limits. Use this to adjust card controls after creation without needing to recreate the card.",
+		updateCardSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const {
+				card_id,
+				spend_limit_daily,
+				spend_limit_monthly,
+				spend_limit_weekly,
+				spend_limit_yearly,
+				spend_limit_lifetime,
+				spend_limit_per_auth,
+				...rest
+			} = args;
+			const path = `/api/v1/cards/${encodeURIComponent(card_id)}`;
+			const result = await context.client.patch<unknown>(path, {
+				...rest,
+				spendLimitDaily: spend_limit_daily,
+				spendLimitMonthly: spend_limit_monthly,
+				spendLimitWeekly: spend_limit_weekly,
+				spendLimitYearly: spend_limit_yearly,
+				spendLimitLifetime: spend_limit_lifetime,
+				spendLimitPerAuth: spend_limit_per_auth,
+			});
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	server.tool(
+		"delete_card",
+		"Permanently delete a card by ID. The card must be frozen or canceled first. Use this to remove decommissioned cards from the system.",
+		cardIdSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const path = `/api/v1/cards/${encodeURIComponent(args.card_id)}`;
+			const result = await context.client.delete<unknown>(path);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	// --- Update Spending Policy Tool ---
+
+	const updateSpendingPolicySchema = z.object({
+		policy_id: z.string().describe("Policy ID to update."),
+		name: z.string().optional().describe("Updated policy name."),
+		action: z
+			.enum(["AUTO_APPROVE", "REQUIRE_APPROVAL", "ALWAYS_DECLINE"])
+			.optional()
+			.describe("Updated policy action."),
+		priority: z
+			.number()
+			.int()
+			.optional()
+			.describe("Updated policy evaluation priority."),
+		max_amount_cents: z
+			.number()
+			.int()
+			.nonnegative()
+			.optional()
+			.describe("Updated max amount in cents allowed by this policy."),
+		allowed_categories: z
+			.array(z.string())
+			.optional()
+			.describe("Updated merchant categories explicitly allowed."),
+		blocked_categories: z
+			.array(z.string())
+			.optional()
+			.describe("Updated merchant categories explicitly blocked."),
+		allowed_merchants: z
+			.array(z.string())
+			.optional()
+			.describe("Updated merchant names explicitly allowed."),
+		blocked_merchants: z
+			.array(z.string())
+			.optional()
+			.describe("Updated merchant names explicitly blocked."),
+	});
+
+	server.tool(
+		"update_spending_policy",
+		"Update an existing spending policy by ID to change its rules, action, or merchant constraints. Use this to refine card governance without deleting and recreating policies.",
+		updateSpendingPolicySchema.shape,
+		withErrorHandling(async (args, context) => {
+			const {
+				policy_id,
+				max_amount_cents,
+				allowed_categories,
+				blocked_categories,
+				allowed_merchants,
+				blocked_merchants,
+				...rest
+			} = args;
+			const path = `/api/v1/cards/policies/${encodeURIComponent(policy_id)}`;
+			const result = await context.client.patch<unknown>(path, {
+				...rest,
+				maxAmountCents: max_amount_cents,
+				allowedCategories: allowed_categories,
+				blockedCategories: blocked_categories,
+				allowedMerchants: allowed_merchants,
+				blockedMerchants: blocked_merchants,
+			});
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	// --- Get Transaction Tool ---
+
+	const getTransactionSchema = z.object({
+		transaction_id: z.string().describe("Transaction ID to retrieve."),
+	});
+
+	server.tool(
+		"get_transaction",
+		"Get full details for a single card transaction by ID, including merchant info, amount, and status. Use this to inspect a specific charge or refund.",
+		getTransactionSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const path = `/api/v1/cards/transactions/${encodeURIComponent(args.transaction_id)}`;
+			const result = await context.client.get<unknown>(path);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	// --- Kill Switch Tool ---
+
+	const killSwitchSchema = z.object({
+		scope: z
+			.enum(["agent", "organization"])
+			.describe("Scope of the kill switch: freeze all cards for the agent or the entire organization."),
+		agent_id: z.string().optional().describe("Agent ID when scope is 'agent'. Required for agent scope."),
+	});
+
+	server.tool(
+		"kill_switch",
+		"Emergency kill switch that immediately freezes all cards within the specified scope. Use this when widespread fraud or compromise is detected and all card activity must stop.",
+		killSwitchSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const result = await context.client.post<unknown>("/api/v1/cards/kill-switch", {
+				scope: args.scope,
+				agentId: args.agent_id,
+			});
+			return toolSuccess(result);
+		}, options.context),
+	);
+
 	// --- Approval Tools ---
 
 	const listApprovalsSchema = z.object({

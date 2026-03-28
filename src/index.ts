@@ -6,6 +6,7 @@ import { loadConfig, SERVER_INFO } from "./config.js";
 import type { McpConfig } from "./config.js";
 import { ApiClient, createApiClientFromEnv } from "./api-client.js";
 import type { ToolRegistrationOptions } from "./tool-helpers.js";
+import { registerAddressTools } from "./tools/address/index.js";
 import { registerOrganizationTools } from "./tools/organization/index.js";
 import { registerAgentTools } from "./tools/agent/index.js";
 import { registerEmailTools } from "./tools/email/index.js";
@@ -30,6 +31,7 @@ const VALID_KEY_PREFIXES = ["ak_", "mk_", "sk_live_", "sk_test_"];
 
 /** Map of tool group names to their registration functions */
 const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> = {
+	address: registerAddressTools,
 	org: registerOrganizationTools,
 	agent: registerAgentTools,
 	email: registerEmailTools,

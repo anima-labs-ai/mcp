@@ -204,7 +204,7 @@ describe("http-transport", () => {
 				body: "not-valid-json{{{",
 			});
 			expect(res.status).toBe(400);
-			const body = await res.json();
+			const body = (await res.json()) as { error: string };
 			expect(body.error).toContain("Invalid JSON");
 		});
 	});
@@ -214,7 +214,7 @@ describe("http-transport", () => {
 			const url = `http://localhost:${port}/mcp`;
 			const res = await fetch(url, { method: "PATCH" });
 			expect(res.status).toBe(405);
-			const body = await res.json();
+			const body = (await res.json()) as { error: string };
 			expect(body.error).toContain("Method not allowed");
 		});
 
@@ -222,7 +222,7 @@ describe("http-transport", () => {
 			const url = `http://localhost:${port}/mcp`;
 			const res = await fetch(url, { method: "PUT" });
 			expect(res.status).toBe(405);
-			const body = await res.json();
+			const body = (await res.json()) as { error: string };
 			expect(body.error).toContain("Method not allowed");
 		});
 	});

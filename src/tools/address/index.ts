@@ -173,7 +173,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
 			const path = `/addresses/${encodeURIComponent(args.id)}`;
-			const result = await context.client.delete<unknown>(path, { agentId: args.agentId });
+			const result = await context.client.delete<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
 	);

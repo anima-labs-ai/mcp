@@ -22,7 +22,7 @@ export interface X402FetchOptions {
   readonly method?: string;
   readonly headers?: Record<string, string>;
   readonly body?: string;
-  readonly fetcher?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  readonly fetcher?: (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
   readonly signer?: PaymentSigner;
   readonly config?: Partial<X402Config>;
   readonly budgetGuard?: X402BudgetGuard;

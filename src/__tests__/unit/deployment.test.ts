@@ -63,8 +63,8 @@ describe("Deployment readiness", () => {
 			expect(existsSync(path)).toBe(true);
 
 			const content = readFileSync(path, "utf-8");
-			expect(content).toContain("mcp.anima.com");
-			expect(content).toContain("api.anima.com");
+			expect(content).toContain("mcp.useanima.sh");
+			expect(content).toContain("api.useanima.sh");
 			expect(content).toContain("reverse_proxy mcp:8014");
 			expect(content).toContain("reverse_proxy api:4001");
 			expect(content).not.toContain("auto_https off");

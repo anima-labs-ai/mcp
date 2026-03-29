@@ -16,10 +16,10 @@ author:
   email: "support@animalabs.ai"
 
 repository: "https://github.com/anima-labs-ai/mcp"
-homepage: "https://anima.email"
-documentation: "https://docs.anima.email"
+homepage: "https://useanima.sh"
+documentation: "https://docs.useanima.sh"
 
-icon: "https://anima.email/icon.png"
+icon: "https://useanima.sh/icon.png"
 
 categories:
   - "AI Agent Tools"

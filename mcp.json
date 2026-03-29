@@ -10,8 +10,8 @@
   },
   "license": "MIT",
   "repository": "https://github.com/anima-labs-ai/mcp",
-  "homepage": "https://anima.email",
-  "documentation": "https://docs.anima.email/mcp",
+  "homepage": "https://useanima.sh",
+  "documentation": "https://docs.useanima.sh/mcp",
   "install": {
     "npm": "@anima-labs/mcp"
   },
@@ -20,7 +20,7 @@
   "authentication": {
     "type": "api_key",
     "env": "ANIMA_API_KEY",
-    "description": "Get your API key at https://console.anima.email"
+    "description": "Get your API key at https://console.useanima.sh"
   },
   "categories": ["communication", "payments", "identity", "productivity"],
   "tags": ["ai-agent", "email", "virtual-cards", "vault", "phone", "sms", "identity", "stripe"],

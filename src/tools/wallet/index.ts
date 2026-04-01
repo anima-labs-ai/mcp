@@ -123,8 +123,8 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.tool(
-		"x402_fetch",
-		"Fetch a URL with automatic x402 payment negotiation. Use this to access paid APIs and content using the agent's wallet.",
+		"wallet_x402_fetch",
+		"Fetch a URL with automatic x402 payment negotiation via the agent's wallet API. Use this to access paid APIs and content.",
 		x402FetchSchema.shape,
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);

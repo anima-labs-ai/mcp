@@ -111,24 +111,30 @@ function stringifyValue(value: unknown): string {
 }
 
 const emailSendSchema = z.object({
-	to: z
+	agentId: z
 		.string()
-		.describe("Recipient email address to send the message to."),
+		.describe("Agent ID sending the email."),
+	to: z
+		.array(z.string())
+		.describe("List of recipient email addresses."),
 	subject: z
 		.string()
 		.describe("Subject line for the outgoing email."),
-	text: z
+	body: z
 		.string()
-		.optional()
 		.describe("Plain-text body content for the email."),
-	html: z
+	bodyHtml: z
 		.string()
 		.optional()
 		.describe("Optional HTML body content for rich email formatting."),
 	cc: z
-		.string()
+		.array(z.string())
 		.optional()
-		.describe("Optional CC recipient list as a comma-separated email string."),
+		.describe("Optional CC recipient email addresses."),
+	bcc: z
+		.array(z.string())
+		.optional()
+		.describe("Optional BCC recipient email addresses."),
 	inReplyTo: z
 		.string()
 		.optional()
@@ -137,23 +143,6 @@ const emailSendSchema = z.object({
 		.array(z.string())
 		.optional()
 		.describe("Optional list of message IDs to include in the References header."),
-	attachments: z
-		.array(
-			z.object({
-				filename: z
-					.string()
-					.describe("Name of the attached file as shown to the recipient."),
-				content: z
-					.string()
-					.describe("Attachment content encoded as a string payload."),
-				contentType: z
-					.string()
-					.optional()
-					.describe("Optional MIME type for the attachment, such as text/plain."),
-			}),
-		)
-		.optional()
-		.describe("Optional attachments to include with the email message."),
 });
 
 const emailGetSchema = z.object({
@@ -180,6 +169,9 @@ const emailListSchema = z.object({
 });
 
 const emailReplySchema = z.object({
+	agentId: z
+		.string()
+		.describe("Agent ID sending the reply."),
 	originalId: z
 		.string()
 		.describe("Original email ID being replied to."),
@@ -197,6 +189,9 @@ const emailReplySchema = z.object({
 });
 
 const emailForwardSchema = z.object({
+	agentId: z
+		.string()
+		.describe("Agent ID forwarding the email."),
 	originalId: z
 		.string()
 		.describe("Original email ID being forwarded."),
@@ -365,10 +360,21 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 
 	server.tool(
 		"email_send",
-		"Send a new outbound email from the agent mailbox. Use this when you need to compose and deliver a message with optional CC, threading headers, or attachments.",
+		"Send a new outbound email from the agent mailbox. Use this when you need to compose and deliver a message with optional CC, threading headers.",
 		emailSendSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.post<unknown>("/email/send", args);
+			const body: Record<string, unknown> = {
+				agentId: args.agentId,
+				to: args.to,
+				subject: args.subject,
+				body: args.body,
+			};
+			if (args.bodyHtml) body.bodyHtml = args.bodyHtml;
+			if (args.cc) body.cc = args.cc;
+			if (args.bcc) body.bcc = args.bcc;
+			if (args.inReplyTo) body.inReplyTo = args.inReplyTo;
+			if (args.references) body.references = args.references;
+			const result = await context.client.post<unknown>("/email/send", body);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -431,20 +437,22 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 			const inReplyTo = extractHeaderId(original);
 
 			const payload: {
-				to: string;
+				agentId: string;
+				to: string[];
 				subject: string;
-				text: string;
-				html?: string;
-				cc?: string;
+				body: string;
+				bodyHtml?: string;
+				cc?: string[];
 				inReplyTo?: string;
 				references?: string[];
 			} = {
-				to: replyToAddress,
+				agentId: args.agentId,
+				to: [replyToAddress],
 				subject,
-				text: args.text,
+				body: args.text,
 			};
 
-			if (args.html) payload.html = args.html;
+			if (args.html) payload.bodyHtml = args.html;
 			if (inReplyTo) payload.inReplyTo = inReplyTo;
 			if (references.length > 0) payload.references = references;
 
@@ -455,7 +463,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 				].filter((address) => address !== replyToAddress));
 
 				if (ccList.length > 0) {
-					payload.cc = ccList.join(", ");
+					payload.cc = ccList;
 				}
 			}
 
@@ -500,9 +508,10 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 				`${originalText}`;
 
 			const payload = {
-				to: args.to,
+				agentId: args.agentId,
+				to: [args.to],
 				subject,
-				text: forwardedBody,
+				body: forwardedBody,
 			};
 
 			const result = await context.client.post<unknown>("/email/send", payload);

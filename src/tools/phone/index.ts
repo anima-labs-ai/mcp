@@ -56,56 +56,68 @@ function toPhoneStatusList(payload: unknown): Array<{
 }
 
 const phoneSearchSchema = z.object({
-	country: z
+	countryCode: z
 		.string()
 		.optional()
-		.describe("Optional ISO country code to scope number search."),
+		.describe("ISO 3166-1 alpha-2 country code to search in (default US)."),
 	areaCode: z
 		.string()
 		.optional()
 		.describe("Optional local area code filter for matching numbers."),
-	contains: z
-		.string()
+	capabilities: z
+		.array(z.enum(["sms", "mms", "voice"]))
 		.optional()
-		.describe("Optional digit sequence that returned numbers should contain."),
+		.describe("Optional required capabilities for the phone numbers."),
 	limit: z
 		.number()
 		.int()
 		.positive()
 		.optional()
-		.describe("Optional maximum number of available results to return."),
+		.describe("Optional maximum number of available results to return (max 50)."),
 });
 
 const phoneProvisionSchema = z.object({
-	phoneNumber: z
+	agentId: z
 		.string()
-		.describe("Phone number to provision, typically in E.164 format."),
-	capabilities: z
-		.array(z.string())
+		.describe("Agent ID to assign the provisioned phone number to."),
+	countryCode: z
+		.string()
 		.optional()
-		.describe("Optional capability list such as sms or voice for the number."),
+		.describe("ISO 3166-1 alpha-2 country code for number selection (default US)."),
+	areaCode: z
+		.string()
+		.optional()
+		.describe("Preferred area code for the phone number."),
+	capabilities: z
+		.array(z.enum(["sms", "mms", "voice"]))
+		.optional()
+		.describe("Optional capability list such as sms, mms, or voice for the number."),
 });
 
 const phoneReleaseSchema = z.object({
+	agentId: z
+		.string()
+		.describe("Agent ID that currently owns the phone number."),
 	phoneNumber: z
 		.string()
-		.describe("Provisioned phone number to release."),
+		.describe("E.164 formatted phone number to release."),
 });
 
 const phoneSendSmsSchema = z.object({
+	agentId: z
+		.string()
+		.describe("Agent ID sending the SMS message."),
 	to: z
 		.string()
-		.describe("Destination phone number for the SMS message."),
+		.describe("Destination phone number in E.164 format."),
 	body: z
 		.string()
-		.describe("Text message body to send."),
-	from: z
-		.string()
+		.describe("Text message body to send (max 1600 characters)."),
+	mediaUrls: z
+		.array(z.string())
 		.optional()
-		.describe("Optional sender phone number if a specific origin is required."),
+		.describe("Optional URLs of media attachments for MMS (max 10)."),
 });
-
-const emptySchema = z.object({});
 
 export function registerPhoneTools(options: ToolRegistrationOptions): void {
 	const { server } = options;
@@ -116,9 +128,13 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		phoneSearchSchema.shape,
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
-			if (args.country) params.set("country", args.country);
+			if (args.countryCode) params.set("countryCode", args.countryCode);
 			if (args.areaCode) params.set("areaCode", args.areaCode);
-			if (args.contains) params.set("contains", args.contains);
+			if (args.capabilities) {
+				for (const cap of args.capabilities) {
+					params.append("capabilities[]", cap);
+				}
+			}
 			if (args.limit !== undefined) params.set("limit", String(args.limit));
 
 			const path = params.toString() ? `/phone/search?${params}` : "/phone/search";
@@ -133,7 +149,11 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		phoneProvisionSchema.shape,
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
-			const result = await context.client.post<unknown>("/phone/provision", args);
+			const body: Record<string, unknown> = { agentId: args.agentId };
+			if (args.countryCode) body.countryCode = args.countryCode;
+			if (args.areaCode) body.areaCode = args.areaCode;
+			if (args.capabilities) body.capabilities = args.capabilities;
+			const result = await context.client.post<unknown>("/phone/provision", body);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -149,84 +169,55 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
+	const phoneListSchema = z.object({
+		agentId: z
+			.string()
+			.describe("Agent ID whose phone numbers to list."),
+	});
+
 	server.tool(
 		"phone_list",
-		"List all currently provisioned phone numbers in the workspace. Use this to review active inventory and assigned capabilities.",
-		emptySchema.shape,
-		withErrorHandling(async (_args, context) => {
-			const result = await context.client.get<unknown>("/phone/numbers");
-			return toolSuccess(result);
-		}, options.context),
-	);
-
-	const phoneIdSchema = z.object({
-		id: z.string().describe("Phone number ID."),
-	});
-
-	server.tool(
-		"phone_get",
-		"Get full details for a specific provisioned phone number by ID, including status and capabilities. Use this to inspect a single number before operations.",
-		phoneIdSchema.shape,
+		"List all phone numbers assigned to a specific agent. Use this to review active inventory and assigned capabilities.",
+		phoneListSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const path = `/phones/${encodeURIComponent(args.id)}`;
-			const result = await context.client.get<unknown>(path);
+			const params = new URLSearchParams({ agentId: args.agentId });
+			const result = await context.client.get<unknown>(`/phone/numbers?${params}`);
 			return toolSuccess(result);
 		}, options.context),
 	);
 
-	const phoneUpdateConfigSchema = z.object({
-		id: z.string().describe("Phone number ID to update."),
-		sms_enabled: z
-			.boolean()
-			.optional()
-			.describe("Enable or disable SMS capability."),
-		voice_enabled: z
-			.boolean()
-			.optional()
-			.describe("Enable or disable voice capability."),
-		webhook_url: z
-			.string()
-			.optional()
-			.describe("Webhook URL for incoming messages on this number."),
-		friendly_name: z
-			.string()
-			.optional()
-			.describe("Human-readable label for this phone number."),
-	});
-
-	server.tool(
-		"phone_update_config",
-		"Update configuration for a provisioned phone number, such as enabling/disabling capabilities or setting a webhook URL. Use this to modify number behavior after provisioning.",
-		phoneUpdateConfigSchema.shape,
-		withErrorHandling(async (args, context) => {
-			const { id, sms_enabled, voice_enabled, webhook_url, friendly_name } = args;
-			const path = `/phones/${encodeURIComponent(id)}`;
-			const result = await context.client.patch<unknown>(path, {
-				smsEnabled: sms_enabled,
-				voiceEnabled: voice_enabled,
-				webhookUrl: webhook_url,
-				friendlyName: friendly_name,
-			});
-			return toolSuccess(result);
-		}, options.context),
-	);
 
 	server.tool(
 		"phone_send_sms",
-		"Send an SMS message to a destination phone number from an assigned sender number. Use this for outbound notifications or conversational messaging.",
+		"Send an SMS or MMS message to a destination phone number. Use this for outbound notifications or conversational messaging.",
 		phoneSendSmsSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.post<unknown>("/phone/send-sms", args);
+			const body: Record<string, unknown> = {
+				agentId: args.agentId,
+				to: args.to,
+				body: args.body,
+			};
+			if (args.mediaUrls && args.mediaUrls.length > 0) {
+				body.mediaUrls = args.mediaUrls;
+			}
+			const result = await context.client.post<unknown>("/phone/send-sms", body);
 			return toolSuccess(result);
 		}, options.context),
 	);
+
+	const phoneStatusSchema = z.object({
+		agentId: z
+			.string()
+			.describe("Agent ID to check phone status for."),
+	});
 
 	server.tool(
 		"phone_status",
 		"Get a status-oriented view of provisioned numbers including capability flags. Use this to verify readiness and operational state for messaging workflows.",
-		emptySchema.shape,
-		withErrorHandling(async (_args, context) => {
-			const result = await context.client.get<unknown>("/phone/numbers");
+		phoneStatusSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const params = new URLSearchParams({ agentId: args.agentId });
+			const result = await context.client.get<unknown>(`/phone/numbers?${params}`);
 			const items = toPhoneStatusList(result);
 			return toolSuccess({
 				count: items.length,

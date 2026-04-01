@@ -92,7 +92,7 @@ describe("funding MCP tools", () => {
 		);
 	});
 
-	test("funding_create_source calls POST /api/v1/funding/sources", async () => {
+	test("funding_create_source calls POST /funding/sources", async () => {
 		const harness = createHarness();
 		registerFundingTools(harness.options);
 
@@ -104,7 +104,7 @@ describe("funding MCP tools", () => {
 		});
 
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/api/v1/funding/sources",
+			"/funding/sources",
 			expect.objectContaining({
 				paymentMethodId: "pm_123",
 				customerId: "cus_123",
@@ -121,7 +121,7 @@ describe("funding MCP tools", () => {
 		await handler({ hold_id: "hold_123", amount_cents: 2500 });
 
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/api/v1/funding/holds/hold_123/capture",
+			"/funding/holds/hold_123/capture",
 			expect.objectContaining({ amountCents: 2500 }),
 		);
 	});

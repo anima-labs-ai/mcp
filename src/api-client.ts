@@ -55,7 +55,7 @@ export class ApiClient {
 		body?: unknown,
 		options?: { useMasterKey?: boolean; timeoutMs?: number },
 	): Promise<T> {
-		const url = `${this.baseUrl}${path}`;
+		const url = `${this.baseUrl}/api${path}`;
 		const key =
 			options?.useMasterKey && this.masterKey
 				? this.masterKey

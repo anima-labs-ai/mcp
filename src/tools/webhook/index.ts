@@ -168,4 +168,32 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 			return toolSuccess(result);
 		}, options.context),
 	);
+
+	const webhookReenableInput = z.object({
+		id: z.string().describe("Webhook ID to test and re-enable."),
+	});
+
+	server.tool(
+		"webhook_reenable",
+		"Test a disabled webhook endpoint and re-enable it if the test delivery succeeds. Use this after fixing a webhook endpoint that was auto-disabled due to consecutive failures.",
+		webhookReenableInput.shape,
+		withErrorHandling(async (args, context) => {
+			const result = await context.client.post(`/webhooks/${args.id}/reenable`, {});
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	const webhookStatsInput = z.object({
+		id: z.string().describe("Webhook ID to get delivery statistics for."),
+	});
+
+	server.tool(
+		"webhook_stats",
+		"Get aggregate delivery statistics for a webhook, including total deliveries, success rate, and failure counts. Use this for monitoring webhook health.",
+		webhookStatsInput.shape,
+		withErrorHandling(async (args, context) => {
+			const result = await context.client.get(`/webhooks/${args.id}/stats`);
+			return toolSuccess(result);
+		}, options.context),
+	);
 }

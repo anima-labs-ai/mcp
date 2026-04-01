@@ -310,7 +310,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 				spend_limit_per_auth,
 				...rest
 			} = args;
-			const result = await context.client.post<unknown>("/api/v1/cards", {
+			const result = await context.client.post<unknown>("/cards", {
 				agentId,
 				...rest,
 				spendLimitDaily: spend_limit_daily,
@@ -334,7 +334,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 			params.set("agentId", agentId);
 			if (args.status) params.set("status", args.status);
 			const result = await context.client.get<unknown>(
-				`/api/v1/cards?${params.toString()}`,
+				`/cards?${params.toString()}`,
 			);
 			return toolSuccess(result);
 		}, options.context),
@@ -345,7 +345,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Get full details for a specific card by ID, including status and limit information. Use this when you need card-level state before taking action.",
 		cardIdSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const path = `/api/v1/cards/${encodeURIComponent(args.card_id)}`;
+			const path = `/cards/${encodeURIComponent(args.card_id)}`;
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -356,7 +356,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Freeze a card to block all new transactions immediately. Use this when suspicious activity is detected or temporary lockout is required.",
 		cardIdSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.put<unknown>("/api/v1/cards", {
+			const result = await context.client.put<unknown>("/cards", {
 				cardId: args.card_id,
 				status: "FROZEN",
 			});
@@ -369,7 +369,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Unfreeze a previously frozen card so transactions can proceed again. Use this after reviewing and clearing a freeze condition.",
 		cardIdSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.put<unknown>("/api/v1/cards", {
+			const result = await context.client.put<unknown>("/cards", {
 				cardId: args.card_id,
 				status: "ACTIVE",
 			});
@@ -386,7 +386,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 			if (args.card_id) params.set("cardId", args.card_id);
 			params.set("limit", String(args.limit));
 			const result = await context.client.get<unknown>(
-				`/api/v1/cards/transactions?${params.toString()}`,
+				`/cards/transactions?${params.toString()}`,
 			);
 			return toolSuccess(result);
 		}, options.context),
@@ -407,7 +407,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 				...rest
 			} = args;
 
-			const result = await context.client.post<unknown>("/api/v1/cards/policies", {
+			const result = await context.client.post<unknown>("/cards/policies", {
 				cardId: card_id,
 				...rest,
 				maxAmountCents: max_amount_cents,
@@ -428,7 +428,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 			const params = new URLSearchParams();
 			params.set("cardId", args.card_id);
 			const result = await context.client.get<unknown>(
-				`/api/v1/cards/policies?${params.toString()}`,
+				`/cards/policies?${params.toString()}`,
 			);
 			return toolSuccess(result);
 		}, options.context),
@@ -439,7 +439,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Delete a spending policy by policy ID. Use this when removing obsolete card controls or simplifying rule sets.",
 		deleteSpendingPolicySchema.shape,
 		withErrorHandling(async (args, context) => {
-			const path = `/api/v1/cards/policies/${encodeURIComponent(args.policy_id)}`;
+			const path = `/cards/policies/${encodeURIComponent(args.policy_id)}`;
 			const result = await context.client.delete<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -450,7 +450,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Get a normalized spending summary for a card, including today and month totals versus configured limits. Use this for quick budget and status checks.",
 		cardIdSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const path = `/api/v1/cards/${encodeURIComponent(args.card_id)}`;
+			const path = `/cards/${encodeURIComponent(args.card_id)}`;
 			const card = await context.client.get<unknown>(path);
 			const summary = extractSpendingSummary(card);
 			return toolSuccess({
@@ -487,7 +487,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Create a cardholder for the current organization to use as the owner of issuing cards. Use this before creating cards when individual cardholder profiles are required.",
 		createCardholderSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.post<unknown>("/api/v1/cardholders", {
+			const result = await context.client.post<unknown>("/cardholders", {
 				name: args.name,
 				type: args.type,
 				email: args.email,
@@ -521,7 +521,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Get details for a specific cardholder by ID. Use this to inspect billing and status fields before assigning or updating cardholders.",
 		getCardholderSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const path = `/api/v1/cardholders/${encodeURIComponent(args.id)}`;
+			const path = `/cardholders/${encodeURIComponent(args.id)}`;
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -535,7 +535,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 			const params = new URLSearchParams();
 			params.set("page", String(args.page));
 			params.set("limit", String(args.limit));
-			const result = await context.client.get<unknown>(`/api/v1/cardholders?${params.toString()}`);
+			const result = await context.client.get<unknown>(`/cardholders?${params.toString()}`);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -545,7 +545,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Update cardholder profile fields such as status and billing details. Use this to keep cardholder records aligned with operational needs.",
 		updateCardholderSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const path = `/api/v1/cardholders/${encodeURIComponent(args.id)}`;
+			const path = `/cardholders/${encodeURIComponent(args.id)}`;
 			const result = await context.client.patch<unknown>(path, {
 				id: args.id,
 				name: args.name,
@@ -581,7 +581,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Delete a cardholder by ID after deactivating it upstream. Use this to remove obsolete cardholder records from active use.",
 		getCardholderSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const path = `/api/v1/cardholders/${encodeURIComponent(args.id)}`;
+			const path = `/cardholders/${encodeURIComponent(args.id)}`;
 			const result = await context.client.delete<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -645,7 +645,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 				spend_limit_per_auth,
 				...rest
 			} = args;
-			const path = `/api/v1/cards/${encodeURIComponent(card_id)}`;
+			const path = `/cards/${encodeURIComponent(card_id)}`;
 			const result = await context.client.patch<unknown>(path, {
 				...rest,
 				spendLimitDaily: spend_limit_daily,
@@ -664,7 +664,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Permanently delete a card by ID. The card must be frozen or canceled first. Use this to remove decommissioned cards from the system.",
 		cardIdSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const path = `/api/v1/cards/${encodeURIComponent(args.card_id)}`;
+			const path = `/cards/${encodeURIComponent(args.card_id)}`;
 			const result = await context.client.delete<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -722,7 +722,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 				blocked_merchants,
 				...rest
 			} = args;
-			const path = `/api/v1/cards/policies/${encodeURIComponent(policy_id)}`;
+			const path = `/cards/policies/${encodeURIComponent(policy_id)}`;
 			const result = await context.client.patch<unknown>(path, {
 				...rest,
 				maxAmountCents: max_amount_cents,
@@ -746,7 +746,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Get full details for a single card transaction by ID, including merchant info, amount, and status. Use this to inspect a specific charge or refund.",
 		getTransactionSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const path = `/api/v1/cards/transactions/${encodeURIComponent(args.transaction_id)}`;
+			const path = `/cards/transactions/${encodeURIComponent(args.transaction_id)}`;
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -766,7 +766,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Emergency kill switch that immediately freezes all cards within the specified scope. Use this when widespread fraud or compromise is detected and all card activity must stop.",
 		killSwitchSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.post<unknown>("/api/v1/cards/kill-switch", {
+			const result = await context.client.post<unknown>("/cards/kill-switch", {
 				scope: args.scope,
 				agentId: args.agent_id,
 			});
@@ -808,7 +808,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 			if (args.status) params.set("status", args.status);
 			params.set("limit", String(args.limit));
 			const result = await context.client.get<unknown>(
-				`/api/v1/cards/approvals?${params.toString()}`,
+				`/cards/approvals?${params.toString()}`,
 			);
 			return toolSuccess(result);
 		}, options.context),
@@ -819,7 +819,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Approve a pending card authorization. This records the approval decision and creates a pre-approval pattern so future similar transactions from the same merchant auto-approve. Note: the original Stripe authorization was already declined due to the 2-second webhook deadline, but approving creates a pattern for future transactions.",
 		approvalDecisionSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const path = `/api/v1/cards/approvals/${encodeURIComponent(args.approval_id)}/decision`;
+			const path = `/cards/approvals/${encodeURIComponent(args.approval_id)}/decision`;
 			const result = await context.client.post<unknown>(path, {
 				decision: "APPROVED",
 			});
@@ -832,7 +832,7 @@ export function registerCardTools(options: ToolRegistrationOptions): void {
 		"Decline a pending card authorization. This confirms the decline decision and does not create a pre-approval pattern. Use this when the transaction should not be allowed in the future either.",
 		approvalDecisionSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const path = `/api/v1/cards/approvals/${encodeURIComponent(args.approval_id)}/decision`;
+			const path = `/cards/approvals/${encodeURIComponent(args.approval_id)}/decision`;
 			const result = await context.client.post<unknown>(path, {
 				decision: "DECLINED",
 			});

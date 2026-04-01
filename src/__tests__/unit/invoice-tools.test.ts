@@ -163,7 +163,7 @@ describe("invoice MCP tools", () => {
 			actions: { confirm: boolean; createCard: boolean };
 		};
 
-		expect(harness.client.get).toHaveBeenCalledWith("/api/v1/invoices/inv_1");
+		expect(harness.client.get).toHaveBeenCalledWith("/invoices/inv_1");
 		expect(harness.client.patch).not.toHaveBeenCalled();
 		expect(harness.client.post).not.toHaveBeenCalled();
 		expect(payload.dryRun).toBe(true);
@@ -183,7 +183,7 @@ describe("invoice MCP tools", () => {
 			confirmedInvoice: { status: string };
 		};
 
-		expect(harness.client.patch).toHaveBeenCalledWith("/api/v1/invoices/inv_2", { status: "confirmed" });
+		expect(harness.client.patch).toHaveBeenCalledWith("/invoices/inv_2", { status: "confirmed" });
 		expect(harness.client.post).not.toHaveBeenCalled();
 		expect(payload.dryRun).toBe(false);
 		expect(payload.confirmedInvoice.status).toBe("confirmed");
@@ -202,7 +202,7 @@ describe("invoice MCP tools", () => {
 		};
 
 		expect(harness.client.patch).not.toHaveBeenCalled();
-		expect(harness.client.post).toHaveBeenCalledWith("/api/v1/invoices/inv_3/card", {});
+		expect(harness.client.post).toHaveBeenCalledWith("/invoices/inv_3/card", {});
 		expect(payload.createdCard.cardId).toBe("card_1");
 	});
 
@@ -216,8 +216,8 @@ describe("invoice MCP tools", () => {
 		const handler = getTool(harness.registeredTools, "invoice_process").handler;
 		await handler({ invoice_id: "inv_4", confirm: true, create_card: true, dry_run: false });
 
-		expect(harness.client.patch).toHaveBeenCalledWith("/api/v1/invoices/inv_4", { status: "confirmed" });
-		expect(harness.client.post).toHaveBeenCalledWith("/api/v1/invoices/inv_4/card", {});
+		expect(harness.client.patch).toHaveBeenCalledWith("/invoices/inv_4", { status: "confirmed" });
+		expect(harness.client.post).toHaveBeenCalledWith("/invoices/inv_4/card", {});
 	});
 
 	test("invoice_process encodes invoice ID in API path", async () => {
@@ -228,7 +228,7 @@ describe("invoice MCP tools", () => {
 		const handler = getTool(harness.registeredTools, "invoice_process").handler;
 		await handler({ invoice_id: "inv/with space" });
 
-		expect(harness.client.get).toHaveBeenCalledWith("/api/v1/invoices/inv%2Fwith%20space");
+		expect(harness.client.get).toHaveBeenCalledWith("/invoices/inv%2Fwith%20space");
 	});
 
 	test("invoice_process wraps client errors as MCP errors", async () => {
@@ -260,7 +260,7 @@ describe("invoice MCP tools", () => {
 			paymentPlan: { amount: number; currency: string; card: { id: string } };
 		};
 
-		expect(harness.client.get).toHaveBeenCalledWith("/api/v1/invoices/inv_5");
+		expect(harness.client.get).toHaveBeenCalledWith("/invoices/inv_5");
 		expect(harness.client.post).not.toHaveBeenCalled();
 		expect(payload.dryRun).toBe(true);
 		expect(payload.paymentPlan.amount).toBe(12345);
@@ -281,7 +281,7 @@ describe("invoice MCP tools", () => {
 			result: { jobId: string };
 		};
 
-		expect(harness.client.post).toHaveBeenCalledWith("/api/v1/invoices/inv_6/auto-pay", {});
+		expect(harness.client.post).toHaveBeenCalledWith("/invoices/inv_6/auto-pay", {});
 		expect(payload.status).toBe("queued");
 		expect(payload.queued).toBe(true);
 		expect(payload.result.jobId).toBe("job_1");
@@ -307,7 +307,7 @@ describe("invoice MCP tools", () => {
 		const handler = getTool(harness.registeredTools, "invoice_reconcile").handler;
 		await handler({});
 
-		expect(harness.client.post).toHaveBeenCalledWith("/api/v1/invoices/match-receipts", {
+		expect(harness.client.post).toHaveBeenCalledWith("/invoices/match-receipts", {
 			receipts: [],
 			autoLinkThreshold: 0.7,
 			dryRun: true,
@@ -327,7 +327,7 @@ describe("invoice MCP tools", () => {
 			dry_run: false,
 		});
 
-		expect(harness.client.post).toHaveBeenCalledWith("/api/v1/invoices/match-receipts", {
+		expect(harness.client.post).toHaveBeenCalledWith("/invoices/match-receipts", {
 			receipts: ["rcpt_1", "rcpt_2"],
 			invoiceIds: ["inv_8"],
 			autoLinkThreshold: 0.85,

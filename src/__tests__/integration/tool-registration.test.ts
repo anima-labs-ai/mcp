@@ -12,6 +12,7 @@ import { registerMessageTools } from "../../tools/message/index.js";
 import { registerWebhookTools } from "../../tools/webhook/index.js";
 import { registerSecurityTools } from "../../tools/security/index.js";
 import { registerUtilityTools } from "../../tools/utility/index.js";
+import { registerVoiceTools } from "../../tools/voice/index.js";
 import { registerResources } from "../../resources/index.js";
 
 type RegisteredTool = {
@@ -147,9 +148,8 @@ const expectedDomainTools = {
 		"phone_provision",
 		"phone_release",
 		"phone_list",
-		"phone_get",
-		"phone_update_config",
 		"phone_send_sms",
+		"voice_list_voices",
 		"phone_status",
 	],
 	message: [
@@ -171,6 +171,8 @@ const expectedDomainTools = {
 		"webhook_list",
 		"webhook_test",
 		"webhook_list_deliveries",
+		"webhook_reenable",
+		"webhook_stats",
 	],
 	security: [
 		"security_approve",
@@ -194,6 +196,18 @@ const expectedDomainTools = {
 		"send_test_email",
 		"manage_spam",
 		"check_tasks",
+	],
+	voice: [
+		"voice_catalog",
+		"voice_create_call",
+		"voice_list_calls",
+		"voice_get_call",
+		"voice_get_transcript",
+		"voice_get_recording",
+		"voice_get_summary",
+		"voice_get_score",
+		"voice_search_calls",
+		"voice_get_security_scan",
 	],
 } as const;
 
@@ -236,9 +250,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(9);
 	});
 
-	test("phone registers 8 tools", () => {
+	test("phone registers 7 tools", () => {
 		registerPhoneTools(harness.options);
-		expect(harness.registeredTools.size).toBe(8);
+		expect(harness.registeredTools.size).toBe(7);
 	});
 
 	test("message registers 9 tools", () => {
@@ -246,9 +260,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(9);
 	});
 
-	test("webhook registers 7 tools", () => {
+	test("webhook registers 9 tools", () => {
 		registerWebhookTools(harness.options);
-		expect(harness.registeredTools.size).toBe(7);
+		expect(harness.registeredTools.size).toBe(9);
 	});
 
 	test("security registers 5 tools", () => {
@@ -324,7 +338,19 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 79 tools", () => {
+	test("voice registers 10 tools", () => {
+		registerVoiceTools(harness.options);
+		expect(harness.registeredTools.size).toBe(10);
+	});
+
+	test("voice tool names match expected snake_case names", () => {
+		registerVoiceTools(harness.options);
+		expect([...harness.registeredTools.keys()].sort()).toEqual(
+			[...expectedDomainTools.voice].sort(),
+		);
+	});
+
+	test("all domains combined register exactly 93 tools", () => {
 		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
@@ -334,8 +360,9 @@ describe("tool registration integration", () => {
 		registerWebhookTools(harness.options);
 		registerSecurityTools(harness.options);
 		registerUtilityTools(harness.options);
+		registerVoiceTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(83);
+		expect(harness.registeredTools.size).toBe(94);
 	});
 
 	test("all registered tool names follow snake_case", () => {
@@ -348,6 +375,7 @@ describe("tool registration integration", () => {
 		registerWebhookTools(harness.options);
 		registerSecurityTools(harness.options);
 		registerUtilityTools(harness.options);
+		registerVoiceTools(harness.options);
 
 		for (const name of harness.registeredTools.keys()) {
 			expect(name).toMatch(/^[a-z]+(?:_[a-z0-9]+)*$/);
@@ -389,6 +417,10 @@ describe("tool registration integration", () => {
 		harness = createRegistrationHarness(true);
 		registerUtilityTools(harness.options);
 		assertDescriptionsNonEmpty(expectedDomainTools.utility, harness.registeredTools);
+
+		harness = createRegistrationHarness(true);
+		registerVoiceTools(harness.options);
+		assertDescriptionsNonEmpty(expectedDomainTools.voice, harness.registeredTools);
 	});
 
 	test("resources register correctly with 2 resources", () => {
@@ -408,6 +440,7 @@ describe("tool registration integration", () => {
 		registerWebhookTools(harness.options);
 		registerSecurityTools(harness.options);
 		registerUtilityTools(harness.options);
+		registerVoiceTools(harness.options);
 
 		for (const toolName of MASTER_KEY_TOOLS) {
 			expect(harness.registeredTools.has(toolName)).toBe(true);

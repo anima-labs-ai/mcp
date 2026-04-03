@@ -205,6 +205,41 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
+	// ── Voice catalog tool ──
+
+	const voiceListSchema = z.object({
+		tier: z
+			.enum(["basic", "premium"])
+			.optional()
+			.describe("Filter by voice tier (basic or premium)."),
+		gender: z
+			.enum(["male", "female", "neutral"])
+			.optional()
+			.describe("Filter by voice gender."),
+		language: z
+			.string()
+			.optional()
+			.describe("Filter by language code or prefix (e.g. 'en', 'en-US', 'fr-FR')."),
+	});
+
+	server.tool(
+		"voice_list_voices",
+		"List available voices for AI agent phone calls. Filter by tier (basic/premium), gender, or language. Use this to find the right voice for an agent's personality.",
+		voiceListSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const params = new URLSearchParams();
+			if (args.tier) params.set("tier", args.tier);
+			if (args.gender) params.set("gender", args.gender);
+			if (args.language) params.set("language", args.language);
+
+			const path = params.toString()
+				? `/voice/catalog?${params}`
+				: "/voice/catalog";
+			const result = await context.client.get<unknown>(path);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
 	const phoneStatusSchema = z.object({
 		agentId: z
 			.string()

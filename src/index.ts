@@ -28,6 +28,7 @@ import { registerX402Tools } from "./tools/x402/index.js";
 import { registerInvoiceTools } from "./tools/invoice/index.js";
 import { registerA2aTools } from "./tools/a2a/index.js";
 import { registerVoiceTools } from "./tools/voice/index.js";
+import { registerExtensionTools } from "./tools/extension/index.js";
 import { registerResources } from "./resources/index.js";
 import { cancelAllFollowUps } from "./pending-followup.js";
 import { createMcpHttpServer, parseBearerToken, type McpAuthError, type McpAuthContext } from "./http-transport.js";
@@ -59,6 +60,7 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> = 
 	invoice: registerInvoiceTools,
 	a2a: registerA2aTools,
 	voice: registerVoiceTools,
+	extension: registerExtensionTools,
 };
 
 /**

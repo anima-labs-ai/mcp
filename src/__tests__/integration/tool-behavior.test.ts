@@ -142,10 +142,10 @@ describe("tool behavior integration", () => {
 
 	test("email_send calls POST /email/send", async () => {
 		const handler = getTool(harness.registeredTools, "email_send");
-		await handler({ to: "a@example.com", subject: "Hello", text: "Body" });
+		await handler({ to: "a@example.com", subject: "Hello", body: "Body" });
 		expect(harness.client.post).toHaveBeenCalledWith(
 			"/email/send",
-			expect.objectContaining({ to: "a@example.com", subject: "Hello", text: "Body" }),
+			expect.objectContaining({ to: "a@example.com", subject: "Hello", body: "Body" }),
 		);
 	});
 
@@ -169,9 +169,9 @@ describe("tool behavior integration", () => {
 		expect(harness.client.post).toHaveBeenCalledWith(
 			"/email/send",
 			expect.objectContaining({
-				to: "sender@example.com",
+				to: ["sender@example.com"],
 				subject: "Re: Question",
-				text: "My reply",
+				body: "My reply",
 				references: expect.arrayContaining(["<ref1>", "orig_1"]),
 				inReplyTo: "orig_1",
 			}),
@@ -189,9 +189,9 @@ describe("tool behavior integration", () => {
 
 	test("phone_search builds correct query string", async () => {
 		const handler = getTool(harness.registeredTools, "phone_search");
-		await handler({ country: "US", areaCode: "415", contains: "12", limit: 5 });
+		await handler({ countryCode: "US", areaCode: "415", limit: 5 });
 		expect(harness.client.get).toHaveBeenCalledWith(
-			"/phone/search?country=US&areaCode=415&contains=12&limit=5",
+			"/phone/search?countryCode=US&areaCode=415&limit=5",
 		);
 	});
 

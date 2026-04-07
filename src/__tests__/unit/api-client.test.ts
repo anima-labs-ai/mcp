@@ -52,7 +52,7 @@ describe("ApiClient", () => {
 
 		expect(mockFetch).toHaveBeenCalledTimes(1);
 		const [url] = getCallArgs(mockFetch);
-		expect(url).toBe("http://localhost:3100/api/health");
+		expect(url).toBe("http://localhost:3100/health");
 	});
 
 	test("GET builds URL and auth headers", async () => {
@@ -68,7 +68,7 @@ describe("ApiClient", () => {
 
 		expect(data).toEqual({ ok: true });
 		const [url, options] = getCallArgs(mockFetch);
-		expect(url).toBe("https://api.anima.dev/api/v1/orgs");
+		expect(url).toBe("https://api.anima.dev/v1/orgs");
 		expect(options.method).toBe("GET");
 		expect(options.headers).toEqual({
 			Authorization: "Bearer ak_123",
@@ -215,7 +215,7 @@ describe("ApiClient", () => {
 
 		await client.get("/env-check");
 		const [url, options] = getCallArgs(mockFetch);
-		expect(url).toBe("http://env-api:9999/api/env-check");
+		expect(url).toBe("http://env-api:9999/env-check");
 		expect(options.headers).toEqual({
 			Authorization: "Bearer ak_env",
 			Accept: "application/json",

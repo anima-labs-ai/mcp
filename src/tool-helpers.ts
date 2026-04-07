@@ -1,4 +1,3 @@
-// Re-export from @anima-labs/mcp-core
 export {
 	requiresMasterKey,
 	toolSuccess,
@@ -8,4 +7,4 @@ export {
 	type ToolContext,
 	type ToolRegistrationOptions,
 	type DomainRegistrar,
-} from "@anima-labs/mcp-core";
+} from "./core/index.js";

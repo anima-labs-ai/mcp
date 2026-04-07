@@ -1,4 +1,3 @@
-// Re-export from @anima-labs/mcp-core
 export {
 	createMcpHttpServer,
 	CORS_HEADERS,
@@ -9,4 +8,4 @@ export {
 	type HttpTransportServer,
 	type McpAuthContext,
 	type McpAuthError,
-} from "@anima-labs/mcp-core";
+} from "./core/index.js";

@@ -18,6 +18,10 @@ const updateExtensionSettingsSchema = z.object({
 		.enum(["session", "pre_approved", "prompt_owner"])
 		.optional()
 		.describe("Auth policy: session (default), pre_approved, or prompt_owner"),
+	tokenTtl: z
+		.enum(["15m", "1h", "session"])
+		.optional()
+		.describe("Token lifetime: 15m (15 minutes), 1h (1 hour), or session (until browser closes)"),
 	preApprovedAgentIds: z
 		.array(z.string())
 		.optional()
@@ -32,13 +36,12 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 		[
 			"Generate an auth token for the Anima Vault browser extension and get a URL to connect it.",
 			"",
-			"This creates a session-scoped API key that authenticates the extension to the WebSocket bridge.",
+			"This creates a scoped API key that authenticates the extension to the WebSocket bridge.",
 			"Open the returned connectUrl in the user's browser to complete the connection.",
 			"",
-			"The token lifecycle depends on the org's extension auth policy:",
-			"  - session (default): Token lives until browser closes",
-			"  - pre_approved: Only allowed agents can authenticate silently",
-			"  - prompt_owner: Owner must approve in the extension popup",
+			"The token lifecycle depends on the org's extension settings:",
+			"  Auth policy: session (default) | pre_approved | prompt_owner",
+			"  Token TTL:   15m | 1h | session (default, until browser closes)",
 		].join("\n"),
 		setupExtensionSchema.shape,
 		withErrorHandling(async (args, context) => {
@@ -47,6 +50,7 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 			const result = await context.client.post<{
 				token: string;
 				policy: string;
+				tokenTtl: string;
 				requiresApproval: boolean;
 				expiresAt: string | null;
 				connectUrl: string;
@@ -60,7 +64,9 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 					: "Token created. Open the connectUrl in the browser to authenticate the extension.",
 				token: result.token,
 				policy: result.policy,
+				tokenTtl: result.tokenTtl,
 				requiresApproval: result.requiresApproval,
+				expiresAt: result.expiresAt,
 				connectUrl: result.connectUrl,
 				instructions: [
 					"1. Open the connectUrl in the user's browser",
@@ -83,6 +89,7 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 
 			const result = await context.client.get<{
 				authPolicy: string;
+				tokenTtl: string;
 				preApprovedAgentIds: string[];
 			}>("/extension/settings");
 
@@ -99,6 +106,11 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 			"  - session: Agent gets a session-scoped token, cleared when browser closes (default)",
 			"  - pre_approved: Only agents in the pre-approved list can authenticate silently",
 			"  - prompt_owner: Owner must approve every auth attempt in the extension popup",
+			"",
+			"Token TTL:",
+			"  - 15m: 15 minutes — quick tasks like a purchase or form fill",
+			"  - 1h: 1 hour — covers most agent sessions",
+			"  - session: Until browser closes (default)",
 		].join("\n"),
 		updateExtensionSettingsSchema.shape,
 		withErrorHandling(async (args, context) => {
@@ -106,6 +118,7 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 
 			const result = await context.client.patch<{
 				authPolicy: string;
+				tokenTtl: string;
 				preApprovedAgentIds: string[];
 			}>("/extension/settings", args);
 

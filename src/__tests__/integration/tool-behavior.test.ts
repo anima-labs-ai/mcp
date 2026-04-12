@@ -290,10 +290,10 @@ describe("tool behavior integration", () => {
 		);
 	});
 
-	test("whoami calls GET /accounts/me", async () => {
+	test("whoami calls GET /orgs/me", async () => {
 		const handler = getTool(harness.registeredTools, "whoami");
 		await handler({});
-		expect(harness.client.get).toHaveBeenCalledWith("/accounts/me");
+		expect(harness.client.get).toHaveBeenCalledWith("/orgs/me");
 	});
 
 	test("check_health calls GET /health", async () => {

@@ -112,15 +112,31 @@ function startCallbackServer(): Promise<{ key: string; port: number }> {
 			reject(new Error("Authentication timed out after 5 minutes"));
 		}, 5 * 60 * 1000);
 
+		/** CORS + Private Network Access headers.
+		 *  Chrome's PNA policy blocks fetch/Image from public HTTPS pages to localhost
+		 *  unless the server handles the preflight with Access-Control-Allow-Private-Network. */
+		const corsHeaders = {
+			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Methods": "GET, OPTIONS",
+			"Access-Control-Allow-Private-Network": "true",
+		};
+
 		server = createServer((req, res) => {
 			const url = new URL(req.url ?? "/", "http://localhost");
+
+			// Handle CORS preflight (required for Chrome Private Network Access)
+			if (req.method === "OPTIONS") {
+				res.writeHead(204, corsHeaders);
+				res.end();
+				return;
+			}
 
 			if (url.pathname === "/callback") {
 				const key = url.searchParams.get("key");
 				const error = url.searchParams.get("error");
 
 				if (error) {
-					res.writeHead(200, { "Content-Type": "text/html" });
+					res.writeHead(200, { "Content-Type": "text/html", ...corsHeaders });
 					res.end(errorPage(error));
 					clearTimeout(timeout);
 					server.close();
@@ -129,7 +145,7 @@ function startCallbackServer(): Promise<{ key: string; port: number }> {
 				}
 
 				if (key) {
-					res.writeHead(200, { "Content-Type": "text/html" });
+					res.writeHead(200, { "Content-Type": "text/html", ...corsHeaders });
 					res.end(successPage());
 					clearTimeout(timeout);
 					server.close();

@@ -28,7 +28,7 @@ export const SERVER_INFO = {
 
 /** Default configuration values */
 export const DEFAULTS = {
-	apiUrl: "http://127.0.0.1:3100",
+	apiUrl: "https://api.useanima.sh",
 	mcpPort: 8014,
 	requestTimeoutMs: 30_000,
 	maxListLimit: 100,

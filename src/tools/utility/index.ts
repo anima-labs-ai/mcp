@@ -201,11 +201,23 @@ function registerWhoAmITool(options: ToolRegistrationOptions): void {
 
 	server.tool(
 		"whoami",
-		"Return identity details for the current API credential. Use this to verify which account and scope the MCP server is operating under.",
+		"Return identity details for the current API credential. Use this to verify which organization, agents, and scope the MCP server is operating under.",
 		noInput.shape,
 		withErrorHandling(async (_args, context) => {
-			const result = await context.client.get("/accounts/me");
-			return toolSuccess(result);
+			// /orgs/me works for all key types (sk_live_, ak_, mk_)
+			const org = await context.client.get<Record<string, unknown>>("/orgs/me");
+			const agents = await context.client.get<{ items: unknown[] }>("/agents");
+
+			return toolSuccess({
+				organization: {
+					id: org.id,
+					name: org.name,
+					slug: org.slug,
+					tier: org.tier,
+				},
+				agents: agents.items,
+				keyType: context.hasMasterKey ? "master" : "org",
+			});
 		}, options.context),
 	);
 }
@@ -426,15 +438,11 @@ function registerUpdateMetadataTool(options: ToolRegistrationOptions): void {
 		"Update metadata for the current agent identity.",
 		updateMetadataInput.shape,
 		withErrorHandling(async (args, context) => {
-			const whoami = await context.client.get("/accounts/me");
-			const whoamiObject = asObject(whoami);
-			const agentId =
-				asString(whoamiObject?.id) ??
-				asString(asObject(whoamiObject?.agent)?.id) ??
-				asString(whoamiObject?.agentId);
+			const agents = await context.client.get<{ items: Array<{ id: string }> }>("/agents");
+			const agentId = agents.items?.[0]?.id;
 
 			if (!agentId) {
-				return toolError("Could not determine current agent ID");
+				return toolError("No agents found in this organization. Create an agent first.");
 			}
 
 			const result = await context.client.patch(`/agents/${agentId}`, {

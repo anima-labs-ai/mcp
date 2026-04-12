@@ -19,15 +19,11 @@ function asString(value: unknown): string | undefined {
 }
 
 async function resolveCurrentAgentId(context: ToolContext): Promise<string> {
-	const whoami = await context.client.get<unknown>("/accounts/me");
-	const whoamiObject = asRecord(whoami);
-	const agentId =
-		asString(whoamiObject?.id) ??
-		asString(asRecord(whoamiObject?.agent)?.id) ??
-		asString(whoamiObject?.agentId);
+	const agents = await context.client.get<{ items: Array<{ id: string }> }>("/agents");
+	const agentId = agents.items?.[0]?.id;
 
 	if (!agentId) {
-		throw new Error("Could not determine current agent ID");
+		throw new Error("No agents found in this organization. Create an agent first.");
 	}
 
 	return agentId;

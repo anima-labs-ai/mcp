@@ -6,26 +6,6 @@ import {
 	requireMasterKeyGuard,
 } from "../../tool-helpers.js";
 
-type UnknownRecord = Record<string, unknown>;
-
-function asRecord(value: unknown): UnknownRecord | undefined {
-	return typeof value === "object" && value !== null
-		? (value as UnknownRecord)
-		: undefined;
-}
-
-function extractOrgId(accountPayload: unknown): string | undefined {
-	const account = asRecord(accountPayload);
-	if (!account) return undefined;
-
-	if (typeof account.orgId === "string") return account.orgId;
-
-	const org = asRecord(account.org);
-	if (org && typeof org.id === "string") return org.id;
-
-	return undefined;
-}
-
 function detectWarnings(content: string): Array<{ type: string; severity: string; detail: string }> {
 	const warnings: Array<{ type: string; severity: string; detail: string }> = [];
 
@@ -208,10 +188,10 @@ export function registerSecurityTools(options: ToolRegistrationOptions): void {
 		"Dry-run scan message content for likely PII or injection issues without sending any outbound message. Use this as a preflight safety check before calling message send tools.",
 		securityScanContentInput.shape,
 		withErrorHandling(async (args, context) => {
-			const account = await context.client.get("/accounts/me");
-			const orgId = extractOrgId(account);
+			const org = await context.client.get<Record<string, unknown>>("/orgs/me");
+			const orgId = typeof org.id === "string" ? org.id : undefined;
 			if (!orgId) {
-				throw new Error("Could not resolve organization ID from account context.");
+				throw new Error("Could not resolve organization ID from auth context.");
 			}
 
 			const eventsPath = `/v1/orgs/${orgId}/security/events?limit=10`;

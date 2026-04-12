@@ -128,7 +128,9 @@ export function registerResources(options: ToolRegistrationOptions): void {
 			description: "Current authenticated identity and agent details",
 		},
 		async (uri) => {
-			const identity = await options.context.client.get("/accounts/me");
+			const org = await options.context.client.get("/orgs/me");
+			const agents = await options.context.client.get<{ items: unknown[] }>("/agents");
+			const identity = { org, agents: agents.items };
 			const text = toText(formatAgentIdentity(identity));
 
 			return {

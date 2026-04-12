@@ -2,76 +2,85 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { loadConfig, SERVER_INFO } from "./config.js";
-import type { McpConfig } from "./config.js";
 import { ApiClient } from "./api-client.js";
-import { resolveApiKey, clearCachedCredentials } from "./auth.js";
+import { clearCachedCredentials, resolveApiKey } from "./auth.js";
+import type { McpConfig } from "./config.js";
+import { loadConfig, SERVER_INFO } from "./config.js";
+import {
+	createMcpHttpServer,
+	type McpAuthContext,
+	type McpAuthError,
+	parseBearerToken,
+} from "./http-transport.js";
+import { cancelAllFollowUps } from "./pending-followup.js";
+import { registerResources } from "./resources/index.js";
 import type { ToolRegistrationOptions } from "./tool-helpers.js";
+import { registerA2aTools } from "./tools/a2a/index.js";
 import { registerAddressTools } from "./tools/address/index.js";
-import { registerOrganizationTools } from "./tools/organization/index.js";
 import { registerAgentTools } from "./tools/agent/index.js";
-import { registerEmailTools } from "./tools/email/index.js";
+import { registerBrowserPaymentsTools } from "./tools/browser-payments/index.js";
+import { registerCardTools } from "./tools/cards/index.js";
 import { registerDomainTools } from "./tools/domain/index.js";
+import { registerEmailTools } from "./tools/email/index.js";
+import { registerExtensionTools } from "./tools/extension/index.js";
+import { registerFundingTools } from "./tools/funding/index.js";
 import { registerIdentityTools } from "./tools/identity/index.js";
+import { registerInvoiceTools } from "./tools/invoice/index.js";
+import { registerMessageTools } from "./tools/message/index.js";
+import { registerOrganizationTools } from "./tools/organization/index.js";
 import { registerPhoneTools } from "./tools/phone/index.js";
 import { registerPodTools } from "./tools/pod/index.js";
 import { registerRegistryTools } from "./tools/registry/index.js";
-import { registerVaultTools } from "./tools/vault/index.js";
-import { registerOAuthTools } from "./tools/vault/oauth.js";
-import { registerWalletTools } from "./tools/wallet/index.js";
-import { registerCardTools } from "./tools/cards/index.js";
-import { registerFundingTools } from "./tools/funding/index.js";
-import { registerMessageTools } from "./tools/message/index.js";
-import { registerWebhookTools } from "./tools/webhook/index.js";
 import { registerSecurityTools } from "./tools/security/index.js";
 import { registerUtilityTools } from "./tools/utility/index.js";
-import { registerBrowserPaymentsTools } from "./tools/browser-payments/index.js";
-import { registerX402Tools } from "./tools/x402/index.js";
-import { registerInvoiceTools } from "./tools/invoice/index.js";
-import { registerA2aTools } from "./tools/a2a/index.js";
+import { registerVaultTools } from "./tools/vault/index.js";
+import { registerOAuthTools } from "./tools/vault/oauth.js";
 import { registerVoiceTools } from "./tools/voice/index.js";
-import { registerExtensionTools } from "./tools/extension/index.js";
-import { registerResources } from "./resources/index.js";
-import { cancelAllFollowUps } from "./pending-followup.js";
-import { createMcpHttpServer, parseBearerToken, type McpAuthError, type McpAuthContext } from "./http-transport.js";
+import { registerWalletTools } from "./tools/wallet/index.js";
+import { registerWebhookTools } from "./tools/webhook/index.js";
+import { registerX402Tools } from "./tools/x402/index.js";
+
 export { marketplaceMetadata } from "./marketplace.js";
 
 const VALID_KEY_PREFIXES = ["ak_", "mk_", "sk_live_", "sk_test_"];
 
 /** Map of tool group names to their registration functions */
-const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> = {
-	address: registerAddressTools,
-	org: registerOrganizationTools,
-	agent: registerAgentTools,
-	email: registerEmailTools,
-	domain: registerDomainTools,
-	identity: registerIdentityTools,
-	phone: registerPhoneTools,
-	pod: registerPodTools,
-	registry: registerRegistryTools,
-	vault: registerVaultTools,
-	wallet: registerWalletTools,
-	cards: registerCardTools,
-	funding: registerFundingTools,
-	message: registerMessageTools,
-	webhook: registerWebhookTools,
-	security: registerSecurityTools,
-	utility: registerUtilityTools,
-	browser: registerBrowserPaymentsTools,
-	x402: registerX402Tools,
-	invoice: registerInvoiceTools,
-	a2a: registerA2aTools,
-	voice: registerVoiceTools,
-	extension: registerExtensionTools,
-	oauth: registerOAuthTools,
-};
+const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
+	{
+		address: registerAddressTools,
+		org: registerOrganizationTools,
+		agent: registerAgentTools,
+		email: registerEmailTools,
+		domain: registerDomainTools,
+		identity: registerIdentityTools,
+		phone: registerPhoneTools,
+		pod: registerPodTools,
+		registry: registerRegistryTools,
+		vault: registerVaultTools,
+		wallet: registerWalletTools,
+		cards: registerCardTools,
+		funding: registerFundingTools,
+		message: registerMessageTools,
+		webhook: registerWebhookTools,
+		security: registerSecurityTools,
+		utility: registerUtilityTools,
+		browser: registerBrowserPaymentsTools,
+		x402: registerX402Tools,
+		invoice: registerInvoiceTools,
+		a2a: registerA2aTools,
+		voice: registerVoiceTools,
+		extension: registerExtensionTools,
+		oauth: registerOAuthTools,
+	};
 
 /**
  * Parse --tools flag from command line args.
  * Returns null if not provided (register all), or a Set of group names.
  */
 function parseToolGroups(args: string[] = process.argv): Set<string> | null {
-	const toolsArg = args.find((a) => a.startsWith("--tools=") || a === "--tools");
+	const toolsArg = args.find(
+		(a) => a.startsWith("--tools=") || a === "--tools",
+	);
 	if (!toolsArg) return null;
 
 	let value: string;
@@ -84,7 +93,12 @@ function parseToolGroups(args: string[] = process.argv): Set<string> | null {
 
 	if (!value) return null;
 
-	const requested = new Set(value.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean));
+	const requested = new Set(
+		value
+			.split(",")
+			.map((s) => s.trim().toLowerCase())
+			.filter(Boolean),
+	);
 	const valid = new Set(Object.keys(TOOL_GROUPS));
 	const invalid = [...requested].filter((g) => !valid.has(g));
 
@@ -97,7 +111,10 @@ function parseToolGroups(args: string[] = process.argv): Set<string> | null {
 	return requested;
 }
 
-function createConfiguredServer(client: ApiClient, toolGroups?: Set<string> | null): McpServer {
+function createConfiguredServer(
+	client: ApiClient,
+	toolGroups?: Set<string> | null,
+): McpServer {
 	const server = new McpServer(SERVER_INFO, {
 		capabilities: { tools: {}, resources: {} },
 	});
@@ -162,16 +179,25 @@ async function startStdioServer(server: McpServer) {
 	process.on("SIGINT", shutdown);
 }
 
-async function startHttpServer(config: McpConfig, toolGroups?: Set<string> | null) {
+async function startHttpServer(
+	config: McpConfig,
+	toolGroups?: Set<string> | null,
+) {
 	// Per-session auth: authenticate stores the validated client, factory reads it.
 	// The authenticate→factory sequence is synchronous within a single HTTP request,
 	// so this closure pattern is safe (no race between authenticate and factory).
 	let pendingClient: ApiClient | null = null;
 
+	const mcpBaseUrl = process.env.MCP_BASE_URL ?? "https://mcp.useanima.sh";
+	const authServerUrl =
+		process.env.CONSOLE_URL ?? "https://console.useanima.sh";
+
 	const { httpServer, close } = createMcpHttpServer(
 		() => {
 			if (!pendingClient) {
-				throw new Error("No authenticated client available — authenticate must run before factory");
+				throw new Error(
+					"No authenticated client available — authenticate must run before factory",
+				);
 			}
 			const client = pendingClient;
 			pendingClient = null;
@@ -180,42 +206,53 @@ async function startHttpServer(config: McpConfig, toolGroups?: Set<string> | nul
 		{
 			port: config.httpPort,
 			onShutdown: () => cancelAllFollowUps(),
-		authenticate: async (req): Promise<McpAuthContext> => {
-			const token = parseBearerToken(req);
-			if (!token) {
-				const err: McpAuthError = { status: 401, message: "Missing Authorization header. Use: Bearer <api-key>" };
-				throw err;
-			}
-
-			const hasValidPrefix = VALID_KEY_PREFIXES.some((p) => token.startsWith(p));
-			if (!hasValidPrefix) {
-				const err: McpAuthError = {
-					status: 401,
-					message: `Invalid API key format. Key must start with one of: ${VALID_KEY_PREFIXES.join(", ")}`,
-				};
-				throw err;
-			}
-
-			const client = new ApiClient({
-				baseUrl: config.apiUrl,
-				apiKey: token,
-			});
-
-			let orgId = "default";
-			try {
-				const orgsResponse = await client.get("/organizations");
-				const firstOrg = Array.isArray(orgsResponse) ? orgsResponse[0] : undefined;
-				if (firstOrg?.id) {
-					orgId = firstOrg.id;
+			oauth: { mcpBaseUrl, authServerUrl },
+			authenticate: async (req): Promise<McpAuthContext> => {
+				const token = parseBearerToken(req);
+				if (!token) {
+					const err: McpAuthError = {
+						status: 401,
+						message: "Missing Authorization header. Use: Bearer <api-key>",
+					};
+					throw err;
 				}
-			} catch (apiErr) {
-				const err: McpAuthError = { status: 401, message: "Invalid or expired API key" };
-				throw err;
-			}
 
-			pendingClient = client;
-			return { apiKeyId: token, orgId };
-		},
+				const hasValidPrefix = VALID_KEY_PREFIXES.some((p) =>
+					token.startsWith(p),
+				);
+				if (!hasValidPrefix) {
+					const err: McpAuthError = {
+						status: 401,
+						message: `Invalid API key format. Key must start with one of: ${VALID_KEY_PREFIXES.join(", ")}`,
+					};
+					throw err;
+				}
+
+				const client = new ApiClient({
+					baseUrl: config.apiUrl,
+					apiKey: token,
+				});
+
+				let orgId = "default";
+				try {
+					const orgsResponse = await client.get("/organizations");
+					const firstOrg = Array.isArray(orgsResponse)
+						? orgsResponse[0]
+						: undefined;
+					if (firstOrg?.id) {
+						orgId = firstOrg.id;
+					}
+				} catch (apiErr) {
+					const err: McpAuthError = {
+						status: 401,
+						message: "Invalid or expired API key",
+					};
+					throw err;
+				}
+
+				pendingClient = client;
+				return { apiKeyId: token, orgId };
+			},
 		},
 	);
 

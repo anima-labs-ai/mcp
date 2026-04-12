@@ -1,11 +1,12 @@
 export {
-	createMcpHttpServer,
 	CORS_HEADERS,
-	jsonError,
-	readBody,
-	parseBearerToken,
+	createMcpHttpServer,
 	type HttpTransportOptions,
 	type HttpTransportServer,
+	jsonError,
 	type McpAuthContext,
 	type McpAuthError,
+	type OAuthDiscovery,
+	parseBearerToken,
+	readBody,
 } from "./core/index.js";

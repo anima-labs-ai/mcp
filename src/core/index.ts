@@ -1,45 +1,46 @@
 // Core infrastructure
 export {
 	ApiClient,
-	ApiError,
-	createApiClientFromEnv,
 	type ApiClientConfig,
+	ApiError,
 	type ApiResponse,
+	createApiClientFromEnv,
 } from "./api-client.js";
-
+// Circuit breaker
 export {
-	MASTER_KEY_TOOLS,
-	SERVER_INFO,
+	type CircuitBreaker,
+	type CircuitBreakerOptions,
+	CircuitOpenError,
+	type CircuitState,
+	createCircuitBreaker,
+} from "./circuit-breaker.js";
+export {
 	DEFAULTS,
 	loadConfig,
+	MASTER_KEY_TOOLS,
 	type McpConfig,
+	SERVER_INFO,
 } from "./config.js";
-
-// Tool helpers
-export {
-	requiresMasterKey,
-	toolSuccess,
-	toolError,
-	withErrorHandling,
-	requireMasterKeyGuard,
-	type ToolContext,
-	type ToolRegistrationOptions,
-	type DomainRegistrar,
-} from "./tool-helpers.js";
 
 // HTTP transport
 export {
-	createMcpHttpServer,
 	CORS_HEADERS,
-	jsonError,
-	readBody,
-	parseBearerToken,
+	createMcpHttpServer,
 	type HttpTransportOptions,
 	type HttpTransportServer,
+	jsonError,
 	type McpAuthContext,
 	type McpAuthError,
+	type OAuthDiscovery,
+	parseBearerToken,
+	readBody,
 } from "./http-transport.js";
-
+// Metrics
+export {
+	createMcpMetrics,
+	type McpMetrics,
+	type MetricsSnapshot,
+} from "./metrics.js";
 // Rate limiter
 export {
 	createMcpRateLimiter,
@@ -48,27 +49,22 @@ export {
 	type RateLimitResult,
 } from "./rate-limiter.js";
 
-// Circuit breaker
-export {
-	createCircuitBreaker,
-	CircuitOpenError,
-	type CircuitBreaker,
-	type CircuitBreakerOptions,
-	type CircuitState,
-} from "./circuit-breaker.js";
-
 // Session registry
 export {
 	createSessionRegistry,
+	type RegistryStats,
+	type SessionMetadata,
 	type SessionRegistry,
 	type SessionRegistryOptions,
-	type SessionMetadata,
-	type RegistryStats,
 } from "./session-registry.js";
-
-// Metrics
+// Tool helpers
 export {
-	createMcpMetrics,
-	type McpMetrics,
-	type MetricsSnapshot,
-} from "./metrics.js";
+	type DomainRegistrar,
+	requireMasterKeyGuard,
+	requiresMasterKey,
+	type ToolContext,
+	type ToolRegistrationOptions,
+	toolError,
+	toolSuccess,
+	withErrorHandling,
+} from "./tool-helpers.js";

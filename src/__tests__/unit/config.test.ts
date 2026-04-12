@@ -93,7 +93,7 @@ describe("loadConfig", () => {
 	});
 
 	test("DEFAULTS exports expected constant values", () => {
-		expect(DEFAULTS.apiUrl).toBe("http://127.0.0.1:3100");
+		expect(DEFAULTS.apiUrl).toBe("https://api.useanima.sh");
 		expect(DEFAULTS.mcpPort).toBe(8014);
 		expect(DEFAULTS.requestTimeoutMs).toBe(30_000);
 		expect(DEFAULTS.maxListLimit).toBe(100);

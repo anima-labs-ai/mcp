@@ -4,7 +4,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadConfig, SERVER_INFO } from "./config.js";
 import type { McpConfig } from "./config.js";
-import { ApiClient, createApiClientFromEnv } from "./api-client.js";
+import { ApiClient } from "./api-client.js";
+import { resolveApiKey, clearCachedCredentials } from "./auth.js";
 import type { ToolRegistrationOptions } from "./tool-helpers.js";
 import { registerAddressTools } from "./tools/address/index.js";
 import { registerOrganizationTools } from "./tools/organization/index.js";
@@ -118,6 +119,12 @@ function createConfiguredServer(client: ApiClient, toolGroups?: Set<string> | nu
 }
 
 async function main() {
+	// Handle --logout command
+	if (process.argv.includes("--logout")) {
+		clearCachedCredentials();
+		process.exit(0);
+	}
+
 	const config = loadConfig();
 	const toolGroups = parseToolGroups();
 
@@ -128,7 +135,13 @@ async function main() {
 	if (config.httpMode) {
 		await startHttpServer(config, toolGroups);
 	} else {
-		const client = createApiClientFromEnv();
+		// Resolve API key: CLI flag → env var → cached → browser auth
+		const apiKey = await resolveApiKey();
+		const client = new ApiClient({
+			baseUrl: config.apiUrl,
+			apiKey,
+			masterKey: config.masterKey,
+		});
 		await startStdioServer(createConfiguredServer(client, toolGroups));
 	}
 }

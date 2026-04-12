@@ -16,6 +16,7 @@ import { registerPhoneTools } from "./tools/phone/index.js";
 import { registerPodTools } from "./tools/pod/index.js";
 import { registerRegistryTools } from "./tools/registry/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
+import { registerOAuthTools } from "./tools/vault/oauth.js";
 import { registerWalletTools } from "./tools/wallet/index.js";
 import { registerCardTools } from "./tools/cards/index.js";
 import { registerFundingTools } from "./tools/funding/index.js";
@@ -61,6 +62,7 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> = 
 	a2a: registerA2aTools,
 	voice: registerVoiceTools,
 	extension: registerExtensionTools,
+	oauth: registerOAuthTools,
 };
 
 /**

@@ -6,6 +6,55 @@ import {
 	requireMasterKeyGuard,
 } from "../../tool-helpers.js";
 
+/**
+ * Masks sensitive fields in a vault credential response.
+ * Passwords, access tokens, and refresh tokens are replaced with "****".
+ * Refresh tokens are omitted entirely.
+ */
+function maskCredentialFields(
+	cred: Record<string, unknown>,
+): Record<string, unknown> {
+	const masked = { ...cred };
+
+	// Mask login password
+	if (masked.login && typeof masked.login === "object") {
+		const login = { ...(masked.login as Record<string, unknown>) };
+		if (login.password) login.password = "****";
+		if (login.totp) login.totp = "****";
+		masked.login = login;
+	}
+
+	// Mask card code (CVV)
+	if (masked.card && typeof masked.card === "object") {
+		const card = { ...(masked.card as Record<string, unknown>) };
+		if (card.code) card.code = "****";
+		if (card.number && typeof card.number === "string") {
+			card.number = "****" + (card.number as string).slice(-4);
+		}
+		masked.card = card;
+	}
+
+	// Mask OAuth tokens
+	if (masked.oauth && typeof masked.oauth === "object") {
+		const oauth = { ...(masked.oauth as Record<string, unknown>) };
+		if (oauth.accessToken) oauth.accessToken = "****";
+		delete oauth.refreshToken;
+		if (oauth.idToken) oauth.idToken = "****";
+		masked.oauth = oauth;
+	}
+
+	// Mask identity SSN
+	if (masked.identity && typeof masked.identity === "object") {
+		const identity = { ...(masked.identity as Record<string, unknown>) };
+		if (identity.ssn) identity.ssn = "****";
+		if (identity.passportNumber) identity.passportNumber = "****";
+		if (identity.licenseNumber) identity.licenseNumber = "****";
+		masked.identity = identity;
+	}
+
+	return masked;
+}
+
 const vaultCredentialTypeSchema = z.enum([
 	"login",
 	"secure_note",
@@ -220,12 +269,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 
 	server.tool(
 		"vault_get_credential",
-		"Get a single vault credential by ID, including its stored structured fields. Use this when you need credential details for login, card, identity, or secure note workflows.",
+		"Get a single vault credential by ID. Sensitive fields (passwords, tokens) are masked for security. Use vault_create_token with scope 'autofill' or 'proxy' to access raw credential data securely.",
 		vaultCredentialIdSchema.shape,
 		withErrorHandling(async (args, context) => {
 			const path = `/vault/credentials/${encodeURIComponent(args.id)}`;
-			const result = await context.client.get<unknown>(path);
-			return toolSuccess(result);
+			const result = await context.client.get<Record<string, unknown>>(path);
+			return toolSuccess(maskCredentialFields(result));
 		}, options.context),
 	);
 
@@ -335,6 +384,168 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 			params.set("agentId", args.agentId);
 			const result = await context.client.get<unknown>(
 				`/vault/status?${params.toString()}`,
+			);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	// --- Credential Sharing ---
+
+	const vaultShareSchema = z.object({
+		agentId: z.string().describe("Source agent ID that owns the credential."),
+		credentialId: z.string().describe("Credential ID to share."),
+		targetAgentId: z
+			.string()
+			.describe("Agent ID to share the credential with."),
+		permission: z
+			.enum(["READ", "USE", "MANAGE"])
+			.describe("Permission level for the share."),
+		expiresInSeconds: z
+			.number()
+			.int()
+			.positive()
+			.optional()
+			.describe("Optional TTL in seconds for the share."),
+	});
+
+	server.tool(
+		"vault_share_credential",
+		"Share a vault credential with another agent at a specified permission level. Use this to grant cross-agent access to secrets for collaborative workflows.",
+		vaultShareSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const result = await context.client.post<unknown>("/vault/share", args);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	const vaultListSharesSchema = z.object({
+		agentId: z
+			.string()
+			.optional()
+			.describe(
+				"Agent ID to list shares for. Optional when using an agent API key.",
+			),
+		direction: z
+			.enum(["granted", "received"])
+			.describe(
+				"Whether to list shares this agent has granted or received.",
+			),
+	});
+
+	server.tool(
+		"vault_list_shares",
+		"List credential shares granted by or received by an agent. Use this to audit cross-agent secret access.",
+		vaultListSharesSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const params = new URLSearchParams();
+			if (args.agentId) params.set("agentId", args.agentId);
+			params.set("direction", args.direction);
+			const result = await context.client.get<unknown>(
+				`/vault/shares?${params.toString()}`,
+			);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	const vaultRevokeShareSchema = z.object({
+		shareId: z.string().describe("Share ID to revoke."),
+		agentId: z
+			.string()
+			.optional()
+			.describe(
+				"Agent ID that owns the share. Optional when using an agent API key.",
+			),
+	});
+
+	server.tool(
+		"vault_revoke_share",
+		"Revoke a previously granted credential share by share ID. Use this to remove cross-agent access when it is no longer needed.",
+		vaultRevokeShareSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const result = await context.client.post<unknown>(
+				"/vault/share/revoke",
+				args,
+			);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	// --- Ephemeral Tokens ---
+
+	const vaultCreateTokenSchema = z.object({
+		agentId: z
+			.string()
+			.optional()
+			.describe(
+				"Agent ID that owns the credential. Optional when using an agent API key.",
+			),
+		credentialId: z
+			.string()
+			.describe("Credential ID to create an ephemeral token for."),
+		scope: z
+			.enum(["autofill", "proxy", "export"])
+			.describe(
+				"Token scope: autofill for CLI/extension injection, proxy for delegated access, export for one-time reveal.",
+			),
+		ttlSeconds: z
+			.number()
+			.int()
+			.positive()
+			.optional()
+			.describe("Optional TTL in seconds (10–3600, default 60)."),
+	});
+
+	server.tool(
+		"vault_create_token",
+		"Create a short-lived ephemeral token for a credential. The vtk_ token can be used in commands for CLI/extension auto-fill without exposing the raw secret to the LLM.",
+		vaultCreateTokenSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const result = await context.client.post<unknown>("/vault/token", args);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	const vaultExchangeTokenSchema = z.object({
+		token: z
+			.string()
+			.describe(
+				"The vtk_ ephemeral token to exchange for credential data. Single-use.",
+			),
+	});
+
+	server.tool(
+		"vault_exchange_token",
+		"Exchange a vtk_ ephemeral token for the underlying credential data. Tokens are single-use and consumed on exchange. No auth header required.",
+		vaultExchangeTokenSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const result = await context.client.post<unknown>(
+				"/vault/token/exchange",
+				args,
+			);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	const vaultRevokeTokensSchema = z.object({
+		agentId: z
+			.string()
+			.optional()
+			.describe(
+				"Agent ID that owns the credential. Optional when using an agent API key.",
+			),
+		credentialId: z
+			.string()
+			.describe("Credential ID whose tokens should be revoked."),
+	});
+
+	server.tool(
+		"vault_revoke_tokens",
+		"Revoke all active ephemeral tokens for a credential. Use this to invalidate outstanding vtk_ tokens after a security event or credential rotation.",
+		vaultRevokeTokensSchema.shape,
+		withErrorHandling(async (args, context) => {
+			const result = await context.client.post<unknown>(
+				"/vault/token/revoke",
+				args,
 			);
 			return toolSuccess(result);
 		}, options.context),

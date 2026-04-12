@@ -18,13 +18,30 @@ export const MASTER_KEY_TOOLS = new Set([
 	"security_update_policy",
 ]);
 
-/** Server metadata */
+/** Server metadata (not `as const` — MCP SDK expects mutable icon arrays) */
 export const SERVER_INFO = {
 	name: "anima-mcp",
 	version: "2.0.0",
 	description:
 		"Anima MCP Server — Unified email, phone, SMS & voice identity infrastructure for AI agents",
-} as const;
+	icons: [
+		{
+			src: "https://console.useanima.sh/icon-512.png",
+			mimeType: "image/png",
+			sizes: ["512x512"],
+		},
+		{
+			src: "https://console.useanima.sh/icon-192.png",
+			mimeType: "image/png",
+			sizes: ["192x192"],
+		},
+		{
+			src: "https://console.useanima.sh/favicon-96.png",
+			mimeType: "image/png",
+			sizes: ["96x96"],
+		},
+	],
+};
 
 /** Default configuration values */
 export const DEFAULTS = {

@@ -1,18 +1,18 @@
 /**
  * Browser-based authentication for the Anima MCP server.
  *
- * Flow:
+ * Uses a server-side relay (device code flow) — no localhost callback needed:
  *   1. Check --api-key flag or ANIMA_API_KEY env var
  *   2. Check cached credentials at ~/.anima/credentials.json
- *   3. If neither found, open browser for OAuth-style login:
- *      a. Start temporary localhost HTTP server on a random port
- *      b. Open console.useanima.sh/install/authorize?callback_port=PORT
- *      c. User authenticates via Clerk, console creates a scoped API key
- *      d. Console redirects to http://localhost:PORT/callback?key=sk_live_xxx
- *      e. MCP server receives key, caches it, closes local server
+ *   3. If neither found, start the browser auth flow:
+ *      a. POST /mcp-auth/sessions to create a pending session (returns sessionId + token + authUrl)
+ *      b. Open authUrl in the browser (console.useanima.sh/install/authorize?session=ID)
+ *      c. User authenticates via Clerk and clicks "Authorize"
+ *      d. Console calls POST /mcp-auth/sessions/{id}/complete, which creates a scoped API key
+ *      e. MCP server polls POST /mcp-auth/sessions/poll with its token
+ *      f. Once completed, the API key is returned (burn-after-reading) and cached locally
  */
 
-import { createServer, type Server } from "node:http";
 import { execFile } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -20,13 +20,26 @@ import { join } from "node:path";
 
 const CREDENTIALS_DIR = join(homedir(), ".anima");
 const CREDENTIALS_FILE = join(CREDENTIALS_DIR, "credentials.json");
-const CONSOLE_URL =
-	process.env.ANIMA_CONSOLE_URL ?? "https://console.useanima.sh";
+const API_URL = process.env.ANIMA_API_URL ?? "https://api.useanima.sh";
+
+const POLL_INTERVAL_MS = 2_000; // Poll every 2 seconds
+const POLL_TIMEOUT_MS = 5 * 60 * 1000; // 5-minute timeout (matches session TTL)
 
 interface CachedCredentials {
 	apiKey: string;
 	apiUrl?: string;
 	createdAt: string;
+}
+
+interface CreateSessionResponse {
+	sessionId: string;
+	token: string;
+	authUrl: string;
+}
+
+interface PollSessionResponse {
+	status: "PENDING" | "COMPLETED" | "DENIED" | "EXPIRED";
+	apiKey?: string;
 }
 
 /* ── CLI flag parsing ── */
@@ -102,141 +115,88 @@ function openBrowser(url: string): void {
 	});
 }
 
-/* ���─ Localhost callback server ── */
+/* ── Server-side relay (device code flow) ── */
 
-function startCallbackServer(): Promise<{ key: string; port: number }> {
-	return new Promise((resolve, reject) => {
-		let server: Server;
-		const timeout = setTimeout(() => {
-			server?.close();
-			reject(new Error("Authentication timed out after 5 minutes"));
-		}, 5 * 60 * 1000);
-
-		/** CORS + Private Network Access headers.
-		 *  Chrome's PNA policy blocks fetch/Image from public HTTPS pages to localhost
-		 *  unless the server handles the preflight with Access-Control-Allow-Private-Network. */
-		const corsHeaders = {
-			"Access-Control-Allow-Origin": "*",
-			"Access-Control-Allow-Methods": "GET, OPTIONS",
-			"Access-Control-Allow-Private-Network": "true",
-		};
-
-		server = createServer((req, res) => {
-			const url = new URL(req.url ?? "/", "http://localhost");
-
-			// Handle CORS preflight (required for Chrome Private Network Access)
-			if (req.method === "OPTIONS") {
-				res.writeHead(204, corsHeaders);
-				res.end();
-				return;
-			}
-
-			if (url.pathname === "/callback") {
-				const key = url.searchParams.get("key");
-				const error = url.searchParams.get("error");
-
-				if (error) {
-					res.writeHead(200, { "Content-Type": "text/html", ...corsHeaders });
-					res.end(errorPage(error));
-					clearTimeout(timeout);
-					server.close();
-					reject(new Error(`Authentication failed: ${error}`));
-					return;
-				}
-
-				if (key) {
-					res.writeHead(200, { "Content-Type": "text/html", ...corsHeaders });
-					res.end(successPage());
-					clearTimeout(timeout);
-					server.close();
-					const addr = server.address();
-					const port =
-						typeof addr === "object" && addr ? addr.port : 0;
-					resolve({ key, port });
-					return;
-				}
-			}
-
-			res.writeHead(404, { "Content-Type": "text/plain" });
-			res.end("Not found");
-		});
-
-		// Listen on random available port
-		server.listen(0, "127.0.0.1", () => {
-			const addr = server.address();
-			const port = typeof addr === "object" && addr ? addr.port : 0;
-			const authUrl = `${CONSOLE_URL}/install/authorize?callback_port=${port}`;
-			console.error("");
-			console.error("┌─────────────────────────────────────────┐");
-			console.error("│   Anima MCP — Browser Authentication    │");
-			console.error("├─────────────────────��───────────────────┤");
-			console.error("│                                         │");
-			console.error("│   Opening browser for sign-in...        │");
-			console.error("│                                         │");
-			console.error("│   If the browser doesn't open, visit:   │");
-			console.error("│                                         │");
-			console.error("└─────────────────────────────���───────────┘");
-			console.error("");
-			console.error(`  ${authUrl}`);
-			console.error("");
-			openBrowser(authUrl);
-		});
-
-		server.on("error", (err) => {
-			clearTimeout(timeout);
-			reject(err);
-		});
+/** Create a pending auth session on the API server. */
+async function createAuthSession(): Promise<CreateSessionResponse> {
+	const res = await fetch(`${API_URL}/mcp-auth/sessions`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({}),
 	});
+
+	if (!res.ok) {
+		const body = await res.text().catch(() => "");
+		throw new Error(`Failed to create auth session: ${res.status} ${body}`);
+	}
+
+	return res.json() as Promise<CreateSessionResponse>;
 }
 
-/* ── HTML pages ── */
+/** Poll the API server for session completion. */
+async function pollAuthSession(token: string): Promise<string> {
+	const deadline = Date.now() + POLL_TIMEOUT_MS;
 
-function successPage(): string {
-	return `<!DOCTYPE html>
-<html>
-<head>
-  <title>Anima MCP — Authenticated</title>
-  <style>
-    body { font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #0a0a0a; color: #fafafa; }
-    .card { text-align: center; padding: 3rem; max-width: 400px; }
-    .icon { font-size: 3rem; margin-bottom: 1rem; }
-    h1 { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.5rem; }
-    p { color: #888; font-size: 0.875rem; margin: 0; }
-    .brand { color: #22c55e; font-weight: 700; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="icon">&#x2713;</div>
-    <h1><span class="brand">Anima</span> MCP Authenticated</h1>
-    <p>You can close this tab and return to your AI tool.</p>
-  </div>
-</body>
-</html>`;
+	while (Date.now() < deadline) {
+		const res = await fetch(`${API_URL}/mcp-auth/sessions/poll`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ token }),
+		});
+
+		if (!res.ok) {
+			const body = await res.text().catch(() => "");
+			throw new Error(`Poll failed: ${res.status} ${body}`);
+		}
+
+		const data = (await res.json()) as PollSessionResponse;
+
+		switch (data.status) {
+			case "COMPLETED":
+				if (data.apiKey) return data.apiKey;
+				throw new Error("Session completed but no API key returned");
+
+			case "DENIED":
+				throw new Error("Authorization was denied by the user");
+
+			case "EXPIRED":
+				throw new Error("Authorization session expired. Please try again.");
+
+			case "PENDING":
+				// Still waiting — sleep and retry
+				await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+				break;
+		}
+	}
+
+	throw new Error("Authentication timed out after 5 minutes");
 }
 
-function errorPage(error: string): string {
-	const safeError = error.replace(/[<>&"']/g, (c) => `&#${c.charCodeAt(0)};`);
-	return `<!DOCTYPE html>
-<html>
-<head>
-  <title>Anima MCP — Error</title>
-  <style>
-    body { font-family: system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #0a0a0a; color: #fafafa; }
-    .card { text-align: center; padding: 3rem; max-width: 400px; }
-    .icon { font-size: 3rem; margin-bottom: 1rem; }
-    h1 { font-size: 1.25rem; font-weight: 600; margin: 0 0 0.5rem; }
-    p { color: #ef4444; font-size: 0.875rem; margin: 0; }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <div class="icon">&#x2717;</div>
-    <h1>Authentication Failed</h1>
-    <p>${safeError}</p>
-  </div>
-</body>
-</html>`;
+/** Run the full browser auth flow: create session → open browser → poll for key. */
+async function browserAuthFlow(): Promise<string> {
+	// 1. Create session on the API server
+	const session = await createAuthSession();
+
+	// 2. Print auth URL and open browser
+	console.error("");
+	console.error("┌─────────────────────────────────────────┐");
+	console.error("│   Anima MCP — Browser Authentication    │");
+	console.error("├─────────────────────────────────────────┤");
+	console.error("│                                         │");
+	console.error("│   Opening browser for sign-in...        │");
+	console.error("│                                         │");
+	console.error("│   If the browser doesn't open, visit:   │");
+	console.error("│                                         │");
+	console.error("└─────────────────────────────────────────┘");
+	console.error("");
+	console.error(`  ${session.authUrl}`);
+	console.error("");
+
+	openBrowser(session.authUrl);
+
+	// 3. Poll for completion
+	console.error("Waiting for authorization...");
+	return pollAuthSession(session.token);
 }
 
 /* ── Main resolver ── */
@@ -269,9 +229,9 @@ export async function resolveApiKey(
 		return cached.apiKey;
 	}
 
-	// 4. Browser authentication flow
+	// 4. Browser authentication flow (server-side relay)
 	console.error("No API key found. Starting browser authentication...");
-	const { key } = await startCallbackServer();
+	const key = await browserAuthFlow();
 	saveCachedCredentials(key, process.env.ANIMA_API_URL);
 	return key;
 }

@@ -6,5 +6,5 @@
 	"tools": 77,
 	"domains": ["email", "phone", "sms", "messaging", "identity", "webhooks", "security"],
 	"transport": ["stdio", "http"],
-	"install": "npx @anima/mcp-server --api-key=mk_xxx"
+	"install": "npx @anima-labs/mcp --api-key=mk_xxx"
 }

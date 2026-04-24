@@ -1,25 +1,30 @@
 {
 	"name": "@anima-labs/mcp",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"type": "module",
 	"description": "Anima MCP server — 77 tools for AI agent communication",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/anima-labs-ai/mcp.git"
+		"url": "git+https://github.com/anima-labs-ai/mcp.git"
 	},
 	"homepage": "https://github.com/anima-labs-ai/mcp",
 	"bugs": {
 		"url": "https://github.com/anima-labs-ai/mcp/issues"
 	},
 	"bin": {
-		"anima-mcp": "./src/index.ts"
+		"anima-mcp": "dist/index.js"
 	},
 	"exports": {
-		".": "./src/index.ts",
-		"./client": "./src/api-client.ts"
+		".": "./dist/index.js",
+		"./client": "./dist/api-client.js"
 	},
+	"files": [
+		"dist"
+	],
 	"scripts": {
+		"build": "tsc && node -e \"const fs=require('fs');const f='dist/index.js';const c=fs.readFileSync(f,'utf8').replace(/^#!.*\\n/,'');fs.writeFileSync(f,'#!/usr/bin/env node\\n'+c)\"",
+		"prepublishOnly": "npm run build",
 		"start": "bun run src/index.ts",
 		"start:http": "bun run src/index.ts --http",
 		"dev": "bun run --watch src/index.ts",

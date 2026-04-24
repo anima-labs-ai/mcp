@@ -76,10 +76,12 @@ const updatePodSchema = z.object({
 export function registerPodTools(options: ToolRegistrationOptions): void {
 	const { server } = options;
 
-	server.tool(
+	server.registerTool(
 		"create_pod",
-		"Create a new compute pod for an agent. Use this to provision a container that runs alongside the agent.",
-		createPodSchema.shape,
+		{
+			description: "Create a new compute pod for an agent. Use this to provision a container that runs alongside the agent.",
+			inputSchema: createPodSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
 			const result = await context.client.post<unknown>("/pods", args);
@@ -87,10 +89,12 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"list_pods",
-		"List all compute pods, optionally filtered by agent. Use this to see running and stopped pods.",
-		listPodsSchema.shape,
+		{
+			description: "List all compute pods, optionally filtered by agent. Use this to see running and stopped pods.",
+			inputSchema: listPodsSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
 			if (args.agentId) params.set("agentId", args.agentId);
@@ -101,20 +105,24 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"get_pod",
-		"Get details for a specific pod. Use this to check pod status, resources, and configuration.",
-		podIdSchema.shape,
+		{
+			description: "Get details for a specific pod. Use this to check pod status, resources, and configuration.",
+			inputSchema: podIdSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(`/pods/${encodeURIComponent(args.id)}`);
 			return toolSuccess(result);
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"update_pod",
-		"Update a pod's configuration. Use this to change resources, environment variables, or metadata.",
-		updatePodSchema.shape,
+		{
+			description: "Update a pod's configuration. Use this to change resources, environment variables, or metadata.",
+			inputSchema: updatePodSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
 			const { id, ...body } = args;
@@ -123,10 +131,12 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"delete_pod",
-		"Delete a compute pod. Use this to tear down a pod that is no longer needed.",
-		podIdSchema.shape,
+		{
+			description: "Delete a compute pod. Use this to tear down a pod that is no longer needed.",
+			inputSchema: podIdSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
 			const result = await context.client.delete<unknown>(`/pods/${encodeURIComponent(args.id)}`);
@@ -134,10 +144,12 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"pod_usage",
-		"Get resource usage metrics for a pod. Use this to monitor CPU, memory, storage, and network usage.",
-		podIdSchema.shape,
+		{
+			description: "Get resource usage metrics for a pod. Use this to monitor CPU, memory, storage, and network usage.",
+			inputSchema: podIdSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(`/pods/${encodeURIComponent(args.id)}/usage`);
 			return toolSuccess(result);

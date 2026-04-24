@@ -224,10 +224,12 @@ const vaultStatusSchema = z.object({
 export function registerVaultTools(options: ToolRegistrationOptions): void {
 	const { server } = options;
 
-	server.tool(
+	server.registerTool(
 		"vault_provision",
-		"Provision a vault for an agent so credentials can be securely stored and managed. Use this before creating vault credentials for a newly onboarded agent.",
-		vaultProvisionSchema.shape,
+		{
+			description: "Provision a vault for an agent so credentials can be securely stored and managed. Use this before creating vault credentials for a newly onboarded agent.",
+			inputSchema: vaultProvisionSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
 			const result = await context.client.post<unknown>("/vault/provision", {
@@ -237,10 +239,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"vault_deprovision",
-		"Deprovision an agent vault and remove its active vault assignment. Use this when retiring an agent or revoking vault access.",
-		vaultDeprovisionSchema.shape,
+		{
+			description: "Deprovision an agent vault and remove its active vault assignment. Use this when retiring an agent or revoking vault access.",
+			inputSchema: vaultDeprovisionSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
 			const result = await context.client.post<unknown>("/vault/deprovision", {
@@ -250,10 +254,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"vault_list_credentials",
-		"List credentials in an agent vault with optional type and search filters. Use this to browse stored secrets before reading, updating, or deleting entries.",
-		vaultListCredentialsSchema.shape,
+		{
+			description: "List credentials in an agent vault with optional type and search filters. Use this to browse stored secrets before reading, updating, or deleting entries.",
+			inputSchema: vaultListCredentialsSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
 			params.set("agentId", args.agentId);
@@ -267,10 +273,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"vault_get_credential",
-		"Get a single vault credential by ID. Sensitive fields (passwords, tokens) are masked for security. Use vault_create_token with scope 'autofill' or 'proxy' to access raw credential data securely.",
-		vaultCredentialIdSchema.shape,
+		{
+			description: "Get a single vault credential by ID. Sensitive fields (passwords, tokens) are masked for security. Use vault_create_token with scope 'autofill' or 'proxy' to access raw credential data securely.",
+			inputSchema: vaultCredentialIdSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const path = `/vault/credentials/${encodeURIComponent(args.id)}`;
 			const result = await context.client.get<Record<string, unknown>>(path);
@@ -278,10 +286,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"vault_create_credential",
-		"Create a new credential in an agent vault with login, card, identity, or secure note content. Use this to store new secrets for agent automation tasks. The response is masked — callers that need the plaintext (e.g. to confirm a rotation) already have it in the request.",
-		vaultCreateCredentialSchema.shape,
+		{
+			description: "Create a new credential in an agent vault with login, card, identity, or secure note content. Use this to store new secrets for agent automation tasks. The response is masked — callers that need the plaintext (e.g. to confirm a rotation) already have it in the request.",
+			inputSchema: vaultCreateCredentialSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post<Record<string, unknown>>(
 				"/vault/credentials",
@@ -296,10 +306,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"vault_update_credential",
-		"Update an existing vault credential by ID, including optional structured sections and metadata flags. Use this to rotate passwords or revise stored secret details. The response is masked — the caller already has the plaintext it just sent.",
-		vaultUpdateCredentialSchema.shape,
+		{
+			description: "Update an existing vault credential by ID, including optional structured sections and metadata flags. Use this to rotate passwords or revise stored secret details. The response is masked — the caller already has the plaintext it just sent.",
+			inputSchema: vaultUpdateCredentialSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const { id, ...payload } = args;
 			const path = `/vault/credentials/${encodeURIComponent(id)}`;
@@ -308,10 +320,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"vault_delete_credential",
-		"Delete a credential from vault storage by ID. Use this to remove obsolete or compromised secrets from an agent vault.",
-		vaultCredentialIdSchema.shape,
+		{
+			description: "Delete a credential from vault storage by ID. Use this to remove obsolete or compromised secrets from an agent vault.",
+			inputSchema: vaultCredentialIdSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const path = `/vault/credentials/${encodeURIComponent(args.id)}`;
 			const result = await context.client.delete<unknown>(path);
@@ -319,10 +333,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"vault_generate_password",
-		"Generate a secure password using configurable character class options and length. Use this when creating or rotating login credentials in vault.",
-		vaultGeneratePasswordSchema.shape,
+		{
+			description: "Generate a secure password using configurable character class options and length. Use this when creating or rotating login credentials in vault.",
+			inputSchema: vaultGeneratePasswordSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post<unknown>(
 				"/vault/generate-password",
@@ -332,10 +348,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"vault_get_totp",
-		"Get the current TOTP code for a credential that has a TOTP secret configured. Use this for time-based one-time passcode login flows.",
-		vaultCredentialIdSchema.shape,
+		{
+			description: "Get the current TOTP code for a credential that has a TOTP secret configured. Use this for time-based one-time passcode login flows.",
+			inputSchema: vaultCredentialIdSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const path = `/vault/totp/${encodeURIComponent(args.id)}`;
 			const result = await context.client.get<unknown>(path);
@@ -351,10 +369,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 			.describe("Optional credential type filter."),
 	});
 
-	server.tool(
+	server.registerTool(
 		"vault_search",
-		"Search vault credentials by keyword across names and content. Use this for targeted credential lookup when you know part of the name, URL, or username.",
-		vaultSearchSchema.shape,
+		{
+			description: "Search vault credentials by keyword across names and content. Use this for targeted credential lookup when you know part of the name, URL, or username.",
+			inputSchema: vaultSearchSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
 			params.set("agentId", args.agentId);
@@ -371,10 +391,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		agentId: z.string().describe("Agent ID whose vault should be synced."),
 	});
 
-	server.tool(
+	server.registerTool(
 		"vault_sync",
-		"Force a sync of an agent's vault to ensure local and remote credential state are consistent. Use this after bulk credential changes or when stale data is suspected.",
-		vaultSyncSchema.shape,
+		{
+			description: "Force a sync of an agent's vault to ensure local and remote credential state are consistent. Use this after bulk credential changes or when stale data is suspected.",
+			inputSchema: vaultSyncSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post<unknown>("/vault/sync", {
 				agentId: args.agentId,
@@ -383,10 +405,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"vault_status",
-		"Get current vault status for an agent, including provisioning and readiness information. Use this to verify vault availability before secret operations.",
-		vaultStatusSchema.shape,
+		{
+			description: "Get current vault status for an agent, including provisioning and readiness information. Use this to verify vault availability before secret operations.",
+			inputSchema: vaultStatusSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
 			params.set("agentId", args.agentId);
@@ -416,10 +440,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 			.describe("Optional TTL in seconds for the share."),
 	});
 
-	server.tool(
+	server.registerTool(
 		"vault_share_credential",
-		"Share a vault credential with another agent at a specified permission level. Use this to grant cross-agent access to secrets for collaborative workflows.",
-		vaultShareSchema.shape,
+		{
+			description: "Share a vault credential with another agent at a specified permission level. Use this to grant cross-agent access to secrets for collaborative workflows.",
+			inputSchema: vaultShareSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post<unknown>("/vault/share", args);
 			return toolSuccess(result);
@@ -440,10 +466,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 			),
 	});
 
-	server.tool(
+	server.registerTool(
 		"vault_list_shares",
-		"List credential shares granted by or received by an agent. Use this to audit cross-agent secret access.",
-		vaultListSharesSchema.shape,
+		{
+			description: "List credential shares granted by or received by an agent. Use this to audit cross-agent secret access.",
+			inputSchema: vaultListSharesSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
 			if (args.agentId) params.set("agentId", args.agentId);
@@ -465,10 +493,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 			),
 	});
 
-	server.tool(
+	server.registerTool(
 		"vault_revoke_share",
-		"Revoke a previously granted credential share by share ID. Use this to remove cross-agent access when it is no longer needed.",
-		vaultRevokeShareSchema.shape,
+		{
+			description: "Revoke a previously granted credential share by share ID. Use this to remove cross-agent access when it is no longer needed.",
+			inputSchema: vaultRevokeShareSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post<unknown>(
 				"/vault/share/revoke",
@@ -503,10 +533,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 			.describe("Optional TTL in seconds (10–3600, default 60)."),
 	});
 
-	server.tool(
+	server.registerTool(
 		"vault_create_token",
-		"Create a short-lived ephemeral token for a credential. The vtk_ token can be used in commands for CLI/extension auto-fill without exposing the raw secret to the LLM.",
-		vaultCreateTokenSchema.shape,
+		{
+			description: "Create a short-lived ephemeral token for a credential. The vtk_ token can be used in commands for CLI/extension auto-fill without exposing the raw secret to the LLM.",
+			inputSchema: vaultCreateTokenSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post<unknown>("/vault/token", args);
 			return toolSuccess(result);
@@ -537,10 +569,12 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 			.describe("Credential ID whose tokens should be revoked."),
 	});
 
-	server.tool(
+	server.registerTool(
 		"vault_revoke_tokens",
-		"Revoke all active ephemeral tokens for a credential. Use this to invalidate outstanding vtk_ tokens after a security event or credential rotation.",
-		vaultRevokeTokensSchema.shape,
+		{
+			description: "Revoke all active ephemeral tokens for a credential. Use this to invalidate outstanding vtk_ tokens after a security event or credential rotation.",
+			inputSchema: vaultRevokeTokensSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post<unknown>(
 				"/vault/token/revoke",

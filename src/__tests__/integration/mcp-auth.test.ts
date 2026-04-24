@@ -12,11 +12,11 @@ const MCP_ACCEPT = "application/json, text/event-stream";
 function createTestServer(apiKey: string): McpServer {
 	const server = new McpServer({ name: "auth-integration-test", version: "1.0.0" }, { capabilities: { tools: {} } });
 
-	server.tool("whoami", "Returns the API key used for this session", {}, async () => ({
+	server.registerTool("whoami", { description: "Returns the API key used for this session", inputSchema: {} }, async () => ({
 		content: [{ type: "text", text: apiKey }],
 	}));
 
-	server.tool("add", "Adds two numbers", { a: z.number(), b: z.number() }, async ({ a, b }) => ({
+	server.registerTool("add", { description: "Adds two numbers", inputSchema: { a: z.number(), b: z.number() } }, async ({ a, b }) => ({
 		content: [{ type: "text", text: String(a + b) }],
 	}));
 

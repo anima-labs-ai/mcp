@@ -11,7 +11,7 @@ const MCP_ACCEPT = "application/json, text/event-stream";
 
 function createTestServer(): McpServer {
 	const server = new McpServer({ name: "auth-test", version: "1.0.0" }, { capabilities: { tools: {} } });
-	server.tool("ping", "Responds with pong", {}, async () => ({
+	server.registerTool("ping", { description: "Responds with pong", inputSchema: {} }, async () => ({
 		content: [{ type: "text", text: "pong" }],
 	}));
 	return server;

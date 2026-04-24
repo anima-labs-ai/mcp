@@ -80,30 +80,36 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 			.describe("Optional pagination cursor from a previous response."),
 	});
 
-	server.tool(
+	server.registerTool(
 		"webhook_create",
-		"Create a new webhook endpoint with subscribed event types so external systems can receive Anima events. Use this when integrating downstream processors or automations.",
-		webhookCreateInput.shape,
+		{
+			description: "Create a new webhook endpoint with subscribed event types so external systems can receive Anima events. Use this when integrating downstream processors or automations.",
+			inputSchema: webhookCreateInput.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post("/webhooks", args);
 			return toolSuccess(result);
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"webhook_get",
-		"Fetch full details for a specific webhook by ID, including URL, events, and status fields. Use this when validating an existing webhook configuration.",
-		webhookGetInput.shape,
+		{
+			description: "Fetch full details for a specific webhook by ID, including URL, events, and status fields. Use this when validating an existing webhook configuration.",
+			inputSchema: webhookGetInput.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get(`/webhooks/${args.id}`);
 			return toolSuccess(result);
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"webhook_update",
-		"Update an existing webhook's URL, subscribed events, enabled state, or description. Use this when endpoint destinations or subscription behavior changes.",
-		webhookUpdateInput.shape,
+		{
+			description: "Update an existing webhook's URL, subscribed events, enabled state, or description. Use this when endpoint destinations or subscription behavior changes.",
+			inputSchema: webhookUpdateInput.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const { id, enabled, ...rest } = args;
 			const payload = {
@@ -115,20 +121,24 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"webhook_delete",
-		"Delete a webhook endpoint by ID so it no longer receives event deliveries. Use this when retiring integrations or removing invalid destinations.",
-		webhookDeleteInput.shape,
+		{
+			description: "Delete a webhook endpoint by ID so it no longer receives event deliveries. Use this when retiring integrations or removing invalid destinations.",
+			inputSchema: webhookDeleteInput.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.delete(`/webhooks/${args.id}`);
 			return toolSuccess(result);
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"webhook_list",
-		"List webhooks with optional agent scope and cursor pagination. Use this to audit currently configured endpoints across your workspace.",
-		webhookListInput.shape,
+		{
+			description: "List webhooks with optional agent scope and cursor pagination. Use this to audit currently configured endpoints across your workspace.",
+			inputSchema: webhookListInput.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
 			if (args.agentId) params.set("agentId", args.agentId);
@@ -141,10 +151,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"webhook_test",
-		"Trigger a test event delivery for a webhook to verify endpoint reachability and signature handling. Use this before enabling production event flows.",
-		webhookTestInput.shape,
+		{
+			description: "Trigger a test event delivery for a webhook to verify endpoint reachability and signature handling. Use this before enabling production event flows.",
+			inputSchema: webhookTestInput.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post(`/webhooks/${args.id}/test`, {
 				event: "message.received",
@@ -153,10 +165,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"webhook_list_deliveries",
-		"List delivery attempts for a specific webhook, including retry and response details when available. Use this to troubleshoot failed or delayed webhook calls.",
-		webhookListDeliveriesInput.shape,
+		{
+			description: "List delivery attempts for a specific webhook, including retry and response details when available. Use this to troubleshoot failed or delayed webhook calls.",
+			inputSchema: webhookListDeliveriesInput.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
 			if (args.limit !== undefined) params.set("limit", String(args.limit));
@@ -173,10 +187,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		id: z.string().describe("Webhook ID to test and re-enable."),
 	});
 
-	server.tool(
+	server.registerTool(
 		"webhook_reenable",
-		"Test a disabled webhook endpoint and re-enable it if the test delivery succeeds. Use this after fixing a webhook endpoint that was auto-disabled due to consecutive failures.",
-		webhookReenableInput.shape,
+		{
+			description: "Test a disabled webhook endpoint and re-enable it if the test delivery succeeds. Use this after fixing a webhook endpoint that was auto-disabled due to consecutive failures.",
+			inputSchema: webhookReenableInput.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post(`/webhooks/${args.id}/reenable`, {});
 			return toolSuccess(result);
@@ -187,10 +203,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		id: z.string().describe("Webhook ID to get delivery statistics for."),
 	});
 
-	server.tool(
+	server.registerTool(
 		"webhook_stats",
-		"Get aggregate delivery statistics for a webhook, including total deliveries, success rate, and failure counts. Use this for monitoring webhook health.",
-		webhookStatsInput.shape,
+		{
+			description: "Get aggregate delivery statistics for a webhook, including total deliveries, success rate, and failure counts. Use this for monitoring webhook health.",
+			inputSchema: webhookStatsInput.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get(`/webhooks/${args.id}/stats`);
 			return toolSuccess(result);

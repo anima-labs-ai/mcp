@@ -31,9 +31,10 @@ const updateExtensionSettingsSchema = z.object({
 export function registerExtensionTools(options: ToolRegistrationOptions): void {
 	const { server } = options;
 
-	server.tool(
+	server.registerTool(
 		"setup_extension",
-		[
+		{
+			description: [
 			"Generate an exchange code for the Anima Vault browser extension and get a URL to connect it.",
 			"",
 			"This creates a one-time exchange code that the extension trades for a scoped API key",
@@ -44,7 +45,8 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 			"  Auth policy: session (default) | pre_approved | prompt_owner",
 			"  Token TTL:   15m | 1h | session (default, until browser closes)",
 		].join("\n"),
-		setupExtensionSchema.shape,
+			inputSchema: setupExtensionSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
 
@@ -82,10 +84,12 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"get_extension_settings",
-		"Get the current extension auth settings for the organization.",
-		z.object({}).shape,
+		{
+			description: "Get the current extension auth settings for the organization.",
+			inputSchema: z.object({}).shape,
+		},
 		withErrorHandling(async (_args, context) => {
 			requireMasterKeyGuard(context);
 
@@ -99,9 +103,10 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	server.tool(
+	server.registerTool(
 		"update_extension_settings",
-		[
+		{
+			description: [
 			"Update the extension auth settings for the organization.",
 			"",
 			"Auth policies:",
@@ -114,7 +119,8 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 			"  - 1h: 1 hour — covers most agent sessions",
 			"  - session: Until browser closes (default)",
 		].join("\n"),
-		updateExtensionSettingsSchema.shape,
+			inputSchema: updateExtensionSettingsSchema.shape,
+		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
 

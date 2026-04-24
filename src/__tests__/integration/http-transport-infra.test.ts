@@ -11,7 +11,7 @@ function createTestServer(): McpServer {
 	const server = new McpServer(SERVER_INFO, {
 		capabilities: { tools: {} },
 	});
-	server.tool("echo", "Echoes the input back", { message: z.string() }, async ({ message }) => ({
+	server.registerTool("echo", { description: "Echoes the input back", inputSchema: { message: z.string() } }, async ({ message }) => ({
 		content: [{ type: "text", text: `echo: ${message}` }],
 	}));
 	return server;

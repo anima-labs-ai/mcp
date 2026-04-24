@@ -10,10 +10,10 @@ function createTestServer(): McpServer {
 	const server = new McpServer(SERVER_INFO, {
 		capabilities: { tools: {} },
 	});
-	server.tool("echo", "Echoes the input back", { message: z.string() }, async ({ message }) => ({
+	server.registerTool("echo", { description: "Echoes the input back", inputSchema: { message: z.string() } }, async ({ message }) => ({
 		content: [{ type: "text", text: `echo: ${message}` }],
 	}));
-	server.tool("add", "Adds two numbers", { a: z.number(), b: z.number() }, async ({ a, b }) => ({
+	server.registerTool("add", { description: "Adds two numbers", inputSchema: { a: z.number(), b: z.number() } }, async ({ a, b }) => ({
 		content: [{ type: "text", text: String(a + b) }],
 	}));
 	return server;

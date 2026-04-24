@@ -18,14 +18,14 @@ function createTestServer(): McpServer {
 	const server = new McpServer(SERVER_INFO, {
 		capabilities: { tools: {} },
 	});
-	server.tool("slow-echo", "Slow echo for disconnect testing", { message: z.string(), delayMs: z.number() }, async ({ message, delayMs }) => {
+	server.registerTool("slow-echo", { description: "Slow echo for disconnect testing", inputSchema: { message: z.string(), delayMs: z.number() } }, async ({ message, delayMs }) => {
 		await new Promise((r) => setTimeout(r, delayMs));
 		return { content: [{ type: "text", text: `echo: ${message}` }] };
 	});
-	server.tool("echo", "Simple echo", { message: z.string() }, async ({ message }) => ({
+	server.registerTool("echo", { description: "Simple echo", inputSchema: { message: z.string() } }, async ({ message }) => ({
 		content: [{ type: "text", text: `echo: ${message}` }],
 	}));
-	server.tool("fail", "Always fails", {}, async () => {
+	server.registerTool("fail", { description: "Always fails", inputSchema: {} }, async () => {
 		throw new Error("intentional failure");
 	});
 	return server;

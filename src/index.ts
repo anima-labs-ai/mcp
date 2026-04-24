@@ -34,7 +34,11 @@ import { registerRegistryTools } from "./tools/registry/index.js";
 import { registerSecurityTools } from "./tools/security/index.js";
 import { registerUtilityTools } from "./tools/utility/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
-import { registerOAuthTools } from "./tools/vault/oauth.js";
+// NOTE: OAuth Apps / Connections were removed from the MCP tool surface on
+// 2026-04-25 — the credential-broker model handles third-party auth through
+// vault credentials + vtk_ tokens instead of exposing a separate OAuth
+// connection catalogue to the LLM. The HTTP endpoints for OAuth linking
+// remain available for the CLI / console.
 import { registerVoiceTools } from "./tools/voice/index.js";
 import { registerWalletTools } from "./tools/wallet/index.js";
 import { registerWebhookTools } from "./tools/webhook/index.js";
@@ -70,7 +74,6 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
 		a2a: registerA2aTools,
 		voice: registerVoiceTools,
 		extension: registerExtensionTools,
-		oauth: registerOAuthTools,
 	};
 
 /**

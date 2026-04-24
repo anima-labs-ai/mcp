@@ -280,23 +280,31 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 
 	server.tool(
 		"vault_create_credential",
-		"Create a new credential in an agent vault with login, card, identity, or secure note content. Use this to store new secrets for agent automation tasks.",
+		"Create a new credential in an agent vault with login, card, identity, or secure note content. Use this to store new secrets for agent automation tasks. The response is masked — callers that need the plaintext (e.g. to confirm a rotation) already have it in the request.",
 		vaultCreateCredentialSchema.shape,
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.post<unknown>("/vault/credentials", args);
-			return toolSuccess(result);
+			const result = await context.client.post<Record<string, unknown>>(
+				"/vault/credentials",
+				args,
+			);
+			// Mask the response even though the server now also masks: MCP
+			// tool outputs are surfaced to the LLM, and we don't want a
+			// plaintext secret to accidentally bypass masking if the server
+			// version drifts. Defence in depth for the credential-broker
+			// invariant: "LLMs never see plaintext through tools."
+			return toolSuccess(maskCredentialFields(result));
 		}, options.context),
 	);
 
 	server.tool(
 		"vault_update_credential",
-		"Update an existing vault credential by ID, including optional structured sections and metadata flags. Use this to rotate passwords or revise stored secret details.",
+		"Update an existing vault credential by ID, including optional structured sections and metadata flags. Use this to rotate passwords or revise stored secret details. The response is masked — the caller already has the plaintext it just sent.",
 		vaultUpdateCredentialSchema.shape,
 		withErrorHandling(async (args, context) => {
 			const { id, ...payload } = args;
 			const path = `/vault/credentials/${encodeURIComponent(id)}`;
-			const result = await context.client.put<unknown>(path, payload);
-			return toolSuccess(result);
+			const result = await context.client.put<Record<string, unknown>>(path, payload);
+			return toolSuccess(maskCredentialFields(result));
 		}, options.context),
 	);
 
@@ -505,26 +513,17 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	const vaultExchangeTokenSchema = z.object({
-		token: z
-			.string()
-			.describe(
-				"The vtk_ ephemeral token to exchange for credential data. Single-use.",
-			),
-	});
-
-	server.tool(
-		"vault_exchange_token",
-		"Exchange a vtk_ ephemeral token for the underlying credential data. Tokens are single-use and consumed on exchange. No auth header required.",
-		vaultExchangeTokenSchema.shape,
-		withErrorHandling(async (args, context) => {
-			const result = await context.client.post<unknown>(
-				"/vault/token/exchange",
-				args,
-			);
-			return toolSuccess(result);
-		}, options.context),
-	);
+	// DELIBERATELY NOT EXPOSED AS AN MCP TOOL: vault_exchange_token.
+	//
+	// The credential-broker invariant is that an LLM can MINT a vtk_ token
+	// (via vault_create_token) but must never exchange it for plaintext
+	// itself — exchange is the job of a non-LLM process (CLI injection,
+	// browser extension autofill, HTTP proxy). Exposing exchange as a tool
+	// would collapse the mint-and-exchange chain into a single LLM turn and
+	// defeat the entire credential-broker design.
+	//
+	// The HTTP endpoint POST /vault/token/exchange remains available for
+	// the CLI (`anima vault exec`) and the browser extension to consume.
 
 	const vaultRevokeTokensSchema = z.object({
 		agentId: z

@@ -51,6 +51,20 @@ function createHarness(): {
 				registeredTools.set(name, { description, schema, handler });
 			},
 		),
+		// New SDK API after the server.tool → server.registerTool migration.
+		registerTool: mock(
+			(
+				name: string,
+				config: { description: string; inputSchema?: unknown },
+				handler: RegisteredTool["handler"],
+			) => {
+				registeredTools.set(name, {
+					description: config.description,
+					schema: config.inputSchema,
+					handler,
+				});
+			},
+		),
 		resource: mock(() => undefined),
 	} as unknown as McpServer;
 

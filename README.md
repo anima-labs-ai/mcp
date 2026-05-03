@@ -345,6 +345,10 @@ With selective loading:
 | `invoice_auto_pay` | Auto-pay an invoice |
 | `invoice_reconcile` | Reconcile invoices |
 
+## Community
+
+Join the [Anima Discord](https://discord.gg/pY3GK59Z9E) to ask questions in `#mcp`, share what you're building in `#showcase`, and stay up to date with releases in `#announcements`.
+
 ## License
 
 MIT

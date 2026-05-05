@@ -36,11 +36,7 @@ import { registerSecurityTools } from "./tools/security/index.js";
 import { registerSpendRequestTools } from "./tools/spend-requests/index.js";
 import { registerUtilityTools } from "./tools/utility/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
-// NOTE: OAuth Apps / Connections were removed from the MCP tool surface on
-// 2026-04-25 — the credential-broker model handles third-party auth through
-// vault credentials + vtk_ tokens instead of exposing a separate OAuth
-// connection catalogue to the LLM. The HTTP endpoints for OAuth linking
-// remain available for the CLI / console.
+// OAuth Apps / Connections removed from MCP surface on 2026-04-25 (credential-broker handles third-party auth via vault + vtk_ tokens).
 import { registerVoiceTools } from "./tools/voice/index.js";
 import { registerWalletTools } from "./tools/wallet/index.js";
 import { registerWebhookTools } from "./tools/webhook/index.js";

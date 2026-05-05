@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/registry/main/schema.json",
   "name": "@anima-labs/mcp",
   "displayName": "Anima — AI Agent Identity Platform",
-  "description": "Give your AI agents real-world capabilities: email, virtual cards, phone numbers, credential vault, and more. 133+ tools for autonomous agent operations.",
+  "description": "Give your AI agents real-world capabilities: email, voice, phone, virtual cards, credential vault, addresses, spend-requests, machine payments, and more. 197 tools for autonomous agent operations.",
   "version": "0.1.0",
   "author": {
     "name": "Anima Labs",
@@ -23,13 +23,18 @@
     "description": "Get your API key at https://console.useanima.sh"
   },
   "categories": ["communication", "payments", "identity", "productivity"],
-  "tags": ["ai-agent", "email", "virtual-cards", "vault", "phone", "sms", "identity", "stripe"],
+  "tags": [
+    "ai-agent", "email", "voice", "virtual-cards", "vault", "phone", "sms",
+    "identity", "spend-requests", "machine-payments", "x402", "browser-checkout",
+    "agent-to-agent"
+  ],
   "tools": {
-    "count": 133,
+    "count": 197,
     "groups": [
-      "agent", "email", "message", "cards", "vault", "phone",
-      "webhook", "domain", "invoice", "funding", "security",
-      "organization", "browser-payments", "x402", "utility"
+      "a2a", "address", "agent", "browser-payments", "cards", "domain",
+      "email", "extension", "funding", "identity", "invoice", "message",
+      "mpp", "organization", "phone", "pod", "registry", "security",
+      "spend-requests", "utility", "vault", "voice", "wallet", "webhook", "x402"
     ]
   }
 }

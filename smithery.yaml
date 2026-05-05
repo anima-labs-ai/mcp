@@ -4,9 +4,9 @@
 name: "@anima-labs/mcp"
 display_name: "Anima — AI Agent Identity Platform"
 description: >
-  Give your AI agents real-world capabilities: email, virtual cards,
-  phone numbers, credential vault, addresses, and more. 133+ tools
-  for autonomous agent operations.
+  Give your AI agents real-world capabilities: email, voice, phone, virtual
+  cards, credential vault, addresses, spend-requests, machine payments,
+  browser checkout. 197 tools for autonomous agent operations.
 version: "0.1.0"
 license: "MIT"
 
@@ -31,12 +31,17 @@ categories:
 tags:
   - ai-agent
   - email-api
+  - voice
   - virtual-cards
   - credential-vault
   - phone-sms
   - agent-identity
   - mcp-server
-  - stripe-issuing
+  - spend-requests
+  - machine-payments
+  - x402
+  - browser-checkout
+  - agent-to-agent
 
 install:
   command: "npx"
@@ -90,6 +95,48 @@ tool_groups:
   - name: "x402"
     description: "HTTP 402 payment protocol"
     tools: ["fetch_x402"]
+  - name: "spend-requests"
+    description: "Human-in-the-loop spend approval (Wave 3 — email magic-link + WebAuthn step-up at $200)"
+    tools: ["spend_request_create", "spend_request_retrieve", "spend_request_request_approval", "spend_request_update", "spend_request_list"]
+  - name: "mpp"
+    description: "Machine Payments Protocol — HTTP 402 settlement with shared payment tokens"
+    tools: ["mpp_pay", "mpp_decode"]
+  - name: "voice"
+    description: "Inbound and outbound voice calls with transcription, scoring, and summaries"
+    tools: ["voice_create_call", "voice_get_call", "voice_list_calls", "voice_search_calls", "voice_get_transcript", "voice_get_recording", "voice_get_summary", "voice_get_score", "voice_list_voices", "voice_catalog", "voice_get_security_scan"]
+  - name: "address"
+    description: "Billing and shipping addresses with USPS validation"
+    tools: ["create_address", "list_addresses", "get_address", "update_address", "delete_address", "validate_address"]
+  - name: "wallet"
+    description: "Agent wallet operations (balance, transactions, x402 fetch)"
+    tools: ["get_wallet", "wallet_pay", "wallet_transactions", "wallet_x402_fetch", "create_wallet", "freeze_wallet", "unfreeze_wallet"]
+  - name: "registry"
+    description: "Agent discovery registry — DID resolution, agent cards, A2A submissions"
+    tools: ["register_agent", "lookup_agent", "search_registry", "discover_agent", "resolve_did", "get_agent_card", "submit_a2a_task", "get_a2a_task", "list_a2a_tasks", "cancel_a2a_task", "get_did", "rotate_keys", "verify_credential", "unlist_agent", "update_registry"]
+  - name: "a2a"
+    description: "Agent-to-agent direct messaging"
+    tools: ["message_agent", "list_agents"]
+  - name: "identity"
+    description: "Identity verification and credentials"
+    tools: ["list_credentials"]
+  - name: "pod"
+    description: "Compute pod management"
+    tools: ["create_pod", "get_pod", "list_pods", "update_pod", "delete_pod", "pod_usage"]
+  - name: "extension"
+    description: "Anima Chrome extension integration"
+    tools: ["browser_detect_checkout", "browser_fill_card", "browser_fill_address", "browser_pay_checkout"]
+  - name: "invoice"
+    description: "Invoice processing with auto-pay and reconciliation"
+    tools: ["invoice_process", "invoice_auto_pay", "invoice_reconcile"]
+  - name: "funding"
+    description: "Card funding sources and holds"
+    tools: ["funding_create_source", "funding_list_sources", "funding_create_hold", "funding_capture_hold", "funding_release_hold", "funding_list_holds", "funding_get_hold"]
+  - name: "organization"
+    description: "Tenant / organization management"
+    tools: ["org_create", "org_get", "org_update", "org_delete", "org_list", "org_rotate_key"]
+  - name: "utility"
+    description: "Health checks, conversation search, follow-ups, task management"
+    tools: ["whoami", "check_health", "check_messages", "check_followups", "wait_for_email", "call_agent", "update_metadata", "manage_pending", "manage_spam", "conversation_search", "check_tasks", "kill_switch", "send_test_email", "setup_email_domain"]
 
 features:
   selective_loading: true

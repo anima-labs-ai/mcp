@@ -1,10 +1,27 @@
 {
 	"name": "Anima MCP Server",
-	"description": "77 tools for managing AI agent email and phone identity",
-	"version": "0.1.0",
+	"description": "197 tools for AI agent identity — email, phone, voice, virtual cards, vault, addresses, spend-requests, machine payments, browser checkout",
+	"version": "0.2.1",
 	"author": "Anima",
-	"tools": 77,
-	"domains": ["email", "phone", "sms", "messaging", "identity", "webhooks", "security"],
+	"tools": 197,
+	"domains": [
+		"identity",
+		"email",
+		"phone",
+		"sms",
+		"voice",
+		"messaging",
+		"cards",
+		"spend-requests",
+		"vault",
+		"addresses",
+		"webhooks",
+		"security",
+		"browser-payments",
+		"x402",
+		"mpp",
+		"agent-to-agent"
+	],
 	"transport": ["stdio", "http"],
 	"install": "npx @anima-labs/mcp --api-key=mk_xxx"
 }

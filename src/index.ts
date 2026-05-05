@@ -27,11 +27,13 @@ import { registerFundingTools } from "./tools/funding/index.js";
 import { registerIdentityTools } from "./tools/identity/index.js";
 import { registerInvoiceTools } from "./tools/invoice/index.js";
 import { registerMessageTools } from "./tools/message/index.js";
+import { registerMppTools } from "./tools/mpp/index.js";
 import { registerOrganizationTools } from "./tools/organization/index.js";
 import { registerPhoneTools } from "./tools/phone/index.js";
 import { registerPodTools } from "./tools/pod/index.js";
 import { registerRegistryTools } from "./tools/registry/index.js";
 import { registerSecurityTools } from "./tools/security/index.js";
+import { registerSpendRequestTools } from "./tools/spend-requests/index.js";
 import { registerUtilityTools } from "./tools/utility/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
 // NOTE: OAuth Apps / Connections were removed from the MCP tool surface on
@@ -74,6 +76,9 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
 		a2a: registerA2aTools,
 		voice: registerVoiceTools,
 		extension: registerExtensionTools,
+		// Wave 3 — agentic-commerce flows
+		"spend-requests": registerSpendRequestTools,
+		mpp: registerMppTools,
 	};
 
 /**

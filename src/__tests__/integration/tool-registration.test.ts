@@ -187,6 +187,9 @@ const expectedDomainTools = {
 		"webhook_list_deliveries",
 		"webhook_reenable",
 		"webhook_stats",
+		"webhook_event_types",
+		"webhook_list_dead_letters",
+		"webhook_replay_delivery",
 	],
 	security: [
 		"security_approve",
@@ -274,9 +277,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(9);
 	});
 
-	test("webhook registers 9 tools", () => {
+	test("webhook registers 12 tools", () => {
 		registerWebhookTools(harness.options);
-		expect(harness.registeredTools.size).toBe(9);
+		expect(harness.registeredTools.size).toBe(12);
 	});
 
 	test("security registers 5 tools", () => {
@@ -364,7 +367,7 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 93 tools", () => {
+	test("all domains combined register exactly 97 tools", () => {
 		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
@@ -376,7 +379,7 @@ describe("tool registration integration", () => {
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(94);
+		expect(harness.registeredTools.size).toBe(97);
 	});
 
 	test("all registered tool names follow snake_case", () => {

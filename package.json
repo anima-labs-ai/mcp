@@ -2,7 +2,7 @@
 	"name": "@anima-labs/mcp",
 	"version": "0.2.1",
 	"type": "module",
-	"description": "Anima MCP server — 77 tools for AI agent communication",
+	"description": "Anima MCP server — 153 tools for AI agent communication",
 	"license": "MIT",
 	"repository": {
 		"type": "git",

@@ -1,6 +1,6 @@
 # @anima-labs/mcp
 
-MCP (Model Context Protocol) server for Anima -- 133 tools across 15 categories for AI agent communication, identity, payments, and security.
+MCP (Model Context Protocol) server for Anima -- 89 tools across 11 categories for AI agent communication, identity, and security.
 
 ## Installation
 
@@ -20,7 +20,7 @@ npx @anima-labs/mcp
 npx @anima-labs/mcp --http --port=8014
 
 # Selective tool loading (only register specific groups)
-npx @anima-labs/mcp --tools=email,cards,vault
+npx @anima-labs/mcp --tools=email,vault,phone
 ```
 
 ## Environment Variables
@@ -36,7 +36,7 @@ npx @anima-labs/mcp --tools=email,cards,vault
 Use the `--tools` flag to load only the tool groups you need. This reduces the tool count exposed to the LLM, which can improve tool selection accuracy and reduce token usage.
 
 ```bash
-npx @anima-labs/mcp --tools=email,cards,vault
+npx @anima-labs/mcp --tools=email,vault,phone
 ```
 
 Available tool groups:
@@ -49,15 +49,11 @@ Available tool groups:
 | `domain` | Domain setup, DNS, verification, deliverability |
 | `phone` | Phone number provisioning, SMS, status |
 | `vault` | Credential vault management and TOTP |
-| `cards` | Virtual card issuing, policies, approvals |
-| `funding` | Funding sources and holds |
 | `message` | Unified messaging (email + SMS) |
 | `webhook` | Webhook management and delivery logs |
 | `security` | Security events, policies, content scanning |
 | `utility` | Health checks, agent messaging, metadata |
-| `browser` | Browser payment detection and checkout |
 | `x402` | HTTP 402 payment protocol |
-| `invoice` | Invoice processing and reconciliation |
 
 If `--tools` is not provided, all groups are registered (current default behavior).
 
@@ -96,7 +92,7 @@ With selective loading:
   "mcpServers": {
     "anima": {
       "command": "npx",
-      "args": ["-y", "@anima-labs/mcp", "--tools=email,cards,vault"],
+      "args": ["-y", "@anima-labs/mcp", "--tools=email,vault,phone"],
       "env": { "ANIMA_API_KEY": "ak_..." }
     }
   }
@@ -227,46 +223,6 @@ With selective loading:
 | `vault_get_totp` | Get current TOTP code |
 | `vault_status` | Check vault provisioning status |
 
-### Cards (23 tools)
-
-| Tool | Description |
-|------|-------------|
-| `create_card` | Create a virtual card with spend limits |
-| `list_cards` | List cards with optional status filter |
-| `get_card` | Get card details by ID |
-| `update_card` | Update card label or spending limits |
-| `delete_card` | Delete a card |
-| `freeze_card` | Freeze a card to block transactions |
-| `unfreeze_card` | Unfreeze a frozen card |
-| `get_transactions` | List card transactions |
-| `get_transaction` | Get single transaction details |
-| `get_spending_summary` | Get normalized spending summary |
-| `create_spending_policy` | Create a spending policy |
-| `list_spending_policies` | List spending policies for a card |
-| `update_spending_policy` | Update a spending policy |
-| `delete_spending_policy` | Delete a spending policy |
-| `kill_switch` | Emergency freeze all cards in scope |
-| `create_cardholder` | Create a cardholder profile |
-| `get_cardholder` | Get cardholder by ID |
-| `list_cardholders` | List cardholders |
-| `update_cardholder` | Update cardholder details |
-| `delete_cardholder` | Delete a cardholder |
-| `list_approvals` | List card authorization approvals |
-| `approve_authorization` | Approve a pending authorization |
-| `decline_authorization` | Decline a pending authorization |
-
-### Funding (7 tools)
-
-| Tool | Description |
-|------|-------------|
-| `funding_create_source` | Create a funding source |
-| `funding_list_sources` | List funding sources |
-| `funding_create_hold` | Create a funding hold |
-| `funding_capture_hold` | Capture a funding hold |
-| `funding_release_hold` | Release a funding hold |
-| `funding_get_hold` | Get hold details |
-| `funding_list_holds` | List funding holds |
-
 ### Message (9 tools)
 
 | Tool | Description |
@@ -322,28 +278,11 @@ With selective loading:
 | `manage_spam` | Manage spam settings |
 | `check_tasks` | Check task status |
 
-### Browser Payments (4 tools)
-
-| Tool | Description |
-|------|-------------|
-| `browser_detect_checkout` | Detect checkout page elements |
-| `browser_pay_checkout` | Pay a checkout |
-| `browser_fill_card` | Fill card details on page |
-| `browser_fill_address` | Fill address on page |
-
 ### x402 (1 tool)
 
 | Tool | Description |
 |------|-------------|
 | `x402_fetch` | Fetch a resource using HTTP 402 payment protocol |
-
-### Invoice (3 tools)
-
-| Tool | Description |
-|------|-------------|
-| `invoice_process` | Process an invoice |
-| `invoice_auto_pay` | Auto-pay an invoice |
-| `invoice_reconcile` | Reconcile invoices |
 
 ## Community
 

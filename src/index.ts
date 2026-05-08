@@ -18,22 +18,16 @@ import type { ToolRegistrationOptions } from "./tool-helpers.js";
 import { registerA2aTools } from "./tools/a2a/index.js";
 import { registerAddressTools } from "./tools/address/index.js";
 import { registerAgentTools } from "./tools/agent/index.js";
-import { registerBrowserPaymentsTools } from "./tools/browser-payments/index.js";
-import { registerCardTools } from "./tools/cards/index.js";
 import { registerDomainTools } from "./tools/domain/index.js";
 import { registerEmailTools } from "./tools/email/index.js";
 import { registerExtensionTools } from "./tools/extension/index.js";
-import { registerFundingTools } from "./tools/funding/index.js";
 import { registerIdentityTools } from "./tools/identity/index.js";
-import { registerInvoiceTools } from "./tools/invoice/index.js";
 import { registerMessageTools } from "./tools/message/index.js";
-import { registerMppTools } from "./tools/mpp/index.js";
 import { registerOrganizationTools } from "./tools/organization/index.js";
 import { registerPhoneTools } from "./tools/phone/index.js";
 import { registerPodTools } from "./tools/pod/index.js";
 import { registerRegistryTools } from "./tools/registry/index.js";
 import { registerSecurityTools } from "./tools/security/index.js";
-import { registerSpendRequestTools } from "./tools/spend-requests/index.js";
 import { registerUtilityTools } from "./tools/utility/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
 // OAuth Apps / Connections removed from MCP surface on 2026-04-25 (credential-broker handles third-party auth via vault + vtk_ tokens).
@@ -60,21 +54,14 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
 		registry: registerRegistryTools,
 		vault: registerVaultTools,
 		wallet: registerWalletTools,
-		cards: registerCardTools,
-		funding: registerFundingTools,
 		message: registerMessageTools,
 		webhook: registerWebhookTools,
 		security: registerSecurityTools,
 		utility: registerUtilityTools,
-		browser: registerBrowserPaymentsTools,
 		x402: registerX402Tools,
-		invoice: registerInvoiceTools,
 		a2a: registerA2aTools,
 		voice: registerVoiceTools,
 		extension: registerExtensionTools,
-		// Wave 3 — agentic-commerce flows
-		"spend-requests": registerSpendRequestTools,
-		mpp: registerMppTools,
 	};
 
 /**

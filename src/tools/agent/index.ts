@@ -52,6 +52,12 @@ function registerAgentCreateTool(options: ToolRegistrationOptions): void {
 		{
 			description: "Create a new agent with optional metadata and return the created record. Use this when provisioning a new sending identity or automation actor.",
 			inputSchema: agentCreateInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post("/agents", args);
@@ -68,6 +74,12 @@ function registerAgentGetTool(options: ToolRegistrationOptions): void {
 		{
 			description: "Fetch one agent by ID. Use this to inspect current settings, metadata, and status for a single agent.",
 			inputSchema: agentGetInput.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get(`/agents/${args.id}`);
@@ -84,6 +96,12 @@ function registerAgentListTool(options: ToolRegistrationOptions): void {
 		{
 			description: "List agents with optional cursor pagination. Use this to discover agents available in the current account context.",
 			inputSchema: agentListInput.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
@@ -104,6 +122,12 @@ function registerAgentUpdateTool(options: ToolRegistrationOptions): void {
 		{
 			description: "Update an agent's name or metadata by ID. Use this when an agent needs renaming or profile metadata changes.",
 			inputSchema: agentUpdateInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const { id, ...body } = args;
@@ -121,6 +145,12 @@ function registerAgentDeleteTool(options: ToolRegistrationOptions): void {
 		{
 			description: "Delete an agent by ID. Use this to remove deprecated or compromised agents that should no longer send messages.",
 			inputSchema: agentDeleteInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: true,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.delete(`/agents/${args.id}`);
@@ -135,8 +165,14 @@ function registerAgentRotateKeyTool(options: ToolRegistrationOptions): void {
 	server.registerTool(
 		"agent_rotate_key",
 		{
-			description: "Rotate an agent API key and return the new key material. Use this when rotating credentials for security hygiene or after suspected exposure.",
+			description: "Rotate an agent API key and return the new key material. Use this when rotating credentials for security hygiene or after suspected exposure. Invalidates the previous key.",
 			inputSchema: agentRotateKeyInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: true,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post(`/agents/${args.id}/rotate-key`);

@@ -35,6 +35,12 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 			language: z.string().optional()
 				.describe("Filter by language code (e.g. 'en-US', 'fr-FR')."),
 		},
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
@@ -63,6 +69,12 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 			fromNumber: z.string().optional()
 				.describe("Source number to call from (defaults to agent's primary number)."),
 		},
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const body: Record<string, unknown> = { to: args.to };
@@ -92,6 +104,12 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 			offset: z.number().int().nonnegative().optional()
 				.describe("Offset for pagination."),
 		},
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
@@ -116,6 +134,12 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 			callId: z.string()
 				.describe("The call ID to retrieve."),
 		},
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(`/voice/calls/${args.callId}`);
@@ -133,6 +157,12 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 			callId: z.string()
 				.describe("The call ID to get the transcript for."),
 		},
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(`/voice/calls/${args.callId}/transcript`);
@@ -150,6 +180,12 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 			callId: z.string()
 				.describe("The call ID to get the recording for."),
 		},
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(`/voice/calls/${args.callId}/recording`);
@@ -167,6 +203,12 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 			callId: z.string()
 				.describe("The call ID to get the summary for."),
 		},
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(`/voice/calls/${args.callId}/summary`);
@@ -184,6 +226,12 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 			callId: z.string()
 				.describe("The call ID to get the score for."),
 		},
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(`/voice/calls/${args.callId}/score`);
@@ -211,6 +259,12 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 			threshold: z.number().min(0).max(1).optional()
 				.describe("Similarity threshold 0-1 (default: 0.7). Lower = more results."),
 		},
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const body: Record<string, unknown> = { query: args.query };
@@ -234,6 +288,12 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 			callId: z.string()
 				.describe("The call ID to get security scan results for."),
 		},
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(`/voice/calls/${args.callId}/security`);

@@ -127,6 +127,12 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Search available phone numbers for provisioning by geography or digit pattern. Use this to find suitable numbers before provisioning.",
 			inputSchema: phoneSearchSchema.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
@@ -148,8 +154,14 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 	server.registerTool(
 		"phone_provision",
 		{
-			description: "Provision a selected phone number for the agent and assign optional capabilities. Use this after choosing a number from phone_search.",
+			description: "Provision a selected phone number for the agent and assign optional capabilities. Use this after choosing a number from phone_search. Note: provisioning a number costs money on the underlying carrier; do not call speculatively.",
 			inputSchema: phoneProvisionSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -165,8 +177,14 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 	server.registerTool(
 		"phone_release",
 		{
-			description: "Release a previously provisioned phone number so it is no longer assigned. Use this when cleaning up unused or temporary numbers.",
+			description: "Release a previously provisioned phone number so it is no longer assigned. Use this when cleaning up unused or temporary numbers. Released numbers go back to the carrier pool and cannot be recovered.",
 			inputSchema: phoneReleaseSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: true,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -186,6 +204,12 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List all phone numbers assigned to a specific agent. Use this to review active inventory and assigned capabilities.",
 			inputSchema: phoneListSchema.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams({ agentId: args.agentId });
@@ -200,6 +224,12 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Send an SMS or MMS message to a destination phone number. Use this for outbound notifications or conversational messaging.",
 			inputSchema: phoneSendSmsSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const body: Record<string, unknown> = {
@@ -232,13 +262,25 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 			.describe("Filter by language code or prefix (e.g. 'en', 'en-US', 'fr-FR')."),
 	});
 
+	// 2026-05-13: voice_list_voices is a duplicate of voice_catalog (voice/index.ts)
+	// — same params, same endpoint /voice/catalog. Marked deprecated here.
+	// Same pattern as mcp-server PR #17. Remove on next major catalog change.
 	server.registerTool(
 		"voice_list_voices",
 		{
-			description: "List available voices for AI agent phone calls. Filter by tier (basic/premium), gender, or language. Use this to find the right voice for an agent's personality.",
+			description: "[DEPRECATED — use `voice_catalog`] List available voices for AI agent phone calls. Filter by tier (basic/premium), gender, or language. This alias is kept for backward compatibility and will be removed in a future release.",
 			inputSchema: voiceListSchema.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
+			console.warn(
+				`[deprecated-tool] alias "voice_list_voices" was invoked — migrate callers to "voice_catalog". The alias will be removed in a future release.`,
+			);
 			const params = new URLSearchParams();
 			if (args.tier) params.set("tier", args.tier);
 			if (args.gender) params.set("gender", args.gender);
@@ -263,6 +305,12 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get a status-oriented view of provisioned numbers including capability flags. Use this to verify readiness and operational state for messaging workflows.",
 			inputSchema: phoneStatusSchema.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams({ agentId: args.agentId });

@@ -26,6 +26,12 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Add a custom sending domain to the workspace so it can be configured for email traffic. Use this before DNS setup and verification.",
 			inputSchema: domainAddSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -39,6 +45,12 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Trigger a verification check for a domain after DNS records are configured. Use this to re-run DNS validation and update verification status.",
 			inputSchema: domainIdSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -53,6 +65,12 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Fetch full details for a single domain, including verification and configuration state. Use this to inspect current domain health.",
 			inputSchema: domainIdSchema.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const path = `/domains/${encodeURIComponent(args.id)}`;
@@ -66,6 +84,12 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List all domains connected to the current workspace. Use this to audit configured sender domains and choose one for follow-up actions.",
 			inputSchema: emptySchema.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (_args, context) => {
 			const result = await context.client.get<unknown>("/domains");
@@ -78,6 +102,12 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Delete a domain from the workspace when it is no longer needed. Use this to remove old or incorrect domain configurations.",
 			inputSchema: domainIdSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: true,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -92,6 +122,12 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get the exact DNS records required to complete domain onboarding. Use this to configure SPF, DKIM, MX, or verification entries at your DNS provider.",
 			inputSchema: domainIdSchema.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const path = `/domains/${encodeURIComponent(args.id)}/dns-records`;
@@ -117,6 +153,12 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Update configuration for a domain, such as catch-all behavior or auto-verify settings. Use this to adjust domain behavior after initial setup.",
 			inputSchema: domainUpdateSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const { id, ...payload } = args;
@@ -131,6 +173,12 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Check domain deliverability diagnostics and readiness for outbound email. Use this to troubleshoot sending reputation or setup issues before campaigns.",
 			inputSchema: domainIdSchema.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const path = `/domains/${encodeURIComponent(args.id)}/deliverability`;
@@ -144,6 +192,12 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get the full DNS zone file for a domain. Use this for complete DNS export or to verify all records are correctly configured.",
 			inputSchema: domainIdSchema.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const path = `/domains/${encodeURIComponent(args.id)}/zone-file`;

@@ -93,6 +93,12 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Create a new wallet for an agent. Use this to provision a payment wallet for agent-to-agent transactions.",
 			inputSchema: createWalletSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -107,6 +113,12 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get wallet details for an agent including balance. Use this to check an agent's wallet status and balance.",
 			inputSchema: agentIdSchema.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(`/agents/${encodeURIComponent(args.agentId)}/wallet`);
@@ -117,8 +129,14 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 	server.registerTool(
 		"wallet_pay",
 		{
-			description: "Send a payment from an agent's wallet. Use this to transfer funds to another agent or address.",
+			description: "Send a payment from an agent's wallet. Use this to transfer funds to another agent or address. Moves real money — caller must confirm intent.",
 			inputSchema: walletPaySchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: true,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -131,8 +149,14 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 	server.registerTool(
 		"wallet_x402_fetch",
 		{
-			description: "Fetch a URL with automatic x402 payment negotiation via the agent's wallet API. Use this to access paid APIs and content.",
+			description: "Fetch a URL with automatic x402 payment negotiation via the agent's wallet API. Use this to access paid APIs and content. Settles real micropayments — cap via `maxPaymentAmount`.",
 			inputSchema: x402FetchSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -147,6 +171,12 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List wallet transactions for an agent. Use this to review payment history.",
 			inputSchema: walletTransactionsSchema.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
@@ -163,6 +193,12 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Freeze an agent's wallet to prevent transactions. Use this to temporarily disable payments.",
 			inputSchema: agentIdSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -176,6 +212,12 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Unfreeze an agent's wallet to re-enable transactions. Use this to restore payment capability.",
 			inputSchema: agentIdSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);

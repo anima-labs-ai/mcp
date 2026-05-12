@@ -120,6 +120,12 @@ export function registerSecurityTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Approve or reject a message that is waiting in pending-review state. Use this to unblock compliant outbound content or explicitly reject risky messages.",
 			inputSchema: securityApproveInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -140,6 +146,12 @@ export function registerSecurityTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List security events for an organization with optional agent and event-type filters. Use this for incident triage, compliance review, and audit timelines.",
 			inputSchema: securityListEventsInput.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
@@ -160,6 +172,12 @@ export function registerSecurityTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Fetch the active security policy for an agent, including scan level and domain constraints. Use this before changing enforcement behavior or diagnosing blocked messages.",
 			inputSchema: securityGetPolicyInput.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get(
@@ -174,6 +192,12 @@ export function registerSecurityTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Update an agent security policy to tune scanning strictness, domain allow-lists, and blocking patterns. Use this to harden or relax outbound message controls.",
 			inputSchema: securityUpdatePolicyInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -196,6 +220,12 @@ export function registerSecurityTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Dry-run scan message content for likely PII or injection issues without sending any outbound message. Use this as a preflight safety check before calling message send tools.",
 			inputSchema: securityScanContentInput.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const org = await context.client.get<Record<string, unknown>>("/orgs/me");

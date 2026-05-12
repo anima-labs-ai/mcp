@@ -85,6 +85,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Create a new webhook endpoint with subscribed event types so external systems can receive Anima events. Use this when integrating downstream processors or automations.",
 			inputSchema: webhookCreateInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post("/webhooks", args);
@@ -97,6 +103,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Fetch full details for a specific webhook by ID, including URL, events, and status fields. Use this when validating an existing webhook configuration.",
 			inputSchema: webhookGetInput.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get(`/webhooks/${args.id}`);
@@ -109,6 +121,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Update an existing webhook's URL, subscribed events, enabled state, or description. Use this when endpoint destinations or subscription behavior changes.",
 			inputSchema: webhookUpdateInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const { id, enabled, ...rest } = args;
@@ -126,6 +144,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Delete a webhook endpoint by ID so it no longer receives event deliveries. Use this when retiring integrations or removing invalid destinations.",
 			inputSchema: webhookDeleteInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: true,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.delete(`/webhooks/${args.id}`);
@@ -138,6 +162,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List webhooks with optional agent scope and cursor pagination. Use this to audit currently configured endpoints across your workspace.",
 			inputSchema: webhookListInput.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
@@ -156,6 +186,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Trigger a test event delivery for a webhook to verify endpoint reachability and signature handling. Use this before enabling production event flows.",
 			inputSchema: webhookTestInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post(`/webhooks/${args.id}/test`, {
@@ -170,6 +206,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List delivery attempts for a specific webhook, including retry and response details when available. Use this to troubleshoot failed or delayed webhook calls.",
 			inputSchema: webhookListDeliveriesInput.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
@@ -192,6 +234,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Test a disabled webhook endpoint and re-enable it if the test delivery succeeds. Use this after fixing a webhook endpoint that was auto-disabled due to consecutive failures.",
 			inputSchema: webhookReenableInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post(`/webhooks/${args.id}/reenable`, {});
@@ -208,6 +256,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get aggregate delivery statistics for a webhook, including total deliveries, success rate, and failure counts. Use this for monitoring webhook health.",
 			inputSchema: webhookStatsInput.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get(`/webhooks/${args.id}/stats`);
@@ -246,6 +300,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List dead-lettered deliveries for a webhook (deliveries that exhausted all retries). Filterable by event type and date range. Use this to diagnose which events were silently dropped before invoking webhook_replay_delivery.",
 			inputSchema: webhookListDeadLettersInput.shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
@@ -271,6 +331,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Re-enqueue a dead-lettered webhook delivery for another delivery attempt. Resets attempts to 0 and clears deadLetteredAt. Use this after the downstream endpoint has been fixed.",
 			inputSchema: webhookReplayDeliveryInput.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post(
@@ -286,6 +352,12 @@ export function registerWebhookTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List all known webhook event type strings. Use this when configuring a new webhook to see exactly which events you can subscribe to. Webhooks may also subscribe to glob patterns (e.g. 'message.*' or '*') that match these names.",
 			inputSchema: {},
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (_args, context) => {
 			const result = await context.client.get("/webhooks/event-types");

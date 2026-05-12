@@ -26,8 +26,14 @@ export function registerX402Tools(
   server.registerTool(
     "x402_fetch",
     {
-      description: "Fetch an x402-protected resource using challenge-response settlement flow.",
+      description: "Fetch an x402-protected resource using challenge-response settlement flow. Settles a real on-chain micropayment when not in sandbox mode — caps via budget_limit_cents.",
       inputSchema: x402FetchSchema.shape,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
     },
     withErrorHandling(async (args) => {
       const budgetAtomic =

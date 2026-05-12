@@ -46,6 +46,12 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 			"  Token TTL:   15m | 1h | session (default, until browser closes)",
 		].join("\n"),
 			inputSchema: setupExtensionSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: false,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
@@ -89,6 +95,12 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get the current extension auth settings for the organization.",
 			inputSchema: z.object({}).shape,
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (_args, context) => {
 			requireMasterKeyGuard(context);
@@ -120,6 +132,12 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 			"  - session: Until browser closes (default)",
 		].join("\n"),
 			inputSchema: updateExtensionSettingsSchema.shape,
+			annotations: {
+				readOnlyHint: false,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);

@@ -60,8 +60,10 @@ export {
 // Tool helpers
 export {
 	type DomainRegistrar,
+	registerToolWithAliases,
 	requireMasterKeyGuard,
 	requiresMasterKey,
+	type ToolAnnotations,
 	type ToolContext,
 	type ToolRegistrationOptions,
 	toolError,

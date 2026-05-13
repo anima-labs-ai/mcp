@@ -94,7 +94,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
-			const result = await context.client.post<unknown>("/pods", args);
+			const result = await context.client.post<unknown>("/v1/pods", args);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -116,7 +116,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 			const params = new URLSearchParams();
 			if (args.agentId) params.set("agentId", args.agentId);
 			const qs = params.toString();
-			const path = `/pods${qs ? `?${qs}` : ""}`;
+			const path = `/v1/pods${qs ? `?${qs}` : ""}`;
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -136,7 +136,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.get<unknown>(`/pods/${encodeURIComponent(args.id)}`);
+			const result = await context.client.get<unknown>(`/v1/pods/${encodeURIComponent(args.id)}`);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -157,7 +157,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
 			const { id, ...body } = args;
-			const result = await context.client.put<unknown>(`/pods/${encodeURIComponent(id)}`, body);
+			const result = await context.client.put<unknown>(`/v1/pods/${encodeURIComponent(id)}`, body);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -177,7 +177,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
-			const result = await context.client.delete<unknown>(`/pods/${encodeURIComponent(args.id)}`);
+			const result = await context.client.delete<unknown>(`/v1/pods/${encodeURIComponent(args.id)}`);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -196,7 +196,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.get<unknown>(`/pods/${encodeURIComponent(args.id)}/usage`);
+			const result = await context.client.get<unknown>(`/v1/pods/${encodeURIComponent(args.id)}/usage`);
 			return toolSuccess(result);
 		}, options.context),
 	);

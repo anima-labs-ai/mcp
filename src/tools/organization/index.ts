@@ -66,7 +66,7 @@ function registerOrgCreateTool(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
-			const result = await context.client.post("/orgs", args, {
+			const result = await context.client.post("/v1/orgs", args, {
 				useMasterKey: true,
 			});
 			return toolSuccess(result);
@@ -91,7 +91,7 @@ function registerOrgGetTool(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.get(`/orgs/${args.id}`);
+			const result = await context.client.get(`/v1/orgs/${args.id}`);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -115,7 +115,7 @@ function registerOrgUpdateTool(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const { id, ...body } = args;
-			const result = await context.client.patch(`/orgs/${id}`, body);
+			const result = await context.client.patch(`/v1/orgs/${id}`, body);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -139,7 +139,7 @@ function registerOrgDeleteTool(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
-			const result = await context.client.delete(`/orgs/${args.id}`, {
+			const result = await context.client.delete(`/v1/orgs/${args.id}`, {
 				useMasterKey: true,
 			});
 			return toolSuccess(result);
@@ -165,7 +165,7 @@ function registerOrgRotateKeyTool(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
-			const result = await context.client.post(`/orgs/${args.id}/rotate-key`, undefined, {
+			const result = await context.client.post(`/v1/orgs/${args.id}/rotate-key`, undefined, {
 				useMasterKey: true,
 			});
 			return toolSuccess(result);
@@ -194,7 +194,7 @@ function registerOrgListTool(options: ToolRegistrationOptions): void {
 			const params = new URLSearchParams();
 			if (args.cursor) params.set("cursor", args.cursor);
 			if (args.limit) params.set("limit", String(args.limit));
-			const path = params.toString() ? `/orgs?${params.toString()}` : "/orgs";
+			const path = params.toString() ? `/v1/orgs?${params.toString()}` : "/v1/orgs";
 			const result = await context.client.get(path, { useMasterKey: true });
 			return toolSuccess(result);
 		}, options.context),

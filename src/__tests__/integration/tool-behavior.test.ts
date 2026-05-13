@@ -134,7 +134,7 @@ describe("tool behavior integration", () => {
 
 		expect(result.content[0]?.type).toBe("text");
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/orgs",
+			"/v1/orgs",
 			expect.objectContaining({ name: "Test Org" }),
 			{ useMasterKey: true },
 		);
@@ -143,27 +143,27 @@ describe("tool behavior integration", () => {
 	test("org_get calls GET /orgs/{id}", async () => {
 		const handler = getTool(harness.registeredTools, "org_get");
 		await handler({ id: "org_1" });
-		expect(harness.client.get).toHaveBeenCalledWith("/orgs/org_1");
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/orgs/org_1");
 	});
 
 	test("agent_list calls GET /agents with query params", async () => {
 		const handler = getTool(harness.registeredTools, "agent_list");
 		await handler({ cursor: "abc", limit: 10 });
-		expect(harness.client.get).toHaveBeenCalledWith("/agents?cursor=abc&limit=10");
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/agents?cursor=abc&limit=10");
 	});
 
 	test("email_send calls POST /email/send", async () => {
 		const handler = getTool(harness.registeredTools, "email_send");
 		await handler({ to: "a@example.com", subject: "Hello", body: "Body" });
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/email/send",
+			"/v1/email/send",
 			expect.objectContaining({ to: "a@example.com", subject: "Hello", body: "Body" }),
 		);
 	});
 
 	test("email_reply fetches original email then sends reply", async () => {
 		harness.client.get.mockImplementation((path: string) => {
-			if (path === "/email/orig_1") {
+			if (path === "/v1/email/orig_1") {
 				return Promise.resolve({
 					id: "orig_1",
 					subject: "Question",
@@ -177,9 +177,9 @@ describe("tool behavior integration", () => {
 		const handler = getTool(harness.registeredTools, "email_reply");
 		await handler({ originalId: "orig_1", text: "My reply", replyAll: true });
 
-		expect(harness.client.get).toHaveBeenCalledWith("/email/orig_1");
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/email/orig_1");
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/email/send",
+			"/v1/email/send",
 			expect.objectContaining({
 				to: ["sender@example.com"],
 				subject: "Re: Question",
@@ -194,7 +194,7 @@ describe("tool behavior integration", () => {
 		const handler = getTool(harness.registeredTools, "domain_add");
 		await handler({ domain: "example.com" });
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/domains",
+			"/v1/domains",
 			expect.objectContaining({ domain: "example.com" }),
 		);
 	});
@@ -203,7 +203,7 @@ describe("tool behavior integration", () => {
 		const handler = getTool(harness.registeredTools, "phone_search");
 		await handler({ countryCode: "US", areaCode: "415", limit: 5 });
 		expect(harness.client.get).toHaveBeenCalledWith(
-			"/phone/search?countryCode=US&areaCode=415&limit=5",
+			"/v1/phone/search?countryCode=US&areaCode=415&limit=5",
 		);
 	});
 
@@ -211,7 +211,7 @@ describe("tool behavior integration", () => {
 		const handler = getTool(harness.registeredTools, "message_search");
 		await handler({ query: "invoice" });
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/messages/search",
+			"/v1/messages/search",
 			expect.objectContaining({ query: "invoice" }),
 		);
 	});
@@ -220,7 +220,7 @@ describe("tool behavior integration", () => {
 		const handler = getTool(harness.registeredTools, "message_semantic_search");
 		await handler({ query: "customer refund", threshold: 0.75, limit: 5 });
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/messages/search/semantic",
+			"/v1/messages/search/semantic",
 			expect.objectContaining({
 				query: "customer refund",
 				threshold: 0.75,
@@ -254,10 +254,10 @@ describe("tool behavior integration", () => {
 		});
 
 		harness.client.get.mockImplementation((path: string) => {
-			if (path === "/messages/msg-1") {
+			if (path === "/v1/messages/msg-1") {
 				return Promise.resolve({ threadId: "thread-a" });
 			}
-			if (path === "/messages/msg-2") {
+			if (path === "/v1/messages/msg-2") {
 				return Promise.resolve({ threadId: "thread-a" });
 			}
 			return Promise.resolve({});
@@ -271,7 +271,7 @@ describe("tool behavior integration", () => {
 		};
 
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/messages/search/semantic",
+			"/v1/messages/search/semantic",
 			expect.objectContaining({ query: "refund" }),
 		);
 		expect(parsed.conversationCount).toBe(1);
@@ -284,7 +284,7 @@ describe("tool behavior integration", () => {
 		const handler = getTool(harness.registeredTools, "webhook_create");
 		await handler({ url: "https://example.com/hook", events: ["message.received"] });
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/webhooks",
+			"/v1/webhooks",
 			expect.objectContaining({
 				url: "https://example.com/hook",
 				events: ["message.received"],
@@ -295,7 +295,7 @@ describe("tool behavior integration", () => {
 	test("whoami calls GET /orgs/me", async () => {
 		const handler = getTool(harness.registeredTools, "whoami");
 		await handler({});
-		expect(harness.client.get).toHaveBeenCalledWith("/orgs/me");
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/orgs/me");
 	});
 
 	test("check_health calls GET /health", async () => {
@@ -330,7 +330,7 @@ describe("tool behavior integration", () => {
 		const result = await orgGet({ id: "org_42" });
 
 		expect(result.isError).toBeUndefined();
-		expect(noMasterHarness.client.get).toHaveBeenCalledWith("/orgs/org_42");
+		expect(noMasterHarness.client.get).toHaveBeenCalledWith("/v1/orgs/org_42");
 	});
 
 	test("api error is converted to toolError format", async () => {
@@ -346,7 +346,7 @@ describe("tool behavior integration", () => {
 	test("batch_mark_read sends array of IDs", async () => {
 		const handler = getTool(harness.registeredTools, "batch_mark_read");
 		await handler({ ids: ["m1", "m2", "m3"] });
-		expect(harness.client.post).toHaveBeenCalledWith("/email/batch/read", {
+		expect(harness.client.post).toHaveBeenCalledWith("/v1/email/batch/read", {
 			ids: ["m1", "m2", "m3"],
 		});
 	});
@@ -354,13 +354,13 @@ describe("tool behavior integration", () => {
 	test("manage_contacts list action calls GET /contacts", async () => {
 		const handler = getTool(harness.registeredTools, "manage_contacts");
 		await handler({ action: "list" });
-		expect(harness.client.get).toHaveBeenCalledWith("/contacts");
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/contacts");
 	});
 
 	test("manage_contacts create action calls POST /contacts", async () => {
 		const handler = getTool(harness.registeredTools, "manage_contacts");
 		await handler({ action: "create", email: "c@example.com", name: "Contact" });
-		expect(harness.client.post).toHaveBeenCalledWith("/contacts", {
+		expect(harness.client.post).toHaveBeenCalledWith("/v1/contacts", {
 			email: "c@example.com",
 			name: "Contact",
 		});

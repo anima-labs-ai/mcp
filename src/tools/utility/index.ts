@@ -199,8 +199,8 @@ function registerWhoAmITool(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (_args, context) => {
 			// /orgs/me works for all key types (sk_live_, ak_, mk_)
-			const org = await context.client.get<Record<string, unknown>>("/orgs/me");
-			const agents = await context.client.get<{ items: unknown[] }>("/agents");
+			const org = await context.client.get<Record<string, unknown>>("/v1/orgs/me");
+			const agents = await context.client.get<{ items: unknown[] }>("/v1/agents");
 
 			return toolSuccess({
 				organization: {
@@ -233,6 +233,7 @@ function registerCheckHealthTool(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (_args, context) => {
+			// /health is a root-level Fastify route, not under the /v1 oRPC prefix.
 			const result = await context.client.get("/health");
 			return toolSuccess(result);
 		}, options.context),
@@ -260,7 +261,7 @@ function registerManagePendingTool(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.post(
-				`/messages/${args.messageId}/approve`,
+				`/v1/messages/${args.messageId}/approve`,
 				{
 					action: args.action,
 					reason: args.reason,
@@ -311,7 +312,7 @@ function registerMessageAgentTool(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const agents = await context.client.get("/agents");
+			const agents = await context.client.get("/v1/agents");
 			const targetAgent = findAgentByName(agents, args.agentName);
 			if (!targetAgent) {
 				return toolError(`Agent not found: ${args.agentName}`);
@@ -322,7 +323,7 @@ function registerMessageAgentTool(options: ToolRegistrationOptions): void {
 				return toolError(`No email identity found for agent: ${args.agentName}`);
 			}
 
-			const result = await context.client.post("/messages/email", {
+			const result = await context.client.post("/v1/messages/email", {
 				to: targetEmail,
 				subject: args.subject,
 				body: args.body,
@@ -356,7 +357,7 @@ function registerCheckMessagesTool(options: ToolRegistrationOptions): void {
 			if (args.limit) params.set("limit", String(args.limit));
 
 			const messagesResponse = await context.client.get<{ items?: unknown[] }>(
-				`/messages?${params.toString()}`,
+				`/v1/messages?${params.toString()}`,
 			);
 			const messages = asArray(messagesResponse.items).map((message) =>
 				pickMessageFields(message),
@@ -390,7 +391,7 @@ function registerWaitForEmailTool(options: ToolRegistrationOptions): void {
 
 			while (Date.now() - startTime < effectiveTimeout) {
 				const messagesResponse = await context.client.get<{ items: unknown[] }>(
-					"/messages?direction=inbound&limit=5",
+					"/v1/messages?direction=inbound&limit=5",
 				);
 				const messages = asArray(messagesResponse.items);
 				const match = messages.find((message) =>
@@ -426,7 +427,7 @@ function registerCallAgentTool(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const agents = await context.client.get("/agents");
+			const agents = await context.client.get("/v1/agents");
 			const targetAgent = findAgentByName(agents, args.agentName);
 			if (!targetAgent) {
 				return toolError(`Agent not found: ${args.agentName}`);
@@ -438,7 +439,7 @@ function registerCallAgentTool(options: ToolRegistrationOptions): void {
 			}
 
 			const requestSentAt = Date.now();
-			await context.client.post("/messages/email", {
+			await context.client.post("/v1/messages/email", {
 				to: targetEmail,
 				subject: `Sync call from ${args.agentName}`,
 				body: args.message,
@@ -448,7 +449,7 @@ function registerCallAgentTool(options: ToolRegistrationOptions): void {
 			const timeoutMs = (args.timeout ?? 30) * 1000;
 			while (Date.now() - requestSentAt < timeoutMs) {
 				const response = await context.client.get<{ items: unknown[] }>(
-					"/messages?direction=inbound&limit=10",
+					"/v1/messages?direction=inbound&limit=10",
 				);
 				const items = asArray(response.items);
 				const reply = items.find((message) => {
@@ -489,14 +490,14 @@ function registerUpdateMetadataTool(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const agents = await context.client.get<{ items: Array<{ id: string }> }>("/agents");
+			const agents = await context.client.get<{ items: Array<{ id: string }> }>("/v1/agents");
 			const agentId = agents.items?.[0]?.id;
 
 			if (!agentId) {
 				return toolError("No agents found in this organization. Create an agent first.");
 			}
 
-			const result = await context.client.patch(`/agents/${agentId}`, {
+			const result = await context.client.patch(`/v1/agents/${agentId}`, {
 				metadata: args.metadata,
 			});
 			return toolSuccess(result);
@@ -525,7 +526,7 @@ function registerManageSpamTool(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			if (args.action === "list") {
-				const result = await context.client.get("/messages?status=SPAM");
+				const result = await context.client.get("/v1/messages?status=SPAM");
 				return toolSuccess(result);
 			}
 
@@ -534,12 +535,12 @@ function registerManageSpamTool(options: ToolRegistrationOptions): void {
 			}
 
 			if (args.action === "report") {
-				const result = await context.client.post(`/messages/${args.messageId}/spam`, {});
+				const result = await context.client.post(`/v1/messages/${args.messageId}/spam`, {});
 				return toolSuccess(result);
 			}
 
 			const result = await context.client.post(
-				`/messages/${args.messageId}/not-spam`,
+				`/v1/messages/${args.messageId}/not-spam`,
 				{},
 			);
 			return toolSuccess(result);
@@ -569,7 +570,7 @@ function registerCheckTasksTool(options: ToolRegistrationOptions): void {
 			params.set("metadata.type", "task");
 			if (args.status) params.set("status", args.status);
 
-			const result = await context.client.get(`/messages?${params.toString()}`);
+			const result = await context.client.get(`/v1/messages?${params.toString()}`);
 			return toolSuccess(result);
 		}, options.context),
 	);

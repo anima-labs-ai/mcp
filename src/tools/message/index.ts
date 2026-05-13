@@ -106,7 +106,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.post("/messages/sms", args);
+			const result = await context.client.post("/v1/messages/sms", args);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -124,7 +124,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.post("/messages/search", args);
+			const result = await context.client.post("/v1/messages/search", args);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -143,7 +143,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.post("/messages/search/semantic", {
+			const result = await context.client.post("/v1/messages/search/semantic", {
 				query: args.query,
 				agentId: args.agentId,
 				limit: args.limit,
@@ -177,7 +177,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 					createdAt: string;
 					agentId: string;
 				}>;
-			}>("/messages/search/semantic", {
+			}>("/v1/messages/search/semantic", {
 				query: args.topic,
 				agentId: args.agentId,
 				limit: args.limit ?? 10,
@@ -201,7 +201,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 
 			for (const message of semanticResult.results) {
 				const fullMessage = await context.client.get<{ threadId: string | null }>(
-					`/messages/${message.id}`,
+					`/v1/messages/${message.id}`,
 				);
 				const threadId = fullMessage.threadId ?? message.id;
 
@@ -261,7 +261,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 		withErrorHandling(async (args, context) => {
 			const { messageId, ...body } = args;
 			const result = await context.client.post(
-				`/messages/${messageId}/attachments`,
+				`/v1/messages/${messageId}/attachments`,
 				body,
 			);
 			return toolSuccess(result);
@@ -282,7 +282,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const result = await context.client.get(`/attachments/${args.id}/download`);
+			const result = await context.client.get(`/v1/attachments/${args.id}/download`);
 			return toolSuccess(result);
 		}, options.context),
 	);

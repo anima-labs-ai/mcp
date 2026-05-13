@@ -151,7 +151,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 			}
 			if (args.limit !== undefined) params.set("limit", String(args.limit));
 
-			const path = params.toString() ? `/phone/search?${params}` : "/phone/search";
+			const path = params.toString() ? `/v1/phone/search?${params}` : "/v1/phone/search";
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -176,7 +176,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 			if (args.countryCode) body.countryCode = args.countryCode;
 			if (args.areaCode) body.areaCode = args.areaCode;
 			if (args.capabilities) body.capabilities = args.capabilities;
-			const result = await context.client.post<unknown>("/phone/provision", body);
+			const result = await context.client.post<unknown>("/v1/phone/provision", body);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -196,7 +196,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
-			const result = await context.client.post<unknown>("/phone/release", args);
+			const result = await context.client.post<unknown>("/v1/phone/release", args);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -222,7 +222,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams({ agentId: args.agentId });
-			const result = await context.client.get<unknown>(`/phone/numbers?${params}`);
+			const result = await context.client.get<unknown>(`/v1/phone/numbers?${params}`);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -250,7 +250,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 			if (args.mediaUrls && args.mediaUrls.length > 0) {
 				body.mediaUrls = args.mediaUrls;
 			}
-			const result = await context.client.post<unknown>("/phone/send-sms", body);
+			const result = await context.client.post<unknown>("/v1/phone/send-sms", body);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -296,7 +296,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams({ agentId: args.agentId });
-			const result = await context.client.get<unknown>(`/phone/numbers?${params}`);
+			const result = await context.client.get<unknown>(`/v1/phone/numbers?${params}`);
 			const items = toPhoneStatusList(result);
 			return toolSuccess({
 				count: items.length,

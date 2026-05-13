@@ -39,7 +39,7 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
-			const result = await context.client.post<unknown>("/domains", args);
+			const result = await context.client.post<unknown>("/v1/domains", args);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -59,7 +59,7 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
-			const path = `/domains/${encodeURIComponent(args.id)}/verify`;
+			const path = `/v1/domains/${encodeURIComponent(args.id)}/verify`;
 			const result = await context.client.post<unknown>(path, {});
 			return toolSuccess(result);
 		}, options.context),
@@ -79,7 +79,7 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const path = `/domains/${encodeURIComponent(args.id)}`;
+			const path = `/v1/domains/${encodeURIComponent(args.id)}`;
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -99,7 +99,7 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (_args, context) => {
-			const result = await context.client.get<unknown>("/domains");
+			const result = await context.client.get<unknown>("/v1/domains");
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -119,7 +119,7 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
-			const path = `/domains/${encodeURIComponent(args.id)}`;
+			const path = `/v1/domains/${encodeURIComponent(args.id)}`;
 			const result = await context.client.delete<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -139,7 +139,7 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const path = `/domains/${encodeURIComponent(args.id)}/dns-records`;
+			const path = `/v1/domains/${encodeURIComponent(args.id)}/dns-records`;
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -172,7 +172,7 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const { id, ...payload } = args;
-			const path = `/domains/${encodeURIComponent(id)}`;
+			const path = `/v1/domains/${encodeURIComponent(id)}`;
 			const result = await context.client.patch<unknown>(path, payload);
 			return toolSuccess(result);
 		}, options.context),
@@ -192,7 +192,7 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const path = `/domains/${encodeURIComponent(args.id)}/deliverability`;
+			const path = `/v1/domains/${encodeURIComponent(args.id)}/deliverability`;
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -212,7 +212,7 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			const path = `/domains/${encodeURIComponent(args.id)}/zone-file`;
+			const path = `/v1/domains/${encodeURIComponent(args.id)}/zone-file`;
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),

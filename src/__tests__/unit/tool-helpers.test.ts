@@ -60,7 +60,8 @@ describe("tool helpers", () => {
 
 	test("requiresMasterKey returns true for protected tools", () => {
 		expect(requiresMasterKey("org_delete")).toBe(true);
-		expect(requiresMasterKey("security_update_policy")).toBe(true);
+		expect(requiresMasterKey("agent_delete")).toBe(true);
+		expect(requiresMasterKey("webhook_delete")).toBe(true);
 	});
 
 	test("requiresMasterKey returns false for regular tools", () => {

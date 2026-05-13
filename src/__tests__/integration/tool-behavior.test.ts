@@ -9,7 +9,6 @@ import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
 import { registerMessageTools } from "../../tools/message/index.js";
 import { registerWebhookTools } from "../../tools/webhook/index.js";
-import { registerSecurityTools } from "../../tools/security/index.js";
 import { registerUtilityTools } from "../../tools/utility/index.js";
 
 type ToolResult = {
@@ -94,7 +93,6 @@ function createHarness(hasMasterKey = true): {
 		registerPhoneTools(options);
 		registerMessageTools(options);
 		registerWebhookTools(options);
-		registerSecurityTools(options);
 		registerUtilityTools(options);
 	};
 
@@ -294,16 +292,6 @@ describe("tool behavior integration", () => {
 		);
 	});
 
-	test("security_approve calls POST with orgId/messageId path and master key option", async () => {
-		const handler = getTool(harness.registeredTools, "security_approve");
-		await handler({ orgId: "org_1", messageId: "msg_1", action: "approve" });
-		expect(harness.client.post).toHaveBeenCalledWith(
-			"/v1/orgs/org_1/messages/msg_1/approve",
-			expect.objectContaining({ action: "approve" }),
-			{ useMasterKey: true },
-		);
-	});
-
 	test("whoami calls GET /orgs/me", async () => {
 		const handler = getTool(harness.registeredTools, "whoami");
 		await handler({});
@@ -321,22 +309,15 @@ describe("tool behavior integration", () => {
 		noMasterHarness.registerAll();
 
 		const orgCreate = getTool(noMasterHarness.registeredTools, "org_create");
-		const securityUpdate = getTool(
-			noMasterHarness.registeredTools,
-			"security_update_policy",
-		);
+		const domainAdd = getTool(noMasterHarness.registeredTools, "domain_add");
 
 		const orgResult = await orgCreate({ name: "No Master" });
-		const securityResult = await securityUpdate({
-			orgId: "org_1",
-			agentId: "agent_1",
-			scanLevel: "strict",
-		});
+		const domainResult = await domainAdd({ domain: "example.com" });
 
 		expect(orgResult.isError).toBe(true);
 		expect(orgResult.content[0]?.text).toContain("requires ANIMA_MASTER_KEY");
-		expect(securityResult.isError).toBe(true);
-		expect(securityResult.content[0]?.text).toContain(
+		expect(domainResult.isError).toBe(true);
+		expect(domainResult.content[0]?.text).toContain(
 			"requires ANIMA_MASTER_KEY",
 		);
 	});

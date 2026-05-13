@@ -15,7 +15,6 @@ export const MASTER_KEY_TOOLS = new Set([
 	"domain_delete",
 	"domain_verify",
 	"webhook_delete",
-	"security_update_policy",
 ]);
 
 /** Server metadata (not `as const` — MCP SDK expects mutable icon arrays) */

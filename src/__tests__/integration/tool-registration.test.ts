@@ -197,7 +197,6 @@ const expectedDomainTools = {
 	utility: [
 		"whoami",
 		"check_health",
-		"list_agents",
 		"manage_pending",
 		"check_followups",
 		"message_agent",
@@ -205,8 +204,6 @@ const expectedDomainTools = {
 		"wait_for_email",
 		"call_agent",
 		"update_metadata",
-		"setup_email_domain",
-		"send_test_email",
 		"manage_spam",
 		"check_tasks",
 	],
@@ -217,7 +214,6 @@ const expectedDomainTools = {
 		"voice_get_call",
 		"voice_get_transcript",
 		"voice_get_recording",
-		"voice_get_summary",
 		"voice_get_score",
 		"voice_search_calls",
 		"voice_get_security_scan",
@@ -283,9 +279,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(5);
 	});
 
-	test("utility registers 14 tools", () => {
+	test("utility registers 11 tools", () => {
 		registerUtilityTools(harness.options);
-		expect(harness.registeredTools.size).toBe(14);
+		expect(harness.registeredTools.size).toBe(11);
 	});
 
 	test("organization tool names match expected snake_case names", () => {
@@ -351,9 +347,9 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("voice registers 10 tools", () => {
+	test("voice registers 9 tools", () => {
 		registerVoiceTools(harness.options);
-		expect(harness.registeredTools.size).toBe(10);
+		expect(harness.registeredTools.size).toBe(9);
 	});
 
 	test("voice tool names match expected snake_case names", () => {
@@ -363,7 +359,7 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 93 tools", () => {
+	test("all domains combined register exactly 89 tools", () => {
 		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
@@ -375,7 +371,7 @@ describe("tool registration integration", () => {
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(93);
+		expect(harness.registeredTools.size).toBe(89);
 	});
 
 	test("all registered tool names follow snake_case", () => {

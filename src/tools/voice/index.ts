@@ -1,14 +1,14 @@
 /**
- * Voice MCP Tools
+ * Voice MCP Tools (npm package)
  *
- * 10 tools for voice call intelligence:
+ * 9 tools for voice call intelligence:
  *   - voice_catalog: list available voices
- *   - voice_create_call: initiate outbound call
+ *   - voice_create_call: initiate outbound call (REST-style; for live LLM-driven
+ *     calls within the tool invocation, see voice_call on the hosted server)
  *   - voice_list_calls: list past calls
- *   - voice_get_call: get call details
+ *   - voice_get_call: get call details + AI-generated summary (cached)
  *   - voice_get_transcript: get call transcript
  *   - voice_get_recording: get recording download URL
- *   - voice_get_summary: get AI-generated summary
  *   - voice_get_score: get call quality score
  *   - voice_search_calls: semantic search across transcripts
  *   - voice_get_security_scan: get security scan results
@@ -138,7 +138,7 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 	server.registerTool(
 		"voice_get_call",
 		{
-			description: "Get detailed information about a specific voice call including status, duration, participants, and tier.",
+			description: "Get a voice call: status, duration, participants, tier, AND the AI-generated summary (one-liner, topics, action items, decisions, open questions, next steps, intent, outcome). The summary is generated once on the first read after post-call processing completes and cached on the call row — subsequent calls return the cached value without re-generating.",
 			inputSchema: {
 			callId: z.string()
 				.describe("The call ID to retrieve."),
@@ -205,29 +205,9 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	// ── voice_get_summary ──
-
-	server.registerTool(
-		"voice_get_summary",
-		{
-			description: "Get an AI-generated summary of a call including one-liner, topics, action items, decisions, open questions, next steps, intent, and outcome. Available after post-call processing completes.",
-			inputSchema: {
-			callId: z.string()
-				.describe("The call ID to get the summary for."),
-		},
-			outputSchema: objectOutput(),
-			annotations: {
-				readOnlyHint: true,
-				destructiveHint: false,
-				idempotentHint: true,
-				openWorldHint: true,
-			},
-		},
-		withErrorHandling(async (args, context) => {
-			const result = await context.client.get<unknown>(`/voice/calls/${args.callId}/summary`);
-			return toolSuccess(result);
-		}, options.context),
-	);
+	// voice_get_summary removed — the summary is now part of voice_get_call's
+	// response. The backend generates the summary once on first read and
+	// caches it on the call row.
 
 	// ── voice_get_score ──
 

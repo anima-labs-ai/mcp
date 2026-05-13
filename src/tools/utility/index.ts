@@ -3,7 +3,6 @@ import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
 	listOutput,
 	objectOutput,
-	requireMasterKeyGuard,
 	sendOutput,
 	statusOutput,
 	toolError,
@@ -13,16 +12,6 @@ import {
 import { drainFollowUps } from "../../pending-followup.js";
 
 const noInput = z.object({});
-
-const listAgentsInput = z.object({
-	cursor: z.string().optional().describe("Pagination cursor from a previous response"),
-	limit: z
-		.number()
-		.int()
-		.positive()
-		.optional()
-		.describe("Maximum number of agents to return"),
-});
 
 const managePendingInput = z.object({
 	messageId: z.string().describe("Pending message ID"),
@@ -79,14 +68,6 @@ const callAgentInput = z.object({
 
 const updateMetadataInput = z.object({
 	metadata: z.record(z.string()).describe("Metadata key-value pairs to set"),
-});
-
-const setupEmailDomainInput = z.object({
-	domain: z.string().min(1).describe("Custom domain to configure"),
-});
-
-const sendTestEmailInput = z.object({
-	to: z.string().min(1).describe("Recipient email address for test message"),
 });
 
 const manageSpamInput = z.object({
@@ -258,32 +239,8 @@ function registerCheckHealthTool(options: ToolRegistrationOptions): void {
 	);
 }
 
-function registerListAgentsTool(options: ToolRegistrationOptions): void {
-	const { server } = options;
-
-	server.registerTool(
-		"list_agents",
-		{
-			description: "List available agents with optional pagination. Use this as a discovery utility to inspect agent inventory before selecting one. Functionally equivalent to `agent_list` — both call /agents.",
-			inputSchema: listAgentsInput.shape,
-			outputSchema: listOutput(),
-			annotations: {
-				readOnlyHint: true,
-				destructiveHint: false,
-				idempotentHint: true,
-				openWorldHint: true,
-			},
-		},
-		withErrorHandling(async (args, context) => {
-			const params = new URLSearchParams();
-			if (args.cursor) params.set("cursor", args.cursor);
-			if (args.limit) params.set("limit", String(args.limit));
-			const path = params.toString() ? `/agents?${params.toString()}` : "/agents";
-			const result = await context.client.get(path);
-			return toolSuccess(result);
-		}, options.context),
-	);
-}
+// list_agents removed 2026-05-13: duplicate of agent_list (registered in
+// tools/agent/index.ts). Same handler, same endpoint, same data.
 
 function registerManagePendingTool(options: ToolRegistrationOptions): void {
 	const { server } = options;
@@ -547,57 +504,8 @@ function registerUpdateMetadataTool(options: ToolRegistrationOptions): void {
 	);
 }
 
-function registerSetupEmailDomainTool(options: ToolRegistrationOptions): void {
-	const { server } = options;
-
-	server.registerTool(
-		"setup_email_domain",
-		{
-			description: "Configure a custom email domain for account setup workflows. Functionally equivalent to `domain_add` — both POST to /domains.",
-			inputSchema: setupEmailDomainInput.shape,
-			outputSchema: objectOutput(),
-			annotations: {
-				readOnlyHint: false,
-				destructiveHint: false,
-				idempotentHint: true,
-				openWorldHint: true,
-			},
-		},
-		withErrorHandling(async (args, context) => {
-			requireMasterKeyGuard(options.context);
-			const result = await context.client.post("/domains", { domain: args.domain });
-			return toolSuccess(result);
-		}, options.context),
-	);
-}
-
-function registerSendTestEmailTool(options: ToolRegistrationOptions): void {
-	const { server } = options;
-
-	server.registerTool(
-		"send_test_email",
-		{
-			description: "Send a simple test email for setup verification.",
-			inputSchema: sendTestEmailInput.shape,
-			outputSchema: sendOutput(),
-			annotations: {
-				readOnlyHint: false,
-				destructiveHint: false,
-				idempotentHint: false,
-				openWorldHint: true,
-			},
-		},
-		withErrorHandling(async (args, context) => {
-			requireMasterKeyGuard(options.context);
-			const result = await context.client.post("/email/send", {
-				to: args.to,
-				subject: "Test from Anima",
-				body: "Test from Anima",
-			});
-			return toolSuccess(result);
-		}, options.context),
-	);
-}
+// setup_email_domain + send_test_email removed 2026-05-13: pure duplicates
+// of domain_add and email_send. Use those canonical tools instead.
 
 function registerManageSpamTool(options: ToolRegistrationOptions): void {
 	const { server } = options;
@@ -670,7 +578,6 @@ function registerCheckTasksTool(options: ToolRegistrationOptions): void {
 export function registerUtilityTools(options: ToolRegistrationOptions): void {
 	registerWhoAmITool(options);
 	registerCheckHealthTool(options);
-	registerListAgentsTool(options);
 	registerManagePendingTool(options);
 	registerCheckFollowupsTool(options);
 	registerMessageAgentTool(options);
@@ -678,8 +585,6 @@ export function registerUtilityTools(options: ToolRegistrationOptions): void {
 	registerWaitForEmailTool(options);
 	registerCallAgentTool(options);
 	registerUpdateMetadataTool(options);
-	registerSetupEmailDomainTool(options);
-	registerSendTestEmailTool(options);
 	registerManageSpamTool(options);
 	registerCheckTasksTool(options);
 }

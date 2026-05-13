@@ -47,10 +47,6 @@ const agentDeleteInput = z.object({
 	id: z.string().describe("Agent ID"),
 });
 
-const agentRotateKeyInput = z.object({
-	id: z.string().describe("Agent ID"),
-});
-
 function registerAgentCreateTool(options: ToolRegistrationOptions): void {
 	const { server } = options;
 
@@ -153,33 +149,9 @@ function registerAgentDeleteTool(options: ToolRegistrationOptions): void {
 	);
 }
 
-function registerAgentRotateKeyTool(options: ToolRegistrationOptions): void {
-	const { server } = options;
-
-	server.registerTool(
-		"agent_rotate_key",
-		{
-			description: "Rotate an agent API key and return the new key material. Use this when rotating credentials for security hygiene or after suspected exposure. Invalidates the previous key.",
-			inputSchema: agentRotateKeyInput.shape,
-			outputSchema: objectOutput(),
-			annotations: {
-				readOnlyHint: false,
-				destructiveHint: true,
-				idempotentHint: false,
-				openWorldHint: true,
-			},
-		},
-		withErrorHandling(async (args, context) => {
-			const result = await context.client.post(`/v1/agents/${args.id}/rotate-key`);
-			return toolSuccess(result);
-		}, options.context),
-	);
-}
-
 export function registerAgentTools(options: ToolRegistrationOptions): void {
 	registerAgentCreateTool(options);
 	registerAgentGetTool(options);
 	registerAgentUpdateTool(options);
 	registerAgentDeleteTool(options);
-	registerAgentRotateKeyTool(options);
 }

@@ -13,7 +13,6 @@ export const MASTER_KEY_TOOLS = new Set([
 	"domain_add",
 	"domain_delete",
 	"domain_verify",
-	"webhook_delete",
 ]);
 
 /** Server metadata (not `as const` — MCP SDK expects mutable icon arrays) */

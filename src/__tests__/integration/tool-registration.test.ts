@@ -9,7 +9,6 @@ import { registerEmailTools } from "../../tools/email/index.js";
 import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
 import { registerMessageTools } from "../../tools/message/index.js";
-import { registerWebhookTools } from "../../tools/webhook/index.js";
 import { registerUtilityTools } from "../../tools/utility/index.js";
 import { registerVoiceTools } from "../../tools/voice/index.js";
 import { registerResources } from "../../resources/index.js";
@@ -170,20 +169,6 @@ const expectedDomainTools = {
 		"message_upload_attachment",
 		"message_get_attachment",
 	],
-	webhook: [
-		"webhook_create",
-		"webhook_get",
-		"webhook_update",
-		"webhook_delete",
-		"webhook_list",
-		"webhook_test",
-		"webhook_list_deliveries",
-		"webhook_reenable",
-		"webhook_stats",
-		"webhook_event_types",
-		"webhook_list_dead_letters",
-		"webhook_replay_delivery",
-	],
 	utility: [
 		"whoami",
 		"health_check",
@@ -259,11 +244,6 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(6);
 	});
 
-	test("webhook registers 12 tools", () => {
-		registerWebhookTools(harness.options);
-		expect(harness.registeredTools.size).toBe(12);
-	});
-
 	test("utility registers 11 tools", () => {
 		registerUtilityTools(harness.options);
 		expect(harness.registeredTools.size).toBe(11);
@@ -311,13 +291,6 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("webhook tool names match expected snake_case names", () => {
-		registerWebhookTools(harness.options);
-		expect([...harness.registeredTools.keys()].sort()).toEqual(
-			[...expectedDomainTools.webhook].sort(),
-		);
-	});
-
 	test("utility tool names match expected snake_case names", () => {
 		registerUtilityTools(harness.options);
 		expect([...harness.registeredTools.keys()].sort()).toEqual(
@@ -337,18 +310,17 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 82 tools", () => {
+	test("all domains combined register exactly 70 tools", () => {
 		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
 		registerMessageTools(harness.options);
-		registerWebhookTools(harness.options);
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(82);
+		expect(harness.registeredTools.size).toBe(70);
 	});
 
 	test("all registered tool names follow snake_case", () => {
@@ -358,7 +330,6 @@ describe("tool registration integration", () => {
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
 		registerMessageTools(harness.options);
-		registerWebhookTools(harness.options);
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
@@ -392,10 +363,6 @@ describe("tool registration integration", () => {
 		assertDescriptionsNonEmpty(expectedDomainTools.message, harness.registeredTools);
 
 		harness = createRegistrationHarness(true);
-		registerWebhookTools(harness.options);
-		assertDescriptionsNonEmpty(expectedDomainTools.webhook, harness.registeredTools);
-
-		harness = createRegistrationHarness(true);
 		registerUtilityTools(harness.options);
 		assertDescriptionsNonEmpty(expectedDomainTools.utility, harness.registeredTools);
 
@@ -418,7 +385,6 @@ describe("tool registration integration", () => {
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
 		registerMessageTools(harness.options);
-		registerWebhookTools(harness.options);
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 

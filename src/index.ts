@@ -25,7 +25,6 @@ import { registerUtilityTools } from "./tools/utility/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
 // OAuth Apps / Connections removed from MCP surface on 2026-04-25 (credential-broker handles third-party auth via vault + vtk_ tokens).
 import { registerVoiceTools } from "./tools/voice/index.js";
-import { registerWebhookTools } from "./tools/webhook/index.js";
 
 export { marketplaceMetadata } from "./marketplace.js";
 
@@ -41,7 +40,6 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
 		phone: registerPhoneTools,
 		vault: registerVaultTools,
 		message: registerMessageTools,
-		webhook: registerWebhookTools,
 		utility: registerUtilityTools,
 		voice: registerVoiceTools,
 	};

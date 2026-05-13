@@ -8,7 +8,6 @@ import { registerEmailTools } from "../../tools/email/index.js";
 import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
 import { registerMessageTools } from "../../tools/message/index.js";
-import { registerWebhookTools } from "../../tools/webhook/index.js";
 import { registerUtilityTools } from "../../tools/utility/index.js";
 
 type ToolResult = {
@@ -92,7 +91,6 @@ function createHarness(hasMasterKey = true): {
 		registerDomainTools(options);
 		registerPhoneTools(options);
 		registerMessageTools(options);
-		registerWebhookTools(options);
 		registerUtilityTools(options);
 	};
 
@@ -284,18 +282,6 @@ describe("tool behavior integration", () => {
 		expect(parsed.conversations[0]?.threadId).toBe("thread-a");
 		expect(parsed.conversations[0]?.messageCount).toBe(2);
 		expect(parsed.conversations[0]?.maxSimilarity).toBe(0.91);
-	});
-
-	test("webhook_create calls POST /webhooks", async () => {
-		const handler = getTool(harness.registeredTools, "webhook_create");
-		await handler({ url: "https://example.com/hook", events: ["message.received"] });
-		expect(harness.client.post).toHaveBeenCalledWith(
-			"/v1/webhooks",
-			expect.objectContaining({
-				url: "https://example.com/hook",
-				events: ["message.received"],
-			}),
-		);
 	});
 
 	test("whoami calls GET /orgs/me", async () => {

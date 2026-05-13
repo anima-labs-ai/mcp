@@ -304,8 +304,8 @@ describe("tool behavior integration", () => {
 		expect(harness.client.get).toHaveBeenCalledWith("/v1/orgs/me");
 	});
 
-	test("check_health calls GET /health", async () => {
-		const handler = getTool(harness.registeredTools, "check_health");
+	test("health_check calls GET /health", async () => {
+		const handler = getTool(harness.registeredTools, "health_check");
 		await handler({});
 		expect(harness.client.get).toHaveBeenCalledWith("/health");
 	});
@@ -357,14 +357,14 @@ describe("tool behavior integration", () => {
 		});
 	});
 
-	test("manage_contacts list action calls GET /contacts", async () => {
-		const handler = getTool(harness.registeredTools, "manage_contacts");
+	test("contacts_manage list action calls GET /contacts", async () => {
+		const handler = getTool(harness.registeredTools, "contacts_manage");
 		await handler({ action: "list" });
 		expect(harness.client.get).toHaveBeenCalledWith("/v1/contacts");
 	});
 
-	test("manage_contacts create action calls POST /contacts", async () => {
-		const handler = getTool(harness.registeredTools, "manage_contacts");
+	test("contacts_manage create action calls POST /contacts", async () => {
+		const handler = getTool(harness.registeredTools, "contacts_manage");
 		await handler({ action: "create", email: "c@example.com", name: "Contact" });
 		expect(harness.client.post).toHaveBeenCalledWith("/v1/contacts", {
 			email: "c@example.com",

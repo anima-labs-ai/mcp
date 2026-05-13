@@ -818,7 +818,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"manage_folders",
+		"folders_manage",
 		{
 			description: "List existing folders or create a new email folder.",
 			inputSchema: manageFoldersSchema.shape,
@@ -850,7 +850,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"manage_contacts",
+		"contacts_manage",
 		{
 			description: "List, create, or delete contacts used for email workflows.",
 			inputSchema: manageContactsSchema.shape,
@@ -891,7 +891,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"manage_templates",
+		"templates_manage",
 		{
 			description: "List, create, or delete email templates.",
 			inputSchema: manageTemplatesSchema.shape,

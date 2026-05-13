@@ -121,7 +121,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 	const { server } = options;
 
 	server.registerTool(
-		"create_address",
+		"address_create",
 		{
 			description: "Create a new postal address for an agent. Use this to register billing, shipping, mailing, or registered addresses.",
 			inputSchema: createAddressSchema.shape,
@@ -141,7 +141,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"list_addresses",
+		"address_list",
 		{
 			description: "List all addresses for an agent, optionally filtered by type. Use this to review the agent's registered addresses.",
 			inputSchema: listAddressesSchema.shape,
@@ -164,7 +164,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"get_address",
+		"address_get",
 		{
 			description: "Get full details for a specific address by ID. Use this to inspect a single address record.",
 			inputSchema: getAddressSchema.shape,
@@ -184,7 +184,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"update_address",
+		"address_update",
 		{
 			description: "Update fields on an existing address. Use this to correct or change address details.",
 			inputSchema: updateAddressSchema.shape,
@@ -206,7 +206,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"delete_address",
+		"address_delete",
 		{
 			description: "Delete an address from an agent. Use this to remove addresses that are no longer needed.",
 			inputSchema: deleteAddressSchema.shape,
@@ -227,7 +227,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"validate_address",
+		"address_validate",
 		{
 			description: "Validate an existing address against postal standards. Use this to verify address accuracy before shipping or official registration.",
 			inputSchema: validateAddressSchema.shape,

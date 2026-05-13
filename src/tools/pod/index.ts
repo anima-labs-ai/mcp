@@ -80,7 +80,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 	const { server } = options;
 
 	server.registerTool(
-		"create_pod",
+		"pod_create",
 		{
 			description: "Create a new compute pod for an agent. Use this to provision a container that runs alongside the agent.",
 			inputSchema: createPodSchema.shape,
@@ -100,7 +100,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"list_pods",
+		"pod_list",
 		{
 			description: "List all compute pods, optionally filtered by agent. Use this to see running and stopped pods.",
 			inputSchema: listPodsSchema.shape,
@@ -123,7 +123,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"get_pod",
+		"pod_get",
 		{
 			description: "Get details for a specific pod. Use this to check pod status, resources, and configuration.",
 			inputSchema: podIdSchema.shape,
@@ -142,7 +142,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"update_pod",
+		"pod_update",
 		{
 			description: "Update a pod's configuration. Use this to change resources, environment variables, or metadata.",
 			inputSchema: updatePodSchema.shape,
@@ -163,7 +163,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"delete_pod",
+		"pod_delete",
 		{
 			description: "Delete a compute pod. Use this to tear down a pod that is no longer needed.",
 			inputSchema: podIdSchema.shape,

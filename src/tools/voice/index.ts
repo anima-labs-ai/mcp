@@ -3,15 +3,15 @@
  *
  * 9 tools for voice call intelligence:
  *   - voice_catalog: list available voices
- *   - voice_create_call: initiate outbound call (REST-style; for live LLM-driven
+ *   - voice_call_create: initiate outbound call (REST-style; for live LLM-driven
  *     calls within the tool invocation, see voice_call on the hosted server)
- *   - voice_list_calls: list past calls
- *   - voice_get_call: get call details + AI-generated summary (cached)
- *   - voice_get_transcript: get call transcript
- *   - voice_get_recording: get recording download URL
- *   - voice_get_score: get call quality score
- *   - voice_search_calls: semantic search across transcripts
- *   - voice_get_security_scan: get security scan results
+ *   - voice_call_list: list past calls
+ *   - voice_call_get: get call details + AI-generated summary (cached)
+ *   - voice_transcript_get: get call transcript
+ *   - voice_recording_get: get recording download URL
+ *   - voice_score_get: get call quality score
+ *   - voice_call_search: semantic search across transcripts
+ *   - voice_security_scan_get: get security scan results
  */
 
 import { z } from "zod";
@@ -32,7 +32,7 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 	server.registerTool(
 		"voice_catalog",
 		{
-			description: "List available AI voices for phone calls. Filter by tier (basic for low-latency, premium for natural voices), gender, or language. Returns voice IDs needed for voice_create_call.",
+			description: "List available AI voices for phone calls. Filter by tier (basic for low-latency, premium for natural voices), gender, or language. Returns voice IDs needed for voice_call_create.",
 			inputSchema: {
 			tier: z.enum(["basic", "premium"]).optional()
 				.describe("Filter by pricing tier."),
@@ -60,10 +60,10 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	// ── voice_create_call ──
+	// ── voice_call_create ──
 
 	server.registerTool(
-		"voice_create_call",
+		"voice_call_create",
 		{
 			description: "Initiate an outbound voice call from an agent. The agent must have a provisioned phone number. Returns a callId — connect via WebSocket for real-time conversation.",
 			inputSchema: {
@@ -94,10 +94,10 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	// ── voice_list_calls ──
+	// ── voice_call_list ──
 
 	server.registerTool(
-		"voice_list_calls",
+		"voice_call_list",
 		{
 			description: "List voice calls with optional filters. Returns call history with status, direction, duration, and tier info.",
 			inputSchema: {
@@ -133,10 +133,10 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	// ── voice_get_call ──
+	// ── voice_call_get ──
 
 	server.registerTool(
-		"voice_get_call",
+		"voice_call_get",
 		{
 			description: "Get a voice call: status, duration, participants, tier, AND the AI-generated summary (one-liner, topics, action items, decisions, open questions, next steps, intent, outcome). The summary is generated once on the first read after post-call processing completes and cached on the call row — subsequent calls return the cached value without re-generating.",
 			inputSchema: {
@@ -157,10 +157,10 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	// ── voice_get_transcript ──
+	// ── voice_transcript_get ──
 
 	server.registerTool(
-		"voice_get_transcript",
+		"voice_transcript_get",
 		{
 			description: "Get the full transcript of a voice call with speaker labels, timestamps, and confidence scores. Available after the call ends and transcription completes.",
 			inputSchema: {
@@ -181,10 +181,10 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	// ── voice_get_recording ──
+	// ── voice_recording_get ──
 
 	server.registerTool(
-		"voice_get_recording",
+		"voice_recording_get",
 		{
 			description: "Get a time-limited download URL for a call recording (WAV format). The URL expires after 1 hour. Recording must have been enabled during the call.",
 			inputSchema: {
@@ -205,14 +205,14 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	// voice_get_summary removed — the summary is now part of voice_get_call's
+	// voice_get_summary removed — the summary is now part of voice_call_get's
 	// response. The backend generates the summary once on first read and
 	// caches it on the call row.
 
-	// ── voice_get_score ──
+	// ── voice_score_get ──
 
 	server.registerTool(
-		"voice_get_score",
+		"voice_score_get",
 		{
 			description: "Get the quality score of a call with composite score (0-100), sub-scores (resolution, sentiment, efficiency, engagement, latency, compliance), and detailed metrics (speaking time, dead air, response latency).",
 			inputSchema: {
@@ -233,10 +233,10 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	// ── voice_search_calls ──
+	// ── voice_call_search ──
 
 	server.registerTool(
-		"voice_search_calls",
+		"voice_call_search",
 		{
 			description: "Semantic search across all call transcripts using natural language. Uses vector similarity to find relevant call segments. Great for finding specific conversations or topics discussed.",
 			inputSchema: {
@@ -273,10 +273,10 @@ export function registerVoiceTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
-	// ── voice_get_security_scan ──
+	// ── voice_security_scan_get ──
 
 	server.registerTool(
-		"voice_get_security_scan",
+		"voice_security_scan_get",
 		{
 			description: "Get security scan results for a call including detected threats (PII leakage, prompt injection, social engineering), compliance pass/fail, and risk score (0-100). Available after post-call security analysis.",
 			inputSchema: {

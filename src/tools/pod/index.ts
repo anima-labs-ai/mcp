@@ -1,9 +1,12 @@
 import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
-	withErrorHandling,
-	toolSuccess,
+	deleteOutput,
+	listOutput,
+	objectOutput,
 	requireMasterKeyGuard,
+	toolSuccess,
+	withErrorHandling,
 } from "../../tool-helpers.js";
 
 const createPodSchema = z.object({
@@ -81,6 +84,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Create a new compute pod for an agent. Use this to provision a container that runs alongside the agent.",
 			inputSchema: createPodSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -100,6 +104,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List all compute pods, optionally filtered by agent. Use this to see running and stopped pods.",
 			inputSchema: listPodsSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -122,6 +127,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get details for a specific pod. Use this to check pod status, resources, and configuration.",
 			inputSchema: podIdSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -140,6 +146,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Update a pod's configuration. Use this to change resources, environment variables, or metadata.",
 			inputSchema: updatePodSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -160,6 +167,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Delete a compute pod. Use this to tear down a pod that is no longer needed.",
 			inputSchema: podIdSchema.shape,
+			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -179,6 +187,7 @@ export function registerPodTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get resource usage metrics for a pod. Use this to monitor CPU, memory, storage, and network usage.",
 			inputSchema: podIdSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,

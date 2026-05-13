@@ -1,6 +1,11 @@
 export {
+	deleteOutput,
+	listOutput,
+	objectOutput,
 	registerToolWithAliases,
 	requiresMasterKey,
+	sendOutput,
+	statusOutput,
 	toolSuccess,
 	toolError,
 	withErrorHandling,

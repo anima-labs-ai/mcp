@@ -1,8 +1,11 @@
 import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
-	withErrorHandling,
+	deleteOutput,
+	listOutput,
+	objectOutput,
 	toolSuccess,
+	withErrorHandling,
 } from "../../tool-helpers.js";
 
 const agentCreateInput = z.object({
@@ -52,6 +55,7 @@ function registerAgentCreateTool(options: ToolRegistrationOptions): void {
 		{
 			description: "Create a new agent with optional metadata and return the created record. Use this when provisioning a new sending identity or automation actor.",
 			inputSchema: agentCreateInput.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -74,6 +78,7 @@ function registerAgentGetTool(options: ToolRegistrationOptions): void {
 		{
 			description: "Fetch one agent by ID. Use this to inspect current settings, metadata, and status for a single agent.",
 			inputSchema: agentGetInput.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -96,6 +101,7 @@ function registerAgentListTool(options: ToolRegistrationOptions): void {
 		{
 			description: "List agents with optional cursor pagination. Use this to discover agents available in the current account context.",
 			inputSchema: agentListInput.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -122,6 +128,7 @@ function registerAgentUpdateTool(options: ToolRegistrationOptions): void {
 		{
 			description: "Update an agent's name or metadata by ID. Use this when an agent needs renaming or profile metadata changes.",
 			inputSchema: agentUpdateInput.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -145,6 +152,7 @@ function registerAgentDeleteTool(options: ToolRegistrationOptions): void {
 		{
 			description: "Delete an agent by ID. Use this to remove deprecated or compromised agents that should no longer send messages.",
 			inputSchema: agentDeleteInput.shape,
+			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -167,6 +175,7 @@ function registerAgentRotateKeyTool(options: ToolRegistrationOptions): void {
 		{
 			description: "Rotate an agent API key and return the new key material. Use this when rotating credentials for security hygiene or after suspected exposure. Invalidates the previous key.",
 			inputSchema: agentRotateKeyInput.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,

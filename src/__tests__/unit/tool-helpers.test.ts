@@ -11,9 +11,11 @@ import {
 
 describe("tool helpers", () => {
 	test("toolSuccess returns MCP text content for string", () => {
-		expect(toolSuccess("done")).toEqual({
-			content: [{ type: "text", text: "done" }],
-		});
+		const result = toolSuccess("done");
+		expect(result.content).toEqual([{ type: "text", text: "done" }]);
+		// String inputs don't get structuredContent — spec requires it to be
+		// an object, and a bare string isn't one.
+		expect(result.structuredContent).toBeUndefined();
 	});
 
 	test("toolSuccess serializes object as pretty JSON", () => {
@@ -24,11 +26,29 @@ describe("tool helpers", () => {
 		expect(result.content[0]?.text).toContain("\"active\": true");
 	});
 
-	test("toolSuccess serializes arrays", () => {
+	test("toolSuccess emits structuredContent for object data (MCP spec 2025-11-25)", () => {
+		const result = toolSuccess({ id: "org_1", active: true });
+		expect(result.structuredContent).toEqual({ id: "org_1", active: true });
+	});
+
+	test("toolSuccess serializes arrays and wraps as { items }", () => {
 		const result = toolSuccess([1, 2, 3]);
-		expect(result).toEqual({
-			content: [{ type: "text", text: "[\n  1,\n  2,\n  3\n]" }],
-		});
+		expect(result.content).toEqual([
+			{ type: "text", text: "[\n  1,\n  2,\n  3\n]" },
+		]);
+		// Top-level arrays are wrapped because structuredContent must be an
+		// object per spec, not an array.
+		expect(result.structuredContent).toEqual({ items: [1, 2, 3] });
+	});
+
+	test("toolSuccess wraps primitives as { value }", () => {
+		expect(toolSuccess(42).structuredContent).toEqual({ value: 42 });
+		expect(toolSuccess(true).structuredContent).toEqual({ value: true });
+	});
+
+	test("toolSuccess omits structuredContent for null/undefined", () => {
+		expect(toolSuccess(null).structuredContent).toBeUndefined();
+		expect(toolSuccess(undefined).structuredContent).toBeUndefined();
 	});
 
 	test("toolError returns MCP error shape", () => {

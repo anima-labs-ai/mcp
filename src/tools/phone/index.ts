@@ -1,9 +1,14 @@
 import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
-	withErrorHandling,
-	toolSuccess,
+	deleteOutput,
+	listOutput,
+	objectOutput,
 	requireMasterKeyGuard,
+	sendOutput,
+	statusOutput,
+	toolSuccess,
+	withErrorHandling,
 } from "../../tool-helpers.js";
 
 type UnknownRecord = Record<string, unknown>;
@@ -127,6 +132,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Search available phone numbers for provisioning by geography or digit pattern. Use this to find suitable numbers before provisioning.",
 			inputSchema: phoneSearchSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -156,6 +162,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Provision a selected phone number for the agent and assign optional capabilities. Use this after choosing a number from phone_search. Note: provisioning a number costs money on the underlying carrier; do not call speculatively.",
 			inputSchema: phoneProvisionSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -179,6 +186,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Release a previously provisioned phone number so it is no longer assigned. Use this when cleaning up unused or temporary numbers. Released numbers go back to the carrier pool and cannot be recovered.",
 			inputSchema: phoneReleaseSchema.shape,
+			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -204,6 +212,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List all phone numbers assigned to a specific agent. Use this to review active inventory and assigned capabilities.",
 			inputSchema: phoneListSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -224,6 +233,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Send an SMS or MMS message to a destination phone number. Use this for outbound notifications or conversational messaging.",
 			inputSchema: phoneSendSmsSchema.shape,
+			outputSchema: sendOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -270,6 +280,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		{
 			description: "[DEPRECATED — use `voice_catalog`] List available voices for AI agent phone calls. Filter by tier (basic/premium), gender, or language. This alias is kept for backward compatibility and will be removed in a future release.",
 			inputSchema: voiceListSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -305,6 +316,7 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get a status-oriented view of provisioned numbers including capability flags. Use this to verify readiness and operational state for messaging workflows.",
 			inputSchema: phoneStatusSchema.shape,
+			outputSchema: statusOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,

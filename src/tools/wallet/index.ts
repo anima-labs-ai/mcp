@@ -1,9 +1,12 @@
 import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
-	withErrorHandling,
-	toolSuccess,
+	listOutput,
+	objectOutput,
 	requireMasterKeyGuard,
+	sendOutput,
+	toolSuccess,
+	withErrorHandling,
 } from "../../tool-helpers.js";
 
 const agentIdSchema = z.object({
@@ -93,6 +96,7 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Create a new wallet for an agent. Use this to provision a payment wallet for agent-to-agent transactions.",
 			inputSchema: createWalletSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -113,6 +117,7 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get wallet details for an agent including balance. Use this to check an agent's wallet status and balance.",
 			inputSchema: agentIdSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -131,6 +136,7 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Send a payment from an agent's wallet. Use this to transfer funds to another agent or address. Moves real money — caller must confirm intent.",
 			inputSchema: walletPaySchema.shape,
+			outputSchema: sendOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -151,6 +157,7 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Fetch a URL with automatic x402 payment negotiation via the agent's wallet API. Use this to access paid APIs and content. Settles real micropayments — cap via `maxPaymentAmount`.",
 			inputSchema: x402FetchSchema.shape,
+			outputSchema: sendOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -171,6 +178,7 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List wallet transactions for an agent. Use this to review payment history.",
 			inputSchema: walletTransactionsSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -193,6 +201,7 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Freeze an agent's wallet to prevent transactions. Use this to temporarily disable payments.",
 			inputSchema: agentIdSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -212,6 +221,7 @@ export function registerWalletTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Unfreeze an agent's wallet to re-enable transactions. Use this to restore payment capability.",
 			inputSchema: agentIdSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,

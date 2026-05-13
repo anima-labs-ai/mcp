@@ -1,9 +1,10 @@
 import { z } from "zod";
 import {
-	withErrorHandling,
-	toolSuccess,
+	objectOutput,
 	requireMasterKeyGuard,
+	toolSuccess,
 	type ToolRegistrationOptions,
+	withErrorHandling,
 } from "../../tool-helpers.js";
 
 const setupExtensionSchema = z.object({
@@ -46,6 +47,7 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 			"  Token TTL:   15m | 1h | session (default, until browser closes)",
 		].join("\n"),
 			inputSchema: setupExtensionSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -95,6 +97,7 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get the current extension auth settings for the organization.",
 			inputSchema: z.object({}).shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -132,6 +135,7 @@ export function registerExtensionTools(options: ToolRegistrationOptions): void {
 			"  - session: Until browser closes (default)",
 		].join("\n"),
 			inputSchema: updateExtensionSettingsSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,

@@ -1,9 +1,12 @@
 import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
-	withErrorHandling,
-	toolSuccess,
+	deleteOutput,
+	listOutput,
+	objectOutput,
 	requireMasterKeyGuard,
+	toolSuccess,
+	withErrorHandling,
 } from "../../tool-helpers.js";
 
 const registerAgentSchema = z.object({
@@ -89,6 +92,7 @@ export function registerRegistryTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Register an agent in the public registry for discovery. Use this to make an agent discoverable by other agents.",
 			inputSchema: registerAgentSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -108,6 +112,7 @@ export function registerRegistryTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Search the public Anima agent registry by name, description, or category. Returns ranked matches. Use this to discover third-party agents; for fetching details of a known DID use `lookup_agent` instead.",
 			inputSchema: searchRegistrySchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -129,6 +134,7 @@ export function registerRegistryTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Look up a specific registry-listed agent by DID. Use this when you already know the agent's DID; for free-text discovery use `search_registry` and for A2A protocol agent-card discovery use `discover_agent`.",
 			inputSchema: didSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -147,6 +153,7 @@ export function registerRegistryTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Update an agent's registry entry. Use this to change the public profile of a registered agent.",
 			inputSchema: updateRegistrySchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -167,6 +174,7 @@ export function registerRegistryTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Remove an agent from the public registry. Use this to make an agent no longer discoverable.",
 			inputSchema: didSchema.shape,
+			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,

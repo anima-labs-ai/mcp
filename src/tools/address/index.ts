@@ -1,9 +1,12 @@
 import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
-	withErrorHandling,
-	toolSuccess,
+	deleteOutput,
+	listOutput,
+	objectOutput,
 	requireMasterKeyGuard,
+	toolSuccess,
+	withErrorHandling,
 } from "../../tool-helpers.js";
 
 const addressTypeEnum = z.enum(["BILLING", "SHIPPING", "MAILING", "REGISTERED"]);
@@ -122,6 +125,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Create a new postal address for an agent. Use this to register billing, shipping, mailing, or registered addresses.",
 			inputSchema: createAddressSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -141,6 +145,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List all addresses for an agent, optionally filtered by type. Use this to review the agent's registered addresses.",
 			inputSchema: listAddressesSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -163,6 +168,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get full details for a specific address by ID. Use this to inspect a single address record.",
 			inputSchema: getAddressSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -182,6 +188,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Update fields on an existing address. Use this to correct or change address details.",
 			inputSchema: updateAddressSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -203,6 +210,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Delete an address from an agent. Use this to remove addresses that are no longer needed.",
 			inputSchema: deleteAddressSchema.shape,
+			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -223,6 +231,7 @@ export function registerAddressTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Validate an existing address against postal standards. Use this to verify address accuracy before shipping or official registration.",
 			inputSchema: validateAddressSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,

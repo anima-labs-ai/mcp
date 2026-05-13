@@ -1,8 +1,11 @@
 import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
-	withErrorHandling,
+	listOutput,
+	objectOutput,
+	sendOutput,
 	toolSuccess,
+	withErrorHandling,
 } from "../../tool-helpers.js";
 
 // 2026-05-13: message_send_email, message_get, message_list flagged as
@@ -154,6 +157,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 		{
 			description: `${DEPRECATED_PREFIX("email_send")} Send an outbound email through the unified messaging API when your workflow should create a tracked message record. Prefer \`email_send\` — it is the canonical email-send tool. This alias is kept for backward compatibility and will be removed in a future release.`,
 			inputSchema: messageSendEmailInput.shape,
+			outputSchema: sendOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -180,6 +184,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Send an outbound SMS through the unified messaging API and return the created message record. Use this for transactional texts or agent-driven mobile messaging.",
 			inputSchema: messageSendSmsInput.shape,
+			outputSchema: sendOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -198,6 +203,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 		{
 			description: `${DEPRECATED_PREFIX("email_get")} Fetch a specific message by ID, including channel metadata and delivery status. Prefer \`email_get\` for emails; this tool also resolves SMS messages but will be removed in a future release.`,
 			inputSchema: messageGetInput.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -217,6 +223,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 		{
 			description: `${DEPRECATED_PREFIX("email_list")} List messages with optional channel, direction, status, and pagination filters. Prefer \`email_list\` for emails; this tool also lists SMS but will be removed in a future release.`,
 			inputSchema: messageListInput.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -245,6 +252,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Run full-text search across messages on every channel (email and SMS) with optional channel and date constraints. Use this for cross-channel auditing; for email-only search use `email_search`.",
 			inputSchema: messageSearchInput.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -263,6 +271,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Search messages by semantic similarity using embeddings rather than exact keyword matching. Use this to find conceptually related messages even when wording differs.",
 			inputSchema: messageSemanticSearchInput.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -286,6 +295,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Search conversation threads by topic by combining semantic message retrieval with thread grouping. Use this to discover related discussions rather than individual messages.",
 			inputSchema: conversationSearchInput.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -377,6 +387,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Upload an attachment for an existing message by ID so downstream delivery or processing can reference the file. Use this when adding files after message creation.",
 			inputSchema: messageUploadAttachmentInput.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -399,6 +410,7 @@ export function registerMessageTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Retrieve a temporary download URL for a previously uploaded attachment. Use this when a client needs direct file access for preview or download.",
 			inputSchema: messageGetAttachmentInput.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,

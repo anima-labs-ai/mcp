@@ -1,9 +1,11 @@
 import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
-	withErrorHandling,
-	toolSuccess,
+	listOutput,
+	objectOutput,
 	requireMasterKeyGuard,
+	toolSuccess,
+	withErrorHandling,
 } from "../../tool-helpers.js";
 
 const agentIdSchema = z.object({
@@ -32,6 +34,7 @@ export function registerIdentityTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get the DID document for an agent. Use this to retrieve an agent's decentralized identifier.",
 			inputSchema: agentIdSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -50,6 +53,7 @@ export function registerIdentityTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Resolve a DID to its DID document. Use this to look up any DID regardless of which agent owns it.",
 			inputSchema: resolveDidSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -68,6 +72,7 @@ export function registerIdentityTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Rotate the cryptographic keys for an agent's DID. Use this to update key material for security. Invalidates the previous key pair.",
 			inputSchema: agentIdSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -87,6 +92,7 @@ export function registerIdentityTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List all verifiable credentials for an agent. Use this to see what credentials an agent holds.",
 			inputSchema: agentIdSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -105,6 +111,7 @@ export function registerIdentityTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Verify a JWT-encoded verifiable credential. Use this to check if a credential is valid and authentic.",
 			inputSchema: verifyCredentialSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -123,6 +130,7 @@ export function registerIdentityTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get the public agent card for an agent. Use this to retrieve the agent's public profile and capabilities.",
 			inputSchema: agentIdSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,

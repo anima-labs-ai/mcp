@@ -1,9 +1,13 @@
 import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
-	withErrorHandling,
-	toolSuccess,
+	deleteOutput,
+	listOutput,
+	objectOutput,
 	requireMasterKeyGuard,
+	sendOutput,
+	toolSuccess,
+	withErrorHandling,
 } from "../../tool-helpers.js";
 
 type UnknownRecord = Record<string, unknown>;
@@ -363,6 +367,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Send a new outbound email from the agent mailbox. Use this when you need to compose and deliver a message with optional CC, threading headers.",
 			inputSchema: emailSendSchema.shape,
+			outputSchema: sendOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -392,6 +397,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Retrieve one specific email by ID, including metadata and body fields. Use this before replying, forwarding, or inspecting message details.",
 			inputSchema: emailGetSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -411,6 +417,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List emails in inbox or another folder with pagination controls. Use this to browse recent messages and mailbox contents.",
 			inputSchema: emailListSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -435,6 +442,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Reply to an existing email thread by first loading the original message and setting threading headers. Use this when you need a proper in-thread response.",
 			inputSchema: emailReplySchema.shape,
+			outputSchema: sendOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -509,6 +517,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Forward an existing email to another recipient by loading the original content first. Use this to share a prior message while preserving context.",
 			inputSchema: emailForwardSchema.shape,
+			outputSchema: sendOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -564,6 +573,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Search mailbox emails by query text and structured filters like sender, recipient, subject, and date bounds. For cross-channel search (email + SMS) use `message_search`.",
 			inputSchema: emailSearchSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -582,6 +592,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Generate a compact digest of recent inbox messages with sender, subject, date, and snippet. Use this for quick triage without opening each email.",
 			inputSchema: inboxDigestSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -643,6 +654,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Mark a specific email message as read by ID.",
 			inputSchema: emailMarkReadSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -662,6 +674,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Mark a specific email message as unread by ID.",
 			inputSchema: emailMarkUnreadSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -681,6 +694,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Mark multiple email messages as read in one operation.",
 			inputSchema: batchMarkReadSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -701,6 +715,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Mark multiple email messages as unread in one operation.",
 			inputSchema: batchMarkUnreadSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -721,6 +736,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Delete multiple emails at once.",
 			inputSchema: batchDeleteSchema.shape,
+			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -741,6 +757,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Move multiple emails to a specified folder.",
 			inputSchema: batchMoveSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -762,6 +779,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Move a specific email message to a destination folder.",
 			inputSchema: emailMoveSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -784,6 +802,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Delete a specific email message by ID.",
 			inputSchema: emailDeleteSchema.shape,
+			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -803,6 +822,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List existing folders or create a new email folder.",
 			inputSchema: manageFoldersSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -834,6 +854,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List, create, or delete contacts used for email workflows.",
 			inputSchema: manageContactsSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -874,6 +895,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List, create, or delete email templates.",
 			inputSchema: manageTemplatesSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -917,6 +939,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Send an email by rendering and dispatching a stored template.",
 			inputSchema: templateSendSchema.shape,
+			outputSchema: sendOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,

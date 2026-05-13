@@ -1,9 +1,13 @@
 import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
-	withErrorHandling,
-	toolSuccess,
+	deleteOutput,
+	listOutput,
+	objectOutput,
 	requireMasterKeyGuard,
+	statusOutput,
+	toolSuccess,
+	withErrorHandling,
 } from "../../tool-helpers.js";
 
 /**
@@ -229,6 +233,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Provision a vault for an agent so credentials can be securely stored and managed. Use this before creating vault credentials for a newly onboarded agent.",
 			inputSchema: vaultProvisionSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -250,6 +255,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Deprovision an agent vault and remove its active vault assignment. Use this when retiring an agent or revoking vault access.",
 			inputSchema: vaultDeprovisionSchema.shape,
+			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -271,6 +277,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List credentials in an agent vault with optional type and search filters. Use this to browse stored secrets before reading, updating, or deleting entries.",
 			inputSchema: vaultListCredentialsSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -296,6 +303,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get a single vault credential by ID. Sensitive fields (passwords, tokens) are masked for security. Use vault_create_token with scope 'autofill' or 'proxy' to access raw credential data securely.",
 			inputSchema: vaultCredentialIdSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -315,6 +323,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Create a new credential in an agent vault with login, card, identity, or secure note content. Use this to store new secrets for agent automation tasks. The response is masked — callers that need the plaintext (e.g. to confirm a rotation) already have it in the request.",
 			inputSchema: vaultCreateCredentialSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -341,6 +350,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Update an existing vault credential by ID, including optional structured sections and metadata flags. Use this to rotate passwords or revise stored secret details. The response is masked — the caller already has the plaintext it just sent.",
 			inputSchema: vaultUpdateCredentialSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -361,6 +371,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Delete a credential from vault storage by ID. Use this to remove obsolete or compromised secrets from an agent vault.",
 			inputSchema: vaultCredentialIdSchema.shape,
+			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -380,6 +391,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Generate a secure password using configurable character class options and length. Use this when creating or rotating login credentials in vault.",
 			inputSchema: vaultGeneratePasswordSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -401,6 +413,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get the current TOTP code for a credential that has a TOTP secret configured. Use this for time-based one-time passcode login flows.",
 			inputSchema: vaultCredentialIdSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -428,6 +441,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Search vault credentials by keyword across names and content. Use this for targeted credential lookup when you know part of the name, URL, or username.",
 			inputSchema: vaultSearchSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -456,6 +470,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Force a sync of an agent's vault to ensure local and remote credential state are consistent. Use this after bulk credential changes or when stale data is suspected.",
 			inputSchema: vaultSyncSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -476,6 +491,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Get current vault status for an agent, including provisioning and readiness information. Use this to verify vault availability before secret operations.",
 			inputSchema: vaultStatusSchema.shape,
+			outputSchema: statusOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -517,6 +533,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Share a vault credential with another agent at a specified permission level. Use this to grant cross-agent access to secrets for collaborative workflows.",
 			inputSchema: vaultShareSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -549,6 +566,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "List credential shares granted by or received by an agent. Use this to audit cross-agent secret access.",
 			inputSchema: vaultListSharesSchema.shape,
+			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -582,6 +600,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Revoke a previously granted credential share by share ID. Use this to remove cross-agent access when it is no longer needed.",
 			inputSchema: vaultRevokeShareSchema.shape,
+			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,
@@ -628,6 +647,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Create a short-lived ephemeral token for a credential. The vtk_ token can be used in commands for CLI/extension auto-fill without exposing the raw secret to the LLM.",
 			inputSchema: vaultCreateTokenSchema.shape,
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: false,
@@ -670,6 +690,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		{
 			description: "Revoke all active ephemeral tokens for a credential. Use this to invalidate outstanding vtk_ tokens after a security event or credential rotation.",
 			inputSchema: vaultRevokeTokensSchema.shape,
+			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
 				destructiveHint: true,

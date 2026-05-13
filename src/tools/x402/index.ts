@@ -1,7 +1,7 @@
 import { x402Fetch } from "../../x402/x402-fetch.js";
 import { z } from "zod";
 
-import { toolSuccess, withErrorHandling, type ToolRegistrationOptions } from "../../tool-helpers.js";
+import { objectOutput, toolSuccess, withErrorHandling, type ToolRegistrationOptions } from "../../tool-helpers.js";
 
 const x402FetchSchema = z.object({
   url: z.string().url(),
@@ -28,6 +28,7 @@ export function registerX402Tools(
     {
       description: "Fetch an x402-protected resource using challenge-response settlement flow. Settles a real on-chain micropayment when not in sandbox mode — caps via budget_limit_cents.",
       inputSchema: x402FetchSchema.shape,
+      outputSchema: objectOutput(),
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,

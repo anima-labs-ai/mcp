@@ -19,7 +19,6 @@ import { registerAddressTools } from "./tools/address/index.js";
 import { registerAgentTools } from "./tools/agent/index.js";
 import { registerDomainTools } from "./tools/domain/index.js";
 import { registerEmailTools } from "./tools/email/index.js";
-import { registerIdentityTools } from "./tools/identity/index.js";
 import { registerMessageTools } from "./tools/message/index.js";
 import { registerOrganizationTools } from "./tools/organization/index.js";
 import { registerPhoneTools } from "./tools/phone/index.js";
@@ -43,7 +42,6 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
 		agent: registerAgentTools,
 		email: registerEmailTools,
 		domain: registerDomainTools,
-		identity: registerIdentityTools,
 		phone: registerPhoneTools,
 		pod: registerPodTools,
 		registry: registerRegistryTools,

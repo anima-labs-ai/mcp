@@ -1,9 +1,9 @@
 {
 	"name": "Anima MCP Server",
-	"description": "120 tools for AI agent identity — email, phone, voice, vault, addresses, webhooks",
+	"description": "118 tools for AI agents — email, phone, voice, vault, addresses, webhooks",
 	"version": "0.2.1",
 	"author": "Anima",
-	"tools": 120,
+	"tools": 118,
 	"domains": [
 		"identity",
 		"email",

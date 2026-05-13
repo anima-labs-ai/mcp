@@ -429,24 +429,4 @@ describe("tool behavior integration", () => {
 		expect(result.content[0]?.text).toContain("Original email payload is missing or invalid");
 	});
 
-	test("message_send_email maps text/html into unified message payload", async () => {
-		const handler = getTool(harness.registeredTools, "message_send_email");
-		await handler({
-			agentId: "agent_7",
-			to: "m@example.com",
-			subject: "Mapped",
-			html: "<p>H</p>",
-		});
-
-		expect(harness.client.post).toHaveBeenCalledWith(
-			"/messages/email",
-			expect.objectContaining({
-				agentId: "agent_7",
-				to: ["m@example.com"],
-				subject: "Mapped",
-				body: "<p>H</p>",
-				bodyHtml: "<p>H</p>",
-			}),
-		);
-	});
 });

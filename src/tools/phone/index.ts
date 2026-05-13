@@ -275,36 +275,6 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 	// 2026-05-13: voice_list_voices is a duplicate of voice_catalog (voice/index.ts)
 	// — same params, same endpoint /voice/catalog. Marked deprecated here.
 	// Same pattern as mcp-server PR #17. Remove on next major catalog change.
-	server.registerTool(
-		"voice_list_voices",
-		{
-			description: "[DEPRECATED — use `voice_catalog`] List available voices for AI agent phone calls. Filter by tier (basic/premium), gender, or language. This alias is kept for backward compatibility and will be removed in a future release.",
-			inputSchema: voiceListSchema.shape,
-			outputSchema: listOutput(),
-			annotations: {
-				readOnlyHint: true,
-				destructiveHint: false,
-				idempotentHint: true,
-				openWorldHint: true,
-			},
-		},
-		withErrorHandling(async (args, context) => {
-			console.warn(
-				`[deprecated-tool] alias "voice_list_voices" was invoked — migrate callers to "voice_catalog". The alias will be removed in a future release.`,
-			);
-			const params = new URLSearchParams();
-			if (args.tier) params.set("tier", args.tier);
-			if (args.gender) params.set("gender", args.gender);
-			if (args.language) params.set("language", args.language);
-
-			const path = params.toString()
-				? `/voice/catalog?${params}`
-				: "/voice/catalog";
-			const result = await context.client.get<unknown>(path);
-			return toolSuccess(result);
-		}, options.context),
-	);
-
 	const phoneStatusSchema = z.object({
 		agentId: z
 			.string()

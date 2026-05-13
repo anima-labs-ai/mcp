@@ -163,14 +163,10 @@ const expectedDomainTools = {
 		"phone_release",
 		"phone_list",
 		"phone_send_sms",
-		"voice_list_voices",
 		"phone_status",
 	],
 	message: [
-		"message_send_email",
 		"message_send_sms",
-		"message_get",
-		"message_list",
 		"message_search",
 		"message_semantic_search",
 		"conversation_search",
@@ -267,14 +263,14 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(9);
 	});
 
-	test("phone registers 7 tools", () => {
+	test("phone registers 6 tools", () => {
 		registerPhoneTools(harness.options);
-		expect(harness.registeredTools.size).toBe(7);
+		expect(harness.registeredTools.size).toBe(6);
 	});
 
-	test("message registers 9 tools", () => {
+	test("message registers 6 tools", () => {
 		registerMessageTools(harness.options);
-		expect(harness.registeredTools.size).toBe(9);
+		expect(harness.registeredTools.size).toBe(6);
 	});
 
 	test("webhook registers 12 tools", () => {
@@ -367,7 +363,7 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 97 tools", () => {
+	test("all domains combined register exactly 93 tools", () => {
 		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
@@ -379,7 +375,7 @@ describe("tool registration integration", () => {
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(97);
+		expect(harness.registeredTools.size).toBe(93);
 	});
 
 	test("all registered tool names follow snake_case", () => {

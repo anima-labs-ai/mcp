@@ -19,7 +19,6 @@ import { registerAddressTools } from "./tools/address/index.js";
 import { registerAgentTools } from "./tools/agent/index.js";
 import { registerDomainTools } from "./tools/domain/index.js";
 import { registerEmailTools } from "./tools/email/index.js";
-import { registerExtensionTools } from "./tools/extension/index.js";
 import { registerIdentityTools } from "./tools/identity/index.js";
 import { registerMessageTools } from "./tools/message/index.js";
 import { registerOrganizationTools } from "./tools/organization/index.js";
@@ -53,7 +52,6 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
 		webhook: registerWebhookTools,
 		utility: registerUtilityTools,
 		voice: registerVoiceTools,
-		extension: registerExtensionTools,
 	};
 
 /**

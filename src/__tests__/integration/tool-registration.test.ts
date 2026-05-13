@@ -119,7 +119,6 @@ const expectedDomainTools = {
 	agent: [
 		"agent_create",
 		"agent_get",
-		"agent_list",
 		"agent_update",
 		"agent_delete",
 		"agent_rotate_key",
@@ -236,9 +235,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(6);
 	});
 
-	test("agent registers 6 tools", () => {
+	test("agent registers 5 tools", () => {
 		registerAgentTools(harness.options);
-		expect(harness.registeredTools.size).toBe(6);
+		expect(harness.registeredTools.size).toBe(5);
 	});
 
 	test("email registers 19 tools", () => {
@@ -339,7 +338,7 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 84 tools", () => {
+	test("all domains combined register exactly 83 tools", () => {
 		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
@@ -350,7 +349,7 @@ describe("tool registration integration", () => {
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(84);
+		expect(harness.registeredTools.size).toBe(83);
 	});
 
 	test("all registered tool names follow snake_case", () => {

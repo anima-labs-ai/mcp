@@ -18,8 +18,6 @@ import type { ToolRegistrationOptions } from "./tool-helpers.js";
 import { registerAgentTools } from "./tools/agent/index.js";
 import { registerDomainTools } from "./tools/domain/index.js";
 import { registerEmailTools } from "./tools/email/index.js";
-import { registerMessageTools } from "./tools/message/index.js";
-import { registerOrganizationTools } from "./tools/organization/index.js";
 import { registerPhoneTools } from "./tools/phone/index.js";
 import { registerUtilityTools } from "./tools/utility/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
@@ -33,13 +31,11 @@ const VALID_KEY_PREFIXES = ["ak_", "mk_", "sk_live_", "sk_test_"];
 /** Map of tool group names to their registration functions */
 const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
 	{
-		org: registerOrganizationTools,
 		agent: registerAgentTools,
 		email: registerEmailTools,
 		domain: registerDomainTools,
 		phone: registerPhoneTools,
 		vault: registerVaultTools,
-		message: registerMessageTools,
 		utility: registerUtilityTools,
 		voice: registerVoiceTools,
 	};

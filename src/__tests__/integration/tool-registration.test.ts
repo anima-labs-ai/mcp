@@ -3,12 +3,10 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ApiClient } from "../../api-client.js";
 import type { ToolContext, ToolRegistrationOptions } from "../../tool-helpers.js";
 import { MASTER_KEY_TOOLS } from "../../config.js";
-import { registerOrganizationTools } from "../../tools/organization/index.js";
 import { registerAgentTools } from "../../tools/agent/index.js";
 import { registerEmailTools } from "../../tools/email/index.js";
 import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
-import { registerMessageTools } from "../../tools/message/index.js";
 import { registerUtilityTools } from "../../tools/utility/index.js";
 import { registerVoiceTools } from "../../tools/voice/index.js";
 import { registerResources } from "../../resources/index.js";
@@ -107,14 +105,6 @@ function createRegistrationHarness(hasMasterKey = true): {
 }
 
 const expectedDomainTools = {
-	organization: [
-		"org_create",
-		"org_get",
-		"org_update",
-		"org_delete",
-		"org_rotate_key",
-		"org_list",
-	],
 	agent: [
 		"agent_create",
 		"agent_get",
@@ -137,11 +127,8 @@ const expectedDomainTools = {
 		"domain_add",
 		"domain_verify",
 		"domain_get",
-		"domain_list",
 		"domain_delete",
-		"domain_dns_records",
 		"domain_update",
-		"domain_deliverability",
 		"domain_zone_file",
 	],
 	phone: [
@@ -151,13 +138,6 @@ const expectedDomainTools = {
 		"phone_list",
 		"phone_send_sms",
 		"phone_status",
-	],
-	message: [
-		"message_send_sms",
-		"message_search",
-		"message_semantic_search",
-		"conversation_search",
-		"message_upload_attachment",
 	],
 	utility: [
 		"whoami",
@@ -204,11 +184,6 @@ describe("tool registration integration", () => {
 		harness = createRegistrationHarness(true);
 	});
 
-	test("organization registers 6 tools", () => {
-		registerOrganizationTools(harness.options);
-		expect(harness.registeredTools.size).toBe(6);
-	});
-
 	test("agent registers 4 tools", () => {
 		registerAgentTools(harness.options);
 		expect(harness.registeredTools.size).toBe(4);
@@ -219,9 +194,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(10);
 	});
 
-	test("domain registers 9 tools", () => {
+	test("domain registers 6 tools", () => {
 		registerDomainTools(harness.options);
-		expect(harness.registeredTools.size).toBe(9);
+		expect(harness.registeredTools.size).toBe(6);
 	});
 
 	test("phone registers 6 tools", () => {
@@ -229,21 +204,14 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(6);
 	});
 
-	test("message registers 5 tools", () => {
-		registerMessageTools(harness.options);
-		expect(harness.registeredTools.size).toBe(5);
-	});
-
 	test("utility registers 11 tools", () => {
 		registerUtilityTools(harness.options);
 		expect(harness.registeredTools.size).toBe(11);
 	});
 
-	test("organization tool names match expected snake_case names", () => {
-		registerOrganizationTools(harness.options);
-		expect([...harness.registeredTools.keys()].sort()).toEqual(
-			[...expectedDomainTools.organization].sort(),
-		);
+	test("voice registers 9 tools", () => {
+		registerVoiceTools(harness.options);
+		expect(harness.registeredTools.size).toBe(9);
 	});
 
 	test("agent tool names match expected snake_case names", () => {
@@ -274,23 +242,11 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("message tool names match expected snake_case names", () => {
-		registerMessageTools(harness.options);
-		expect([...harness.registeredTools.keys()].sort()).toEqual(
-			[...expectedDomainTools.message].sort(),
-		);
-	});
-
 	test("utility tool names match expected snake_case names", () => {
 		registerUtilityTools(harness.options);
 		expect([...harness.registeredTools.keys()].sort()).toEqual(
 			[...expectedDomainTools.utility].sort(),
 		);
-	});
-
-	test("voice registers 9 tools", () => {
-		registerVoiceTools(harness.options);
-		expect(harness.registeredTools.size).toBe(9);
 	});
 
 	test("voice tool names match expected snake_case names", () => {
@@ -300,26 +256,22 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 60 tools", () => {
-		registerOrganizationTools(harness.options);
+	test("all domains combined register exactly 46 tools", () => {
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
-		registerMessageTools(harness.options);
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(60);
+		expect(harness.registeredTools.size).toBe(46);
 	});
 
 	test("all registered tool names follow snake_case", () => {
-		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
-		registerMessageTools(harness.options);
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
@@ -329,10 +281,6 @@ describe("tool registration integration", () => {
 	});
 
 	test("descriptions are non-empty for all tools in each domain", () => {
-		registerOrganizationTools(harness.options);
-		assertDescriptionsNonEmpty(expectedDomainTools.organization, harness.registeredTools);
-
-		harness = createRegistrationHarness(true);
 		registerAgentTools(harness.options);
 		assertDescriptionsNonEmpty(expectedDomainTools.agent, harness.registeredTools);
 
@@ -347,10 +295,6 @@ describe("tool registration integration", () => {
 		harness = createRegistrationHarness(true);
 		registerPhoneTools(harness.options);
 		assertDescriptionsNonEmpty(expectedDomainTools.phone, harness.registeredTools);
-
-		harness = createRegistrationHarness(true);
-		registerMessageTools(harness.options);
-		assertDescriptionsNonEmpty(expectedDomainTools.message, harness.registeredTools);
 
 		harness = createRegistrationHarness(true);
 		registerUtilityTools(harness.options);
@@ -369,12 +313,10 @@ describe("tool registration integration", () => {
 	});
 
 	test("MASTER_KEY_TOOLS are a subset of registered tools", () => {
-		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
-		registerMessageTools(harness.options);
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 

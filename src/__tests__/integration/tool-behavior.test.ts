@@ -335,55 +335,6 @@ describe("tool behavior integration", () => {
 		expect(result.content[0]?.text).toBe("Error: network down");
 	});
 
-	test("batch_mark_read sends array of IDs", async () => {
-		const handler = getTool(harness.registeredTools, "batch_mark_read");
-		await handler({ ids: ["m1", "m2", "m3"] });
-		expect(harness.client.post).toHaveBeenCalledWith("/v1/email/batch/read", {
-			ids: ["m1", "m2", "m3"],
-		});
-	});
-
-	test("contacts_manage list action calls GET /contacts", async () => {
-		const handler = getTool(harness.registeredTools, "contacts_manage");
-		await handler({ action: "list" });
-		expect(harness.client.get).toHaveBeenCalledWith("/v1/contacts");
-	});
-
-	test("contacts_manage create action calls POST /contacts", async () => {
-		const handler = getTool(harness.registeredTools, "contacts_manage");
-		await handler({ action: "create", email: "c@example.com", name: "Contact" });
-		expect(harness.client.post).toHaveBeenCalledWith("/v1/contacts", {
-			email: "c@example.com",
-			name: "Contact",
-		});
-	});
-
-	test("inbox_digest formats response with summary and count", async () => {
-		harness.client.get.mockResolvedValueOnce({
-			items: [
-				{
-					from: "alice@example.com",
-					subject: "Status",
-					date: "2026-01-01T00:00:00Z",
-					snippet: "Update ready",
-				},
-			],
-		});
-
-		const handler = getTool(harness.registeredTools, "inbox_digest");
-		const result = await handler({ limit: 1 });
-		const payload = parseTextPayload(result) as {
-			count: number;
-			items: Array<{ from: string; subject: string; date: string; snippet: string }>;
-			summary: string;
-		};
-
-		expect(payload.count).toBe(1);
-		expect(payload.items[0]?.from).toBe("alice@example.com");
-		expect(payload.summary).toContain("alice@example.com");
-		expect(payload.summary).toContain("Status");
-	});
-
 	test("tool handlers return MCP text content format", async () => {
 		const handler = getTool(harness.registeredTools, "email_send");
 		const result = await handler({ to: "x@example.com", subject: "S", text: "T" });

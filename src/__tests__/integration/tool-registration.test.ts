@@ -124,23 +124,10 @@ const expectedDomainTools = {
 	email: [
 		"email_send",
 		"email_get",
-		"email_list",
 		"email_reply",
 		"email_forward",
-		"email_search",
-		"inbox_digest",
-		"email_mark_read",
-		"email_mark_unread",
-		"batch_mark_read",
-		"batch_mark_unread",
-		"batch_delete",
-		"batch_move",
-		"email_move",
-		"email_delete",
-		"folders_manage",
-		"contacts_manage",
-		"templates_manage",
-		"template_send",
+		"email_thread_get",
+		"email_attachment_get",
 	],
 	domain: [
 		"domain_add",
@@ -167,7 +154,6 @@ const expectedDomainTools = {
 		"message_semantic_search",
 		"conversation_search",
 		"message_upload_attachment",
-		"message_get_attachment",
 	],
 	utility: [
 		"whoami",
@@ -224,9 +210,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(4);
 	});
 
-	test("email registers 19 tools", () => {
+	test("email registers 6 tools", () => {
 		registerEmailTools(harness.options);
-		expect(harness.registeredTools.size).toBe(19);
+		expect(harness.registeredTools.size).toBe(6);
 	});
 
 	test("domain registers 9 tools", () => {
@@ -239,9 +225,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(6);
 	});
 
-	test("message registers 6 tools", () => {
+	test("message registers 5 tools", () => {
 		registerMessageTools(harness.options);
-		expect(harness.registeredTools.size).toBe(6);
+		expect(harness.registeredTools.size).toBe(5);
 	});
 
 	test("utility registers 11 tools", () => {
@@ -310,7 +296,7 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 70 tools", () => {
+	test("all domains combined register exactly 56 tools", () => {
 		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
@@ -320,7 +306,7 @@ describe("tool registration integration", () => {
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(70);
+		expect(harness.registeredTools.size).toBe(56);
 	});
 
 	test("all registered tool names follow snake_case", () => {

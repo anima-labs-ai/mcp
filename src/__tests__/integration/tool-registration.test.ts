@@ -128,6 +128,10 @@ const expectedDomainTools = {
 		"email_forward",
 		"email_thread_get",
 		"email_attachment_get",
+		"email_draft_create",
+		"email_draft_get",
+		"email_draft_send",
+		"email_draft_delete",
 	],
 	domain: [
 		"domain_add",
@@ -210,9 +214,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(4);
 	});
 
-	test("email registers 6 tools", () => {
+	test("email registers 10 tools", () => {
 		registerEmailTools(harness.options);
-		expect(harness.registeredTools.size).toBe(6);
+		expect(harness.registeredTools.size).toBe(10);
 	});
 
 	test("domain registers 9 tools", () => {
@@ -296,7 +300,7 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 56 tools", () => {
+	test("all domains combined register exactly 60 tools", () => {
 		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
@@ -306,7 +310,7 @@ describe("tool registration integration", () => {
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(56);
+		expect(harness.registeredTools.size).toBe(60);
 	});
 
 	test("all registered tool names follow snake_case", () => {

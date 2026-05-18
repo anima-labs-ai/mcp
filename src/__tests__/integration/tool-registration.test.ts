@@ -7,6 +7,7 @@ import { registerAgentTools } from "../../tools/agent/index.js";
 import { registerEmailTools } from "../../tools/email/index.js";
 import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
+import { registerSmsTools } from "../../tools/sms/index.js";
 import { registerUtilityTools } from "../../tools/utility/index.js";
 import { registerVoiceTools } from "../../tools/voice/index.js";
 import { registerResources } from "../../resources/index.js";
@@ -136,8 +137,13 @@ const expectedDomainTools = {
 		"phone_provision",
 		"phone_release",
 		"phone_list",
-		"phone_send_sms",
 		"phone_status",
+	],
+	sms: [
+		"sms_get",
+		"sms_thread_list",
+		"sms_thread_get",
+		"sms_send",
 	],
 	utility: [
 		"whoami",
@@ -199,9 +205,14 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(6);
 	});
 
-	test("phone registers 6 tools", () => {
+	test("phone registers 5 tools", () => {
 		registerPhoneTools(harness.options);
-		expect(harness.registeredTools.size).toBe(6);
+		expect(harness.registeredTools.size).toBe(5);
+	});
+
+	test("sms registers 4 tools", () => {
+		registerSmsTools(harness.options);
+		expect(harness.registeredTools.size).toBe(4);
 	});
 
 	test("utility registers 11 tools", () => {
@@ -242,6 +253,13 @@ describe("tool registration integration", () => {
 		);
 	});
 
+	test("sms tool names match expected snake_case names", () => {
+		registerSmsTools(harness.options);
+		expect([...harness.registeredTools.keys()].sort()).toEqual(
+			[...expectedDomainTools.sms].sort(),
+		);
+	});
+
 	test("utility tool names match expected snake_case names", () => {
 		registerUtilityTools(harness.options);
 		expect([...harness.registeredTools.keys()].sort()).toEqual(
@@ -256,15 +274,16 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 46 tools", () => {
+	test("all domains combined register exactly 49 tools", () => {
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
+		registerSmsTools(harness.options);
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(46);
+		expect(harness.registeredTools.size).toBe(49);
 	});
 
 	test("all registered tool names follow snake_case", () => {
@@ -272,6 +291,7 @@ describe("tool registration integration", () => {
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
+		registerSmsTools(harness.options);
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
@@ -297,6 +317,10 @@ describe("tool registration integration", () => {
 		assertDescriptionsNonEmpty(expectedDomainTools.phone, harness.registeredTools);
 
 		harness = createRegistrationHarness(true);
+		registerSmsTools(harness.options);
+		assertDescriptionsNonEmpty(expectedDomainTools.sms, harness.registeredTools);
+
+		harness = createRegistrationHarness(true);
 		registerUtilityTools(harness.options);
 		assertDescriptionsNonEmpty(expectedDomainTools.utility, harness.registeredTools);
 
@@ -317,6 +341,7 @@ describe("tool registration integration", () => {
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
+		registerSmsTools(harness.options);
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 

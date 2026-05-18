@@ -19,6 +19,7 @@ import { registerAgentTools } from "./tools/agent/index.js";
 import { registerDomainTools } from "./tools/domain/index.js";
 import { registerEmailTools } from "./tools/email/index.js";
 import { registerPhoneTools } from "./tools/phone/index.js";
+import { registerSmsTools } from "./tools/sms/index.js";
 import { registerUtilityTools } from "./tools/utility/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
 // OAuth Apps / Connections removed from MCP surface on 2026-04-25 (credential-broker handles third-party auth via vault + vtk_ tokens).
@@ -35,6 +36,7 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
 		email: registerEmailTools,
 		domain: registerDomainTools,
 		phone: registerPhoneTools,
+		sms: registerSmsTools,
 		vault: registerVaultTools,
 		utility: registerUtilityTools,
 		voice: registerVoiceTools,

@@ -6,6 +6,7 @@ import { registerAgentTools } from "../../tools/agent/index.js";
 import { registerEmailTools } from "../../tools/email/index.js";
 import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
+import { registerSmsTools } from "../../tools/sms/index.js";
 import { registerUtilityTools } from "../../tools/utility/index.js";
 
 type ToolResult = {
@@ -87,6 +88,7 @@ function createHarness(hasMasterKey = true): {
 		registerEmailTools(options);
 		registerDomainTools(options);
 		registerPhoneTools(options);
+		registerSmsTools(options);
 		registerUtilityTools(options);
 	};
 

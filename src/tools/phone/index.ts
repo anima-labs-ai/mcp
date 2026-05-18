@@ -1,3 +1,16 @@
+/**
+ * Phone Number MCP Tools (npm package)
+ *
+ * 3 tools for phone-number management. The "phone number" resource is
+ * distinct from the SMS messaging surface (see tools/sms/) and from the
+ * voice-call surface (see tools/voice/) — this group is purely about the
+ * lifecycle of E.164 numbers attached to an agent.
+ *
+ *   - phone_number_list:      list numbers (optionally filtered by agent)
+ *   - phone_number_provision: provision a new number from the carrier pool
+ *   - phone_number_release:   release a number back to the carrier
+ */
+
 import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
@@ -5,82 +18,18 @@ import {
 	listOutput,
 	objectOutput,
 	requireMasterKeyGuard,
-	statusOutput,
 	toolSuccess,
 	withErrorHandling,
 } from "../../tool-helpers.js";
 
-type UnknownRecord = Record<string, unknown>;
-
-function asRecord(value: unknown): UnknownRecord | undefined {
-	return typeof value === "object" && value !== null
-		? (value as UnknownRecord)
-		: undefined;
-}
-
-function toPhoneStatusList(payload: unknown): Array<{
-	phoneNumber: string;
-	status: string;
-	capabilities: string[];
-}> {
-	const root = asRecord(payload);
-	const candidates = [
-		payload,
-		root?.items,
-		root?.numbers,
-		root?.data,
-	];
-
-	for (const candidate of candidates) {
-		if (!Array.isArray(candidate)) continue;
-
-		return candidate
-			.map((entry) => asRecord(entry))
-			.filter((entry): entry is UnknownRecord => Boolean(entry))
-			.map((entry) => {
-				const phoneNumber =
-					typeof entry.phoneNumber === "string"
-						? entry.phoneNumber
-						: typeof entry.number === "string"
-							? entry.number
-							: "unknown";
-				const status =
-					typeof entry.status === "string" ? entry.status : "unknown";
-				const capabilities = Array.isArray(entry.capabilities)
-					? entry.capabilities.filter(
-							(value): value is string => typeof value === "string",
-						)
-					: [];
-
-				return { phoneNumber, status, capabilities };
-			});
-	}
-
-	return [];
-}
-
-const phoneSearchSchema = z.object({
-	countryCode: z
+const phoneNumberListSchema = z.object({
+	agentId: z
 		.string()
 		.optional()
-		.describe("ISO 3166-1 alpha-2 country code to search in (default US)."),
-	areaCode: z
-		.string()
-		.optional()
-		.describe("Optional local area code filter for matching numbers."),
-	capabilities: z
-		.array(z.enum(["sms", "mms", "voice"]))
-		.optional()
-		.describe("Optional required capabilities for the phone numbers."),
-	limit: z
-		.number()
-		.int()
-		.positive()
-		.optional()
-		.describe("Optional maximum number of available results to return (max 50)."),
+		.describe("Filter by agent. Omit to list all phone numbers in the workspace."),
 });
 
-const phoneProvisionSchema = z.object({
+const phoneNumberProvisionSchema = z.object({
 	agentId: z
 		.string()
 		.describe("Agent ID to assign the provisioned phone number to."),
@@ -95,10 +44,10 @@ const phoneProvisionSchema = z.object({
 	capabilities: z
 		.array(z.enum(["sms", "mms", "voice"]))
 		.optional()
-		.describe("Optional capability list such as sms, mms, or voice for the number."),
+		.describe("Optional capability list (sms, mms, voice) the number must support."),
 });
 
-const phoneReleaseSchema = z.object({
+const phoneNumberReleaseSchema = z.object({
 	agentId: z
 		.string()
 		.describe("Agent ID that currently owns the phone number."),
@@ -111,10 +60,11 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 	const { server } = options;
 
 	server.registerTool(
-		"phone_search",
+		"phone_number_list",
 		{
-			description: "Search available phone numbers for provisioning by geography or digit pattern. Use this to find suitable numbers before provisioning.",
-			inputSchema: phoneSearchSchema.shape,
+			description:
+				"List provisioned phone numbers, optionally filtered by agent. Each result includes status and capability flags (sms/mms/voice).",
+			inputSchema: phoneNumberListSchema.shape,
 			outputSchema: listOutput(),
 			annotations: {
 				readOnlyHint: true,
@@ -125,26 +75,19 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
-			if (args.countryCode) params.set("countryCode", args.countryCode);
-			if (args.areaCode) params.set("areaCode", args.areaCode);
-			if (args.capabilities) {
-				for (const cap of args.capabilities) {
-					params.append("capabilities[]", cap);
-				}
-			}
-			if (args.limit !== undefined) params.set("limit", String(args.limit));
-
-			const path = params.toString() ? `/v1/phone/search?${params}` : "/v1/phone/search";
+			if (args.agentId) params.set("agentId", args.agentId);
+			const path = params.toString() ? `/v1/phone/numbers?${params}` : "/v1/phone/numbers";
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
 	);
 
 	server.registerTool(
-		"phone_provision",
+		"phone_number_provision",
 		{
-			description: "Provision a selected phone number for the agent and assign optional capabilities. Use this after choosing a number from phone_search. Note: provisioning a number costs money on the underlying carrier; do not call speculatively.",
-			inputSchema: phoneProvisionSchema.shape,
+			description:
+				"Provision a new phone number from the carrier pool and assign it to an agent. Note: provisioning a number costs money on the underlying carrier; do not call speculatively. Use countryCode / areaCode / capabilities to constrain selection.",
+			inputSchema: phoneNumberProvisionSchema.shape,
 			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: false,
@@ -165,10 +108,11 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"phone_release",
+		"phone_number_release",
 		{
-			description: "Release a previously provisioned phone number so it is no longer assigned. Use this when cleaning up unused or temporary numbers. Released numbers go back to the carrier pool and cannot be recovered.",
-			inputSchema: phoneReleaseSchema.shape,
+			description:
+				"Release a previously provisioned phone number back to the carrier pool. Use this when cleaning up unused numbers. Released numbers cannot be recovered.",
+			inputSchema: phoneNumberReleaseSchema.shape,
 			outputSchema: deleteOutput(),
 			annotations: {
 				readOnlyHint: false,
@@ -181,83 +125,6 @@ export function registerPhoneTools(options: ToolRegistrationOptions): void {
 			requireMasterKeyGuard(context);
 			const result = await context.client.post<unknown>("/v1/phone/release", args);
 			return toolSuccess(result);
-		}, options.context),
-	);
-
-	const phoneListSchema = z.object({
-		agentId: z
-			.string()
-			.describe("Agent ID whose phone numbers to list."),
-	});
-
-	server.registerTool(
-		"phone_list",
-		{
-			description: "List all phone numbers assigned to a specific agent. Use this to review active inventory and assigned capabilities.",
-			inputSchema: phoneListSchema.shape,
-			outputSchema: listOutput(),
-			annotations: {
-				readOnlyHint: true,
-				destructiveHint: false,
-				idempotentHint: true,
-				openWorldHint: true,
-			},
-		},
-		withErrorHandling(async (args, context) => {
-			const params = new URLSearchParams({ agentId: args.agentId });
-			const result = await context.client.get<unknown>(`/v1/phone/numbers?${params}`);
-			return toolSuccess(result);
-		}, options.context),
-	);
-
-
-	// ── Voice catalog tool ──
-
-	const voiceListSchema = z.object({
-		tier: z
-			.enum(["basic", "premium"])
-			.optional()
-			.describe("Filter by voice tier (basic or premium)."),
-		gender: z
-			.enum(["male", "female", "neutral"])
-			.optional()
-			.describe("Filter by voice gender."),
-		language: z
-			.string()
-			.optional()
-			.describe("Filter by language code or prefix (e.g. 'en', 'en-US', 'fr-FR')."),
-	});
-
-	// 2026-05-13: voice_list_voices is a duplicate of voice_catalog (voice/index.ts)
-	// — same params, same endpoint /voice/catalog. Marked deprecated here.
-	// Same pattern as mcp-server PR #17. Remove on next major catalog change.
-	const phoneStatusSchema = z.object({
-		agentId: z
-			.string()
-			.describe("Agent ID to check phone status for."),
-	});
-
-	server.registerTool(
-		"phone_status",
-		{
-			description: "Get a status-oriented view of provisioned numbers including capability flags. Use this to verify readiness and operational state for messaging workflows.",
-			inputSchema: phoneStatusSchema.shape,
-			outputSchema: statusOutput(),
-			annotations: {
-				readOnlyHint: true,
-				destructiveHint: false,
-				idempotentHint: true,
-				openWorldHint: true,
-			},
-		},
-		withErrorHandling(async (args, context) => {
-			const params = new URLSearchParams({ agentId: args.agentId });
-			const result = await context.client.get<unknown>(`/v1/phone/numbers?${params}`);
-			const items = toPhoneStatusList(result);
-			return toolSuccess({
-				count: items.length,
-				items,
-			});
 		}, options.context),
 	);
 }

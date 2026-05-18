@@ -133,11 +133,9 @@ const expectedDomainTools = {
 		"domain_zone_file",
 	],
 	phone: [
-		"phone_search",
-		"phone_provision",
-		"phone_release",
-		"phone_list",
-		"phone_status",
+		"phone_number_list",
+		"phone_number_provision",
+		"phone_number_release",
 	],
 	sms: [
 		"sms_get",
@@ -205,9 +203,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(6);
 	});
 
-	test("phone registers 5 tools", () => {
+	test("phone registers 3 tools", () => {
 		registerPhoneTools(harness.options);
-		expect(harness.registeredTools.size).toBe(5);
+		expect(harness.registeredTools.size).toBe(3);
 	});
 
 	test("sms registers 4 tools", () => {
@@ -274,7 +272,7 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 49 tools", () => {
+	test("all domains combined register exactly 47 tools", () => {
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
@@ -283,7 +281,7 @@ describe("tool registration integration", () => {
 		registerUtilityTools(harness.options);
 		registerVoiceTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(49);
+		expect(harness.registeredTools.size).toBe(47);
 	});
 
 	test("all registered tool names follow snake_case", () => {

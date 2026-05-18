@@ -174,12 +174,18 @@ describe("tool behavior integration", () => {
 		);
 	});
 
-	test("phone_search builds correct query string", async () => {
-		const handler = getTool(harness.registeredTools, "phone_search");
-		await handler({ countryCode: "US", areaCode: "415", limit: 5 });
+	test("phone_number_list with agentId builds query string", async () => {
+		const handler = getTool(harness.registeredTools, "phone_number_list");
+		await handler({ agentId: "agent_1" });
 		expect(harness.client.get).toHaveBeenCalledWith(
-			"/v1/phone/search?countryCode=US&areaCode=415&limit=5",
+			"/v1/phone/numbers?agentId=agent_1",
 		);
+	});
+
+	test("phone_number_list without agentId omits query string", async () => {
+		const handler = getTool(harness.registeredTools, "phone_number_list");
+		await handler({});
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/phone/numbers");
 	});
 
 	test("whoami calls GET /orgs/me", async () => {

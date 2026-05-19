@@ -28,26 +28,13 @@ import {
 } from "../../tool-helpers.js";
 
 const smsGetSchema = z.object({
-	id: z
-		.string()
-		.optional()
-		.describe(
-			"SMS message ID. If provided, returns that one SMS. If omitted, returns a paginated list of SMS messages (each includes `threadId`).",
-		),
-	agentId: z
-		.string()
-		.optional()
-		.describe("Filter SMS by agent ID when listing. Ignored when `id` is provided."),
-	cursor: z
-		.string()
-		.optional()
-		.describe("Pagination cursor when listing. Ignored when `id` is provided."),
-	limit: z
-		.number()
-		.int()
-		.positive()
-		.optional()
-		.describe("Max SMS messages when listing. Ignored when `id` is provided."),
+	id: z.string().describe("SMS message ID."),
+});
+
+const smsListSchema = z.object({
+	agentId: z.string().optional().describe("Filter SMS by agent ID."),
+	cursor: z.string().optional().describe("Pagination cursor from a previous list response."),
+	limit: z.number().int().positive().optional().describe("Max SMS messages to return."),
 });
 
 const smsThreadListSchema = z.object({
@@ -167,7 +154,7 @@ export function registerSmsTools(options: ToolRegistrationOptions): void {
 		"sms_get",
 		{
 			description:
-				"Fetch one SMS by ID, or list SMS messages. Pass `id` to inspect a single SMS (includes its `threadId` for joining the conversation). Omit `id` to list — filter by `agentId`, paginate with `cursor` + `limit`.",
+				"Fetch full detail for a single SMS by ID (includes its `threadId` for joining the conversation). Use sms_list to browse multiple SMS messages.",
 			inputSchema: smsGetSchema.shape,
 			outputSchema: objectOutput(),
 			annotations: {
@@ -178,12 +165,28 @@ export function registerSmsTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			if (args.id) {
-				const result = await context.client.get<unknown>(
-					`/v1/messages/${encodeURIComponent(args.id)}`,
-				);
-				return toolSuccess(result);
-			}
+			const result = await context.client.get<unknown>(
+				`/v1/messages/${encodeURIComponent(args.id)}`,
+			);
+			return toolSuccess(result);
+		}, options.context),
+	);
+
+	server.registerTool(
+		"sms_list",
+		{
+			description:
+				"List SMS messages with optional filters. Each result includes its `threadId` for joining the conversation. Use sms_get for full single-message detail.",
+			inputSchema: smsListSchema.shape,
+			outputSchema: listOutput(),
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
+		},
+		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
 			params.set("channel", "SMS");
 			if (args.agentId) params.set("agentId", args.agentId);

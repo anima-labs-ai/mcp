@@ -115,15 +115,15 @@ describe("tool behavior integration", () => {
 		harness.registerAll();
 	});
 
-	test("agent_get without id calls GET /agents with query params", async () => {
-		const handler = getTool(harness.registeredTools, "agent_get");
+	test("agent_list calls GET /agents with query params", async () => {
+		const handler = getTool(harness.registeredTools, "agent_list");
 		await handler({ cursor: "abc", limit: 10 });
 		expect(harness.client.get).toHaveBeenCalledWith("/v1/agents?cursor=abc&limit=10");
 	});
 
-	test("agent_get with id calls GET /agents/{id} and ignores cursor/limit", async () => {
+	test("agent_get calls GET /agents/{id} (+ addresses)", async () => {
 		const handler = getTool(harness.registeredTools, "agent_get");
-		await handler({ id: "agent_1", cursor: "abc", limit: 10 });
+		await handler({ id: "agent_1" });
 		expect(harness.client.get).toHaveBeenCalledWith("/v1/agents/agent_1");
 	});
 

@@ -23,7 +23,7 @@ import { registerSmsTools } from "./tools/sms/index.js";
 import { registerUtilityTools } from "./tools/utility/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
 // OAuth Apps / Connections removed from MCP surface on 2026-04-25 (credential-broker handles third-party auth via vault + vtk_ tokens).
-import { registerVoiceTools } from "./tools/voice/index.js";
+import { registerPhoneCallTools } from "./tools/phone_call/index.js";
 
 export { marketplaceMetadata } from "./marketplace.js";
 
@@ -39,7 +39,7 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
 		sms: registerSmsTools,
 		vault: registerVaultTools,
 		utility: registerUtilityTools,
-		voice: registerVoiceTools,
+		phone_call: registerPhoneCallTools,
 	};
 
 /**

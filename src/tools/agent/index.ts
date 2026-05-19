@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import {
 	deleteOutput,
+	listOutput,
 	objectOutput,
 	toolSuccess,
 	withErrorHandling,
@@ -46,22 +47,12 @@ const agentCreateInput = z.object({
 });
 
 const agentGetInput = z.object({
-	id: z
-		.string()
-		.optional()
-		.describe(
-			"Agent ID. If provided, returns that one agent including its addresses[]. If omitted, returns a paginated list of agents (addresses not included to avoid N+1 round-trips).",
-		),
-	cursor: z
-		.string()
-		.optional()
-		.describe("Pagination cursor from a previous list response. Ignored when `id` is provided."),
-	limit: z
-		.number()
-		.int()
-		.positive()
-		.optional()
-		.describe("Maximum number of agents to return when listing. Ignored when `id` is provided."),
+	id: z.string().describe("Agent ID. Returns full agent detail including addresses, emailIdentities, and phoneIdentities."),
+});
+
+const agentListInput = z.object({
+	cursor: z.string().optional().describe("Pagination cursor from a previous list response."),
+	limit: z.number().int().positive().optional().describe("Maximum number of agents to return."),
 });
 
 const agentUpdateInput = z.object({
@@ -128,7 +119,7 @@ function registerAgentGetTool(options: ToolRegistrationOptions): void {
 		"agent_get",
 		{
 			description:
-				"Fetch one agent by ID (including its addresses), or list all agents. Pass `id` to inspect a single agent — the response includes its postal addresses alongside emailIdentities and phoneIdentities. Omit `id` to list agents in the current account context — `cursor` and `limit` apply only when listing; addresses are not included in list mode.",
+				"Fetch full detail for a single agent by ID: settings, metadata, status, and the full addresses[] / emailIdentities[] / phoneIdentities[] lists. Use agent_list to browse multiple agents.",
 			inputSchema: agentGetInput.shape,
 			outputSchema: objectOutput(),
 			annotations: {
@@ -139,16 +130,36 @@ function registerAgentGetTool(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			if (args.id) {
-				const [agent, addressResp] = await Promise.all([
-					context.client.get(`/v1/agents/${args.id}`),
-					context.client.get(
-						`/v1/addresses?agentId=${encodeURIComponent(args.id)}`,
-					),
-				]);
-				const addresses = (addressResp as { items?: unknown[] })?.items ?? addressResp;
-				return toolSuccess({ ...(agent as object), addresses });
-			}
+			const [agent, addressResp] = await Promise.all([
+				context.client.get(`/v1/agents/${args.id}`),
+				context.client.get(
+					`/v1/addresses?agentId=${encodeURIComponent(args.id)}`,
+				),
+			]);
+			const addresses = (addressResp as { items?: unknown[] })?.items ?? addressResp;
+			return toolSuccess({ ...(agent as object), addresses });
+		}, options.context),
+	);
+}
+
+function registerAgentListTool(options: ToolRegistrationOptions): void {
+	const { server } = options;
+
+	server.registerTool(
+		"agent_list",
+		{
+			description:
+				"List agents in the current account context with cursor pagination. Returns a lightweight per-agent record (addresses are NOT included to avoid N+1 round-trips). Use agent_get for full single-agent detail.",
+			inputSchema: agentListInput.shape,
+			outputSchema: listOutput(),
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
+		},
+		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
 			if (args.cursor) params.set("cursor", args.cursor);
 			if (args.limit) params.set("limit", String(args.limit));
@@ -237,6 +248,7 @@ function registerAgentDeleteTool(options: ToolRegistrationOptions): void {
 export function registerAgentTools(options: ToolRegistrationOptions): void {
 	registerAgentCreateTool(options);
 	registerAgentGetTool(options);
+	registerAgentListTool(options);
 	registerAgentUpdateTool(options);
 	registerAgentDeleteTool(options);
 }

@@ -9,6 +9,8 @@ import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
 import { registerSmsTools } from "../../tools/sms/index.js";
 import { registerUtilityTools } from "../../tools/utility/index.js";
+import { registerVaultTools } from "../../tools/vault/index.js";
+import { registerWebhookTools } from "../../tools/webhook/index.js";
 import { registerPhoneCallTools } from "../../tools/phone_call/index.js";
 import { registerResources } from "../../resources/index.js";
 
@@ -149,6 +151,22 @@ const expectedDomainTools = {
 		"sms_send",
 	],
 	utility: ["account_overview", "usage_overview"],
+	vault: [
+		"vault_credential_list",
+		"vault_credential_get",
+		"vault_credential_create",
+		"vault_credential_update",
+		"vault_credential_delete",
+		"vault_credential_search",
+		"vault_credential_get_totp",
+	],
+	webhook: [
+		"webhook_get",
+		"webhook_list",
+		"webhook_set",
+		"webhook_delete",
+		"webhook_test",
+	],
 	phone_call: [
 		"phone_call",
 		"phone_call_list",
@@ -208,6 +226,16 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(2);
 	});
 
+	test("vault registers 7 tools", () => {
+		registerVaultTools(harness.options);
+		expect(harness.registeredTools.size).toBe(7);
+	});
+
+	test("webhook registers 5 tools", () => {
+		registerWebhookTools(harness.options);
+		expect(harness.registeredTools.size).toBe(5);
+	});
+
 	test("phone_call registers 6 tools", () => {
 		registerPhoneCallTools(harness.options);
 		expect(harness.registeredTools.size).toBe(6);
@@ -255,6 +283,20 @@ describe("tool registration integration", () => {
 		);
 	});
 
+	test("vault tool names match expected snake_case names", () => {
+		registerVaultTools(harness.options);
+		expect([...harness.registeredTools.keys()].sort()).toEqual(
+			[...expectedDomainTools.vault].sort(),
+		);
+	});
+
+	test("webhook tool names match expected snake_case names", () => {
+		registerWebhookTools(harness.options);
+		expect([...harness.registeredTools.keys()].sort()).toEqual(
+			[...expectedDomainTools.webhook].sort(),
+		);
+	});
+
 	test("phone_call tool names match expected snake_case names", () => {
 		registerPhoneCallTools(harness.options);
 		expect([...harness.registeredTools.keys()].sort()).toEqual(
@@ -262,16 +304,18 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 40 tools", () => {
+	test("all domains combined register exactly 52 tools", () => {
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
 		registerSmsTools(harness.options);
 		registerUtilityTools(harness.options);
+		registerVaultTools(harness.options);
+		registerWebhookTools(harness.options);
 		registerPhoneCallTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(40);
+		expect(harness.registeredTools.size).toBe(52);
 	});
 
 	test("all registered tool names follow snake_case", () => {
@@ -281,6 +325,8 @@ describe("tool registration integration", () => {
 		registerPhoneTools(harness.options);
 		registerSmsTools(harness.options);
 		registerUtilityTools(harness.options);
+		registerVaultTools(harness.options);
+		registerWebhookTools(harness.options);
 		registerPhoneCallTools(harness.options);
 
 		for (const name of harness.registeredTools.keys()) {
@@ -313,6 +359,14 @@ describe("tool registration integration", () => {
 		assertDescriptionsNonEmpty(expectedDomainTools.utility, harness.registeredTools);
 
 		harness = createRegistrationHarness(true);
+		registerVaultTools(harness.options);
+		assertDescriptionsNonEmpty(expectedDomainTools.vault, harness.registeredTools);
+
+		harness = createRegistrationHarness(true);
+		registerWebhookTools(harness.options);
+		assertDescriptionsNonEmpty(expectedDomainTools.webhook, harness.registeredTools);
+
+		harness = createRegistrationHarness(true);
 		registerPhoneCallTools(harness.options);
 		assertDescriptionsNonEmpty(expectedDomainTools.phone_call, harness.registeredTools);
 	});
@@ -331,6 +385,8 @@ describe("tool registration integration", () => {
 		registerPhoneTools(harness.options);
 		registerSmsTools(harness.options);
 		registerUtilityTools(harness.options);
+		registerVaultTools(harness.options);
+		registerWebhookTools(harness.options);
 		registerPhoneCallTools(harness.options);
 
 		for (const toolName of MASTER_KEY_TOOLS) {

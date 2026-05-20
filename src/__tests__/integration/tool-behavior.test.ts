@@ -211,12 +211,6 @@ describe("tool behavior integration", () => {
 		);
 	});
 
-	test("health_check calls GET /health", async () => {
-		const handler = getTool(harness.registeredTools, "health_check");
-		await handler({});
-		expect(harness.client.get).toHaveBeenCalledWith("/health");
-	});
-
 	test("master-key guarded tools return error without master key", async () => {
 		const noMasterHarness = createHarness(false);
 		noMasterHarness.registerAll();

@@ -148,19 +148,7 @@ const expectedDomainTools = {
 		"sms_thread_get",
 		"sms_send",
 	],
-	utility: [
-		"account_overview",
-		"usage_overview",
-		"health_check",
-		"pending_manage",
-		"followups_check",
-		"agent_message",
-		"messages_check",
-		"email_wait",
-		"agent_call",
-		"spam_manage",
-		"tasks_check",
-	],
+	utility: ["account_overview", "usage_overview"],
 	phone_call: [
 		"phone_call",
 		"phone_call_list",
@@ -215,9 +203,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(5);
 	});
 
-	test("utility registers 11 tools", () => {
+	test("utility registers 2 tools", () => {
 		registerUtilityTools(harness.options);
-		expect(harness.registeredTools.size).toBe(11);
+		expect(harness.registeredTools.size).toBe(2);
 	});
 
 	test("phone_call registers 6 tools", () => {
@@ -274,7 +262,7 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 49 tools", () => {
+	test("all domains combined register exactly 40 tools", () => {
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
@@ -283,7 +271,7 @@ describe("tool registration integration", () => {
 		registerUtilityTools(harness.options);
 		registerPhoneCallTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(49);
+		expect(harness.registeredTools.size).toBe(40);
 	});
 
 	test("all registered tool names follow snake_case", () => {

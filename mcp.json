@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/modelcontextprotocol/registry/main/schema.json",
   "name": "@anima-labs/mcp",
   "displayName": "Anima — AI Agent Identity Platform",
-  "description": "Give your AI agents real-world capabilities: email, voice, phone, SMS, credential vault, and more. 66 tools for autonomous agent operations.",
+  "description": "Give your AI agents real-world capabilities: email, voice, phone, SMS, credential vault, and more. 57 tools for autonomous agent operations.",
   "version": "0.1.0",
   "author": {
     "name": "Anima Labs",
@@ -28,11 +28,11 @@
     "identity"
   ],
   "tools": {
-    "count": 66,
+    "count": 57,
     "groups": [
       "agent", "domain",
       "email", "phone", "sms",
-      "utility", "vault", "voice"
+      "utility", "vault", "phone_call"
     ]
   }
 }

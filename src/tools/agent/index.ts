@@ -189,14 +189,27 @@ function registerAgentUpdateTool(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const { id, name, metadata, addAddress, updateAddress, deleteAddressId } = args;
-			const result: Record<string, unknown> = {};
+			const addressOps: Record<string, unknown> = {};
 
 			if (name !== undefined || metadata !== undefined) {
-				result.agent = await context.client.patch(`/v1/agents/${id}`, { name, metadata });
+				// 2026-05-20: API replaces metadata on PATCH. Shim a merge in
+				// the MCP layer so callers get idiomatic "set these keys"
+				// semantics instead of "replace the whole map".
+				let mergedMetadata: Record<string, string> | undefined = metadata;
+				if (metadata !== undefined) {
+					const current = await context.client.get<{ metadata?: Record<string, string> }>(
+						`/v1/agents/${id}`,
+					);
+					mergedMetadata = { ...(current?.metadata ?? {}), ...metadata };
+				}
+				await context.client.patch(`/v1/agents/${id}`, {
+					name,
+					metadata: mergedMetadata,
+				});
 			}
 
 			if (addAddress) {
-				result.addedAddress = await context.client.post("/v1/addresses", {
+				addressOps.addedAddress = await context.client.post("/v1/addresses", {
 					agentId: id,
 					...addAddress,
 				});
@@ -204,7 +217,7 @@ function registerAgentUpdateTool(options: ToolRegistrationOptions): void {
 
 			if (updateAddress) {
 				const { addressId, ...fields } = updateAddress;
-				result.updatedAddress = await context.client.put(
+				addressOps.updatedAddress = await context.client.put(
 					`/v1/addresses/${encodeURIComponent(addressId)}`,
 					fields,
 				);
@@ -214,10 +227,18 @@ function registerAgentUpdateTool(options: ToolRegistrationOptions): void {
 				await context.client.delete(
 					`/v1/addresses/${encodeURIComponent(deleteAddressId)}`,
 				);
-				result.deletedAddressId = deleteAddressId;
+				addressOps.deletedAddressId = deleteAddressId;
 			}
 
-			return toolSuccess(result);
+			// 2026-05-20: re-fetch the agent at the end so the response shape
+			// matches agent_get (bare agent record). Previously this returned
+			// `{ agent: {...}, addedAddress?, ... }` which was awkward for the
+			// common name/metadata-only update path.
+			const agent = await context.client.get<Record<string, unknown>>(`/v1/agents/${id}`);
+			return toolSuccess({
+				...agent,
+				...(Object.keys(addressOps).length > 0 ? { addressOps } : {}),
+			});
 		}, options.context),
 	);
 }

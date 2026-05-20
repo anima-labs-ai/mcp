@@ -213,10 +213,11 @@ export function registerSmsTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			// Client-side aggregation: fetch a batch of recent SMS messages then
-			// group by threadId. messageFetchLimit caps how many messages we pull
-			// — adequate for pre-launch volumes; replace with a server-side
-			// /v1/sms/threads endpoint when SMS traffic grows past it.
-			const messageFetchLimit = 500;
+			// group by threadId. 2026-05-20: was 500 — hit the API's max(100)
+			// limit and 400'd. 100 still gives enough breadth for the common
+			// inbox; replace with a server-side /v1/sms/threads endpoint when
+			// SMS traffic grows past it.
+			const messageFetchLimit = 100;
 			const params = new URLSearchParams();
 			params.set("channel", "SMS");
 			params.set("limit", String(messageFetchLimit));

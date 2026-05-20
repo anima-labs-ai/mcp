@@ -67,7 +67,7 @@ const phoneCallListSchema = z.object({
 });
 
 const phoneCallIdSchema = z.object({
-	callId: z.string().describe("The call ID."),
+	id: z.string().describe("The call ID."),
 });
 
 const voicesListSchema = z.object({
@@ -158,7 +158,7 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(
-				`/v1/voice/calls/${encodeURIComponent(args.callId)}`,
+				`/v1/voice/calls/${encodeURIComponent(args.id)}`,
 			);
 			return toolSuccess(result);
 		}, options.context),
@@ -180,7 +180,7 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(
-				`/v1/voice/calls/${encodeURIComponent(args.callId)}/transcript`,
+				`/v1/voice/calls/${encodeURIComponent(args.id)}/transcript`,
 			);
 			return toolSuccess(result);
 		}, options.context),
@@ -202,7 +202,7 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const result = await context.client.get<unknown>(
-				`/v1/voice/calls/${encodeURIComponent(args.callId)}/recording`,
+				`/v1/voice/calls/${encodeURIComponent(args.id)}/recording`,
 			);
 			return toolSuccess(result);
 		}, options.context),

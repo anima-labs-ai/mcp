@@ -152,6 +152,7 @@ const expectedDomainTools = {
 	],
 	workspace: ["account_overview", "usage_overview"],
 	vault: [
+		"vault_provision",
 		"vault_credential_list",
 		"vault_credential_get",
 		"vault_credential_create",
@@ -226,9 +227,9 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(2);
 	});
 
-	test("vault registers 7 tools", () => {
+	test("vault registers 8 tools", () => {
 		registerVaultTools(harness.options);
-		expect(harness.registeredTools.size).toBe(7);
+		expect(harness.registeredTools.size).toBe(8);
 	});
 
 	test("webhook registers 5 tools", () => {
@@ -304,7 +305,7 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 52 tools", () => {
+	test("all domains combined register exactly 53 tools", () => {
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
@@ -315,7 +316,7 @@ describe("tool registration integration", () => {
 		registerWebhookTools(harness.options);
 		registerPhoneCallTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(52);
+		expect(harness.registeredTools.size).toBe(53);
 	});
 
 	test("all registered tool names follow snake_case", () => {

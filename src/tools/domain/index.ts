@@ -63,7 +63,9 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		withErrorHandling(async (args, context) => {
 			requireMasterKeyGuard(context);
 			const path = `/v1/domains/${encodeURIComponent(args.id)}/verify`;
-			const result = await context.client.post<unknown>(path, {});
+			// API contract has `domainId` in the body redundantly with the
+			// path `id`. Pass it through transparently.
+			const result = await context.client.post<unknown>(path, { domainId: args.id });
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -134,22 +136,22 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		}, options.context),
 	);
 
+	// 2026-05-20: previously had catchAll + autoVerify, which the API
+	// doesn't accept. The actual updatable field is feedbackEnabled.
 	const domainUpdateSchema = z.object({
 		id: z.string().describe("Unique domain ID."),
-		catchAll: z
+		feedbackEnabled: z
 			.boolean()
 			.optional()
-			.describe("Enable or disable catch-all for this domain."),
-		autoVerify: z
-			.boolean()
-			.optional()
-			.describe("Enable or disable automatic verification."),
+			.describe(
+				"Enable or disable bounce + complaint feedback processing for this domain.",
+			),
 	});
 
 	server.registerTool(
 		"domain_update",
 		{
-			description: "Update configuration for a domain, such as catch-all behavior or auto-verify settings. Use this to adjust domain behavior after initial setup.",
+			description: "Update mutable configuration on a domain. Currently the only updatable field is `feedbackEnabled` — toggle SES bounce and complaint feedback processing on or off.",
 			inputSchema: domainUpdateSchema.shape,
 			outputSchema: objectOutput(),
 			annotations: {

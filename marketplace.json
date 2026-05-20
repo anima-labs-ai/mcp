@@ -1,9 +1,9 @@
 {
 	"name": "Anima MCP Server",
-	"description": "153 tools for AI agent identity — email, phone, voice, vault, addresses, agent-to-agent messaging",
+	"description": "52 tools for AI agents — email, phone, sms, voice, vault, webhooks",
 	"version": "0.2.1",
 	"author": "Anima",
-	"tools": 153,
+	"tools": 52,
 	"domains": [
 		"identity",
 		"email",
@@ -12,11 +12,7 @@
 		"voice",
 		"messaging",
 		"vault",
-		"addresses",
-		"webhooks",
-		"security",
-		"x402",
-		"agent-to-agent"
+		"webhooks"
 	],
 	"transport": ["stdio", "http"],
 	"install": "npx @anima-labs/mcp --api-key=mk_xxx"

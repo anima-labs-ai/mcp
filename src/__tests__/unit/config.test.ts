@@ -79,10 +79,10 @@ describe("loadConfig", () => {
 	});
 
 	test("MASTER_KEY_TOOLS contains expected sensitive tool names", () => {
-		expect(MASTER_KEY_TOOLS.has("org_create")).toBe(true);
-		expect(MASTER_KEY_TOOLS.has("org_delete")).toBe(true);
-		expect(MASTER_KEY_TOOLS.has("agent_rotate_key")).toBe(true);
-		expect(MASTER_KEY_TOOLS.has("security_update_policy")).toBe(true);
+		expect(MASTER_KEY_TOOLS.has("agent_delete")).toBe(true);
+		expect(MASTER_KEY_TOOLS.has("domain_create")).toBe(true);
+		expect(MASTER_KEY_TOOLS.has("domain_delete")).toBe(true);
+		expect(MASTER_KEY_TOOLS.has("domain_verify")).toBe(true);
 		expect(MASTER_KEY_TOOLS.has("email_send")).toBe(false);
 	});
 

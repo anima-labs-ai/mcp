@@ -8,6 +8,22 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ApiClient } from "./api-client.js";
 import { MASTER_KEY_TOOLS } from "./config.js";
 
+/**
+ * MCP tool annotation hints per spec 2025-11-25. All optional; clients use
+ * these to bucket tools (read-only vs. write vs. destructive) in UI
+ * permission flows. NOT a security boundary — the spec calls these "hints"
+ * and warns clients to treat them as untrusted unless the server is
+ * trusted. We surface them so LLM clients with permission gating
+ * (Claude Desktop, Cursor) get accurate categorization without parsing
+ * descriptions.
+ */
+export interface ToolAnnotations {
+	readOnlyHint?: boolean;
+	destructiveHint?: boolean;
+	idempotentHint?: boolean;
+	openWorldHint?: boolean;
+}
+
 /** Context passed to each tool handler */
 export interface ToolContext {
 	client: ApiClient;
@@ -35,14 +51,45 @@ export function requiresMasterKey(toolName: string): boolean {
 
 /**
  * Format a successful tool response for MCP.
+ *
+ * Emits BOTH unstructured text content AND `structuredContent` per the
+ * MCP spec 2025-11-25:
+ *   - `content` — text block, preserved for clients that don't yet read
+ *     `structuredContent`. Required for backward compatibility.
+ *   - `structuredContent` — JSON object that conforms to the tool's
+ *     declared `outputSchema`. Required by spec whenever outputSchema is
+ *     set on the tool. Lets clients typecheck and consume responses
+ *     without re-parsing the text block.
+ *
+ * Wrapping rule: API responses are usually objects (or arrays). The MCP
+ * spec requires `structuredContent` to be a JSON object — not an array
+ * or scalar. So:
+ *   - object → return as-is in structuredContent
+ *   - array  → wrap as `{ items: [...] }` so it satisfies "object"
+ *   - string → no structuredContent (use cases: pure prose responses)
+ *   - other  → wrap as `{ value: ... }`
  */
-export function toolSuccess(
-	data: unknown,
-): { content: Array<{ type: "text"; text: string }> } {
+export function toolSuccess(data: unknown): {
+	content: Array<{ type: "text"; text: string }>;
+	structuredContent?: Record<string, unknown>;
+} {
 	const text =
 		typeof data === "string" ? data : JSON.stringify(data, null, 2);
-	return {
+	const base = {
 		content: [{ type: "text" as const, text }],
+	};
+	if (data === null || data === undefined || typeof data === "string") {
+		return base;
+	}
+	if (Array.isArray(data)) {
+		return { ...base, structuredContent: { items: data } };
+	}
+	if (typeof data === "object") {
+		return { ...base, structuredContent: data as Record<string, unknown> };
+	}
+	return {
+		...base,
+		structuredContent: { value: data as unknown },
 	};
 }
 
@@ -94,6 +141,102 @@ export function requireMasterKeyGuard(context: ToolContext): void {
 	if (!context.hasMasterKey) {
 		throw new Error(
 			"This operation requires ANIMA_MASTER_KEY to be set.",
+		);
+	}
+}
+
+/**
+ * Register a tool under multiple names so the LLM can find it via either
+ * the namespaced canonical name (`email_send`) or natural-language verb
+ * forms (`send_email`). Only the canonical name's description appears
+ * verbatim; aliases get a "(alias of <canonical>)" suffix so the model
+ * understands they resolve to the same handler.
+ *
+ * Why aliases at all:
+ *   LLMs hallucinate tool names from common-sense templates. When the
+ *   user says "send an email", the model often emits `send_email` as
+ *   the call. With no alias, that call fails with "tool not found" and
+ *   the model has to retry. With the alias, it just works.
+ *
+ *   We pay a small cost in tool-list bloat (the names show up twice in
+ *   the catalog) but accept it because the alternative — model retries
+ *   on a wrong-name guess — costs more in latency and tokens per turn.
+ *
+ * Deprecation flow:
+ *   When a tool is renamed (e.g. `anima_email_send` → `email_send`), pass
+ *   the old names in `aliases` AND set `deprecate: true`. Aliases will:
+ *     - Render with `[DEPRECATED — use <canonical>]` prefix in the
+ *       tool description so any consumer browsing tools/list sees the
+ *       migration path immediately.
+ *     - Log a structured warning to stderr on every invocation so we can
+ *       grep server logs for usage and decide when removal is safe.
+ *     - Otherwise behave identically to the canonical (same handler).
+ *
+ *   Removing aliases without a deprecation window is a breaking change for
+ *   every consumer that pinned to the old name in code, prompts, or docs.
+ *   Always go through this helper for renames.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: Mirrors McpServer.registerTool's overloaded signature; preserving stricter inference would require copying ~80 lines of generics from the SDK.
+export function registerToolWithAliases(
+	server: McpServer,
+	canonical: string,
+	aliases: readonly string[],
+	config: {
+		title?: string;
+		description: string;
+		// biome-ignore lint/suspicious/noExplicitAny: Zod-shape passthrough.
+		inputSchema: any;
+		/**
+		 * Optional JSON Schema (Zod-shape form, same convention as
+		 * `inputSchema`) describing the structured tool output. When set,
+		 * the canonical + every alias get the same schema, and the MCP SDK
+		 * validates `structuredContent` against it on the wire. See
+		 * `output-schemas.ts` for reusable shapes.
+		 */
+		// biome-ignore lint/suspicious/noExplicitAny: Same — Zod-shape passthrough.
+		outputSchema?: any;
+		annotations?: ToolAnnotations;
+		deprecate?: boolean;
+	},
+	// biome-ignore lint/suspicious/noExplicitAny: Same.
+	handler: any,
+): void {
+	server.registerTool(
+		canonical,
+		{
+			...(config.title ? { title: config.title } : {}),
+			description: config.description,
+			inputSchema: config.inputSchema,
+			...(config.outputSchema ? { outputSchema: config.outputSchema } : {}),
+			...(config.annotations ? { annotations: config.annotations } : {}),
+		},
+		handler,
+	);
+	for (const alias of aliases) {
+		const description = config.deprecate
+			? `[DEPRECATED — use \`${canonical}\`] ${config.description} This alias is kept for backward compatibility and will be removed in a future release.`
+			: `${config.description} (alias of \`${canonical}\`)`;
+
+		// biome-ignore lint/suspicious/noExplicitAny: Handler signature passthrough.
+		const wrappedHandler: any = config.deprecate
+			? // biome-ignore lint/suspicious/noExplicitAny: Same.
+				(...args: any[]) => {
+					console.warn(
+						`[deprecated-tool] alias "${alias}" was invoked — migrate callers to "${canonical}". The alias will be removed in a future release.`,
+					);
+					return handler(...args);
+				}
+			: handler;
+
+		server.registerTool(
+			alias,
+			{
+				description,
+				inputSchema: config.inputSchema,
+				...(config.outputSchema ? { outputSchema: config.outputSchema } : {}),
+				...(config.annotations ? { annotations: config.annotations } : {}),
+			},
+			wrappedHandler,
 		);
 	}
 }

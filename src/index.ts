@@ -15,26 +15,16 @@ import {
 import { cancelAllFollowUps } from "./pending-followup.js";
 import { registerResources } from "./resources/index.js";
 import type { ToolRegistrationOptions } from "./tool-helpers.js";
-import { registerA2aTools } from "./tools/a2a/index.js";
-import { registerAddressTools } from "./tools/address/index.js";
 import { registerAgentTools } from "./tools/agent/index.js";
 import { registerDomainTools } from "./tools/domain/index.js";
 import { registerEmailTools } from "./tools/email/index.js";
-import { registerExtensionTools } from "./tools/extension/index.js";
-import { registerIdentityTools } from "./tools/identity/index.js";
-import { registerMessageTools } from "./tools/message/index.js";
-import { registerOrganizationTools } from "./tools/organization/index.js";
 import { registerPhoneTools } from "./tools/phone/index.js";
-import { registerPodTools } from "./tools/pod/index.js";
-import { registerRegistryTools } from "./tools/registry/index.js";
-import { registerSecurityTools } from "./tools/security/index.js";
-import { registerUtilityTools } from "./tools/utility/index.js";
+import { registerSmsTools } from "./tools/sms/index.js";
+import { registerWorkspaceTools } from "./tools/workspace/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
 // OAuth Apps / Connections removed from MCP surface on 2026-04-25 (credential-broker handles third-party auth via vault + vtk_ tokens).
-import { registerVoiceTools } from "./tools/voice/index.js";
-import { registerWalletTools } from "./tools/wallet/index.js";
 import { registerWebhookTools } from "./tools/webhook/index.js";
-import { registerX402Tools } from "./tools/x402/index.js";
+import { registerPhoneCallTools } from "./tools/phone_call/index.js";
 
 export { marketplaceMetadata } from "./marketplace.js";
 
@@ -43,25 +33,15 @@ const VALID_KEY_PREFIXES = ["ak_", "mk_", "sk_live_", "sk_test_"];
 /** Map of tool group names to their registration functions */
 const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
 	{
-		address: registerAddressTools,
-		org: registerOrganizationTools,
 		agent: registerAgentTools,
 		email: registerEmailTools,
 		domain: registerDomainTools,
-		identity: registerIdentityTools,
 		phone: registerPhoneTools,
-		pod: registerPodTools,
-		registry: registerRegistryTools,
+		sms: registerSmsTools,
 		vault: registerVaultTools,
-		wallet: registerWalletTools,
-		message: registerMessageTools,
 		webhook: registerWebhookTools,
-		security: registerSecurityTools,
-		utility: registerUtilityTools,
-		x402: registerX402Tools,
-		a2a: registerA2aTools,
-		voice: registerVoiceTools,
-		extension: registerExtensionTools,
+		workspace: registerWorkspaceTools,
+		phone_call: registerPhoneCallTools,
 	};
 
 /**

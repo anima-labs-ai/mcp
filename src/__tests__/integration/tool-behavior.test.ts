@@ -2,15 +2,14 @@ import { describe, test, expect, beforeEach, mock } from "bun:test";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ApiClient } from "../../api-client.js";
 import type { ToolContext, ToolRegistrationOptions } from "../../tool-helpers.js";
-import { registerOrganizationTools } from "../../tools/organization/index.js";
 import { registerAgentTools } from "../../tools/agent/index.js";
 import { registerEmailTools } from "../../tools/email/index.js";
 import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
-import { registerMessageTools } from "../../tools/message/index.js";
+import { registerSmsTools } from "../../tools/sms/index.js";
+import { registerVaultTools } from "../../tools/vault/index.js";
 import { registerWebhookTools } from "../../tools/webhook/index.js";
-import { registerSecurityTools } from "../../tools/security/index.js";
-import { registerUtilityTools } from "../../tools/utility/index.js";
+import { registerWorkspaceTools } from "../../tools/workspace/index.js";
 
 type ToolResult = {
 	content: Array<{ type: "text"; text: string }>;
@@ -87,15 +86,14 @@ function createHarness(hasMasterKey = true): {
 	const options: ToolRegistrationOptions = { server, context };
 
 	const registerAll = (): void => {
-		registerOrganizationTools(options);
 		registerAgentTools(options);
 		registerEmailTools(options);
 		registerDomainTools(options);
 		registerPhoneTools(options);
-		registerMessageTools(options);
+		registerSmsTools(options);
+		registerVaultTools(options);
 		registerWebhookTools(options);
-		registerSecurityTools(options);
-		registerUtilityTools(options);
+		registerWorkspaceTools(options);
 	};
 
 	return { registeredTools, client, registerAll };
@@ -113,15 +111,6 @@ function getTool(
 	return tool.handler;
 }
 
-function parseTextPayload(result: ToolResult): unknown {
-	const text = result.content[0]?.text ?? "";
-	try {
-		return JSON.parse(text) as unknown;
-	} catch {
-		return text;
-	}
-}
-
 describe("tool behavior integration", () => {
 	let harness: ReturnType<typeof createHarness>;
 
@@ -130,42 +119,30 @@ describe("tool behavior integration", () => {
 		harness.registerAll();
 	});
 
-	test("org_create calls POST /orgs with master key and body", async () => {
-		const handler = getTool(harness.registeredTools, "org_create");
-		const result = await handler({ name: "Test Org" });
-
-		expect(result.content[0]?.type).toBe("text");
-		expect(harness.client.post).toHaveBeenCalledWith(
-			"/orgs",
-			expect.objectContaining({ name: "Test Org" }),
-			{ useMasterKey: true },
-		);
-	});
-
-	test("org_get calls GET /orgs/{id}", async () => {
-		const handler = getTool(harness.registeredTools, "org_get");
-		await handler({ id: "org_1" });
-		expect(harness.client.get).toHaveBeenCalledWith("/orgs/org_1");
-	});
-
 	test("agent_list calls GET /agents with query params", async () => {
 		const handler = getTool(harness.registeredTools, "agent_list");
 		await handler({ cursor: "abc", limit: 10 });
-		expect(harness.client.get).toHaveBeenCalledWith("/agents?cursor=abc&limit=10");
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/agents?cursor=abc&limit=10");
+	});
+
+	test("agent_get calls GET /agents/{id} (+ addresses)", async () => {
+		const handler = getTool(harness.registeredTools, "agent_get");
+		await handler({ id: "agent_1" });
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/agents/agent_1");
 	});
 
 	test("email_send calls POST /email/send", async () => {
 		const handler = getTool(harness.registeredTools, "email_send");
 		await handler({ to: "a@example.com", subject: "Hello", body: "Body" });
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/email/send",
+			"/v1/email/send",
 			expect.objectContaining({ to: "a@example.com", subject: "Hello", body: "Body" }),
 		);
 	});
 
 	test("email_reply fetches original email then sends reply", async () => {
 		harness.client.get.mockImplementation((path: string) => {
-			if (path === "/email/orig_1") {
+			if (path === "/v1/email/orig_1") {
 				return Promise.resolve({
 					id: "orig_1",
 					subject: "Question",
@@ -179,9 +156,9 @@ describe("tool behavior integration", () => {
 		const handler = getTool(harness.registeredTools, "email_reply");
 		await handler({ originalId: "orig_1", text: "My reply", replyAll: true });
 
-		expect(harness.client.get).toHaveBeenCalledWith("/email/orig_1");
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/email/orig_1");
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/email/send",
+			"/v1/email/send",
 			expect.objectContaining({
 				to: ["sender@example.com"],
 				subject: "Re: Question",
@@ -192,151 +169,237 @@ describe("tool behavior integration", () => {
 		);
 	});
 
-	test("domain_add calls POST /domains", async () => {
-		const handler = getTool(harness.registeredTools, "domain_add");
+	test("domain_create calls POST /v1/domains", async () => {
+		const handler = getTool(harness.registeredTools, "domain_create");
 		await handler({ domain: "example.com" });
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/domains",
+			"/v1/domains",
 			expect.objectContaining({ domain: "example.com" }),
 		);
 	});
 
-	test("phone_search builds correct query string", async () => {
-		const handler = getTool(harness.registeredTools, "phone_search");
-		await handler({ countryCode: "US", areaCode: "415", limit: 5 });
+	test("phone_number_list with agentId builds query string", async () => {
+		const handler = getTool(harness.registeredTools, "phone_number_list");
+		await handler({ agentId: "agent_1" });
 		expect(harness.client.get).toHaveBeenCalledWith(
-			"/phone/search?countryCode=US&areaCode=415&limit=5",
+			"/v1/phone/numbers?agentId=agent_1",
 		);
 	});
 
-	test("message_search calls POST /messages/search", async () => {
-		const handler = getTool(harness.registeredTools, "message_search");
-		await handler({ query: "invoice" });
-		expect(harness.client.post).toHaveBeenCalledWith(
-			"/messages/search",
-			expect.objectContaining({ query: "invoice" }),
+	test("phone_number_list without agentId omits query string", async () => {
+		const handler = getTool(harness.registeredTools, "phone_number_list");
+		await handler({});
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/phone/numbers");
+	});
+
+	test("account_overview reads /orgs/me and /orgs/me/workspace-health in parallel", async () => {
+		const handler = getTool(harness.registeredTools, "account_overview");
+		await handler({});
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/orgs/me");
+		expect(harness.client.get).toHaveBeenCalledWith(
+			"/v1/orgs/me/workspace-health",
 		);
 	});
 
-	test("message_semantic_search calls POST /messages/search/semantic", async () => {
-		const handler = getTool(harness.registeredTools, "message_semantic_search");
-		await handler({ query: "customer refund", threshold: 0.75, limit: 5 });
-		expect(harness.client.post).toHaveBeenCalledWith(
-			"/messages/search/semantic",
-			expect.objectContaining({
-				query: "customer refund",
-				threshold: 0.75,
-				limit: 5,
-			}),
+	test("usage_overview calls GET /orgs/me/usage with no params when period omitted", async () => {
+		const handler = getTool(harness.registeredTools, "usage_overview");
+		await handler({});
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/orgs/me/usage");
+	});
+
+	test("usage_overview forwards period query param when provided", async () => {
+		const handler = getTool(harness.registeredTools, "usage_overview");
+		await handler({ period: "2026-05" });
+		expect(harness.client.get).toHaveBeenCalledWith(
+			"/v1/orgs/me/usage?period=2026-05",
 		);
 	});
 
-	test("conversation_search groups semantic results by thread", async () => {
-		harness.client.post.mockResolvedValueOnce({
-			results: [
-				{
-					id: "msg-1",
-					content: "refund approved",
-					similarity: 0.91,
-					channel: "EMAIL",
-					direction: "INBOUND",
-					createdAt: "2026-01-01T00:00:00.000Z",
-					agentId: "agent-1",
-				},
-				{
-					id: "msg-2",
-					content: "refund sent",
-					similarity: 0.82,
-					channel: "EMAIL",
-					direction: "OUTBOUND",
-					createdAt: "2026-01-02T00:00:00.000Z",
-					agentId: "agent-1",
-				},
-			],
+	// ── Vault behavior ────────────────────────────────────────────────────
+	// Confirms URL shape for each renamed vault_credential_* tool. The
+	// security-critical masking logic is unit-tested in vault-mask.test.ts;
+	// here we just verify the handler hits the right endpoint.
+
+	test("vault_credential_list builds query string with agentId + type", async () => {
+		const handler = getTool(harness.registeredTools, "vault_credential_list");
+		await handler({ agentId: "agent_v1", type: "login" });
+		expect(harness.client.get).toHaveBeenCalledWith(
+			"/v1/vault/credentials?agentId=agent_v1&type=login",
+		);
+	});
+
+	test("vault_credential_get calls GET /vault/credentials/{id} and masks response", async () => {
+		harness.client.get.mockResolvedValueOnce({
+			id: "cr_1",
+			name: "GitHub",
+			login: { username: "diyan", password: "secret" },
 		});
+		const handler = getTool(harness.registeredTools, "vault_credential_get");
+		const result = await handler({ id: "cr_1" });
 
-		harness.client.get.mockImplementation((path: string) => {
-			if (path === "/messages/msg-1") {
-				return Promise.resolve({ threadId: "thread-a" });
-			}
-			if (path === "/messages/msg-2") {
-				return Promise.resolve({ threadId: "thread-a" });
-			}
-			return Promise.resolve({});
-		});
-
-		const handler = getTool(harness.registeredTools, "conversation_search");
-		const result = await handler({ topic: "refund" });
-		const parsed = parseTextPayload(result) as {
-			conversationCount: number;
-			conversations: Array<{ threadId: string; messageCount: number; maxSimilarity: number }>;
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/vault/credentials/cr_1");
+		// The handler should mask before returning. Parse the JSON in the
+		// tool result and confirm the password is "****", not "secret".
+		const parsed = JSON.parse(result.content[0]?.text as string) as {
+			login: { password: string };
 		};
-
-		expect(harness.client.post).toHaveBeenCalledWith(
-			"/messages/search/semantic",
-			expect.objectContaining({ query: "refund" }),
-		);
-		expect(parsed.conversationCount).toBe(1);
-		expect(parsed.conversations[0]?.threadId).toBe("thread-a");
-		expect(parsed.conversations[0]?.messageCount).toBe(2);
-		expect(parsed.conversations[0]?.maxSimilarity).toBe(0.91);
+		expect(parsed.login.password).toBe("****");
 	});
 
-	test("webhook_create calls POST /webhooks", async () => {
-		const handler = getTool(harness.registeredTools, "webhook_create");
-		await handler({ url: "https://example.com/hook", events: ["message.received"] });
+	test("vault_credential_create POSTs to /vault/credentials and masks the echo", async () => {
+		// The server now masks too, but the tool re-masks on the way out as
+		// defence in depth. Confirm a plaintext password in a hypothetical
+		// drift scenario still gets masked at the MCP layer.
+		harness.client.post.mockResolvedValueOnce({
+			id: "cr_2",
+			login: { password: "still-plaintext-from-server" },
+		});
+		const handler = getTool(harness.registeredTools, "vault_credential_create");
+		const result = await handler({
+			agentId: "agent_v1",
+			type: "login",
+			name: "Acme",
+			login: { username: "u", password: "p" },
+		});
+
 		expect(harness.client.post).toHaveBeenCalledWith(
-			"/webhooks",
+			"/v1/vault/credentials",
+			expect.objectContaining({ agentId: "agent_v1", type: "login", name: "Acme" }),
+		);
+		const parsed = JSON.parse(result.content[0]?.text as string) as {
+			login: { password: string };
+		};
+		expect(parsed.login.password).toBe("****");
+	});
+
+	test("vault_credential_update PUTs to /vault/credentials/{id} without `id` in body", async () => {
+		const handler = getTool(harness.registeredTools, "vault_credential_update");
+		await handler({ id: "cr_3", name: "Renamed" });
+		expect(harness.client.put).toHaveBeenCalledWith(
+			"/v1/vault/credentials/cr_3",
+			expect.objectContaining({ name: "Renamed" }),
+		);
+		// `id` is the path segment, not part of the body payload.
+		const putCall = harness.client.put.mock.calls[0];
+		expect((putCall?.[1] as Record<string, unknown>)?.id).toBeUndefined();
+	});
+
+	test("vault_credential_delete calls DELETE /vault/credentials/{id}", async () => {
+		const handler = getTool(harness.registeredTools, "vault_credential_delete");
+		await handler({ id: "cr_4" });
+		expect(harness.client.delete).toHaveBeenCalledWith("/v1/vault/credentials/cr_4");
+	});
+
+	test("vault_credential_search hits /vault/search (NOT /vault/credentials)", async () => {
+		// Search uses a separate endpoint — confirms the two access patterns
+		// (paginated list vs text search) are routed correctly.
+		const handler = getTool(harness.registeredTools, "vault_credential_search");
+		await handler({ agentId: "agent_v1", search: "github" });
+		expect(harness.client.get).toHaveBeenCalledWith(
+			"/v1/vault/search?agentId=agent_v1&search=github",
+		);
+	});
+
+	test("vault_credential_get_totp calls GET /vault/totp/{id}", async () => {
+		const handler = getTool(harness.registeredTools, "vault_credential_get_totp");
+		await handler({ id: "cr_5" });
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/vault/totp/cr_5");
+	});
+
+	// ── Webhook behavior ─────────────────────────────────────────────────
+	// The non-trivial logic is webhook_set's upsert routing: PUT when
+	// `id` is provided, POST when absent. Both test cases below.
+
+	test("webhook_get calls GET /webhooks/{id}", async () => {
+		const handler = getTool(harness.registeredTools, "webhook_get");
+		await handler({ id: "wh_1" });
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/webhooks/wh_1");
+	});
+
+	test("webhook_list with no params calls GET /webhooks (no trailing ?)", async () => {
+		// Edge case: empty URLSearchParams stringifies to "" — we should NOT
+		// emit "/v1/webhooks?" with a dangling question mark.
+		const handler = getTool(harness.registeredTools, "webhook_list");
+		await handler({});
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/webhooks");
+	});
+
+	test("webhook_list forwards cursor + limit as query params", async () => {
+		const handler = getTool(harness.registeredTools, "webhook_list");
+		await handler({ cursor: "wh_5", limit: 20 });
+		expect(harness.client.get).toHaveBeenCalledWith(
+			"/v1/webhooks?cursor=wh_5&limit=20",
+		);
+	});
+
+	test("webhook_set WITHOUT id routes to POST /webhooks (create)", async () => {
+		// The upsert routing logic: id absent → create.
+		const handler = getTool(harness.registeredTools, "webhook_set");
+		await handler({
+			url: "https://example.com/hook",
+			events: ["message.received"],
+			description: "primary",
+		});
+		expect(harness.client.post).toHaveBeenCalledWith(
+			"/v1/webhooks",
 			expect.objectContaining({
 				url: "https://example.com/hook",
 				events: ["message.received"],
+				description: "primary",
 			}),
 		);
+		// PUT was NOT called — this is the create branch.
+		expect(harness.client.put).not.toHaveBeenCalled();
 	});
 
-	test("security_approve calls POST with orgId/messageId path and master key option", async () => {
-		const handler = getTool(harness.registeredTools, "security_approve");
-		await handler({ orgId: "org_1", messageId: "msg_1", action: "approve" });
-		expect(harness.client.post).toHaveBeenCalledWith(
-			"/v1/orgs/org_1/messages/msg_1/approve",
-			expect.objectContaining({ action: "approve" }),
-			{ useMasterKey: true },
+	test("webhook_set WITH id routes to PUT /webhooks/{id} (update); id stripped from body", async () => {
+		// The upsert routing logic: id present → update. The id becomes the
+		// path segment and MUST NOT also appear in the body (PUT body is the
+		// update payload, not the resource identity).
+		const handler = getTool(harness.registeredTools, "webhook_set");
+		await handler({ id: "wh_9", active: false });
+		expect(harness.client.put).toHaveBeenCalledWith(
+			"/v1/webhooks/wh_9",
+			expect.objectContaining({ active: false }),
 		);
+		const putCall = harness.client.put.mock.calls[0];
+		expect((putCall?.[1] as Record<string, unknown>)?.id).toBeUndefined();
+		// POST was NOT called — this is the update branch.
+		expect(harness.client.post).not.toHaveBeenCalled();
 	});
 
-	test("whoami calls GET /orgs/me", async () => {
-		const handler = getTool(harness.registeredTools, "whoami");
-		await handler({});
-		expect(harness.client.get).toHaveBeenCalledWith("/orgs/me");
+	test("webhook_delete calls DELETE /webhooks/{id}", async () => {
+		const handler = getTool(harness.registeredTools, "webhook_delete");
+		await handler({ id: "wh_10" });
+		expect(harness.client.delete).toHaveBeenCalledWith("/v1/webhooks/wh_10");
 	});
 
-	test("check_health calls GET /health", async () => {
-		const handler = getTool(harness.registeredTools, "check_health");
-		await handler({});
-		expect(harness.client.get).toHaveBeenCalledWith("/health");
+	test("webhook_test POSTs empty body when no event is provided", async () => {
+		// Defensive: the test endpoint accepts an optional `event` field.
+		// When omitted, we should send {} (not undefined, not {event: undefined}).
+		const handler = getTool(harness.registeredTools, "webhook_test");
+		await handler({ id: "wh_11" });
+		expect(harness.client.post).toHaveBeenCalledWith("/v1/webhooks/wh_11/test", {});
+	});
+
+	test("webhook_test POSTs {event} when event is provided", async () => {
+		const handler = getTool(harness.registeredTools, "webhook_test");
+		await handler({ id: "wh_12", event: "email.bounced" });
+		expect(harness.client.post).toHaveBeenCalledWith(
+			"/v1/webhooks/wh_12/test",
+			{ event: "email.bounced" },
+		);
 	});
 
 	test("master-key guarded tools return error without master key", async () => {
 		const noMasterHarness = createHarness(false);
 		noMasterHarness.registerAll();
 
-		const orgCreate = getTool(noMasterHarness.registeredTools, "org_create");
-		const securityUpdate = getTool(
-			noMasterHarness.registeredTools,
-			"security_update_policy",
-		);
+		const domainAdd = getTool(noMasterHarness.registeredTools, "domain_create");
+		const domainResult = await domainAdd({ domain: "example.com" });
 
-		const orgResult = await orgCreate({ name: "No Master" });
-		const securityResult = await securityUpdate({
-			orgId: "org_1",
-			agentId: "agent_1",
-			scanLevel: "strict",
-		});
-
-		expect(orgResult.isError).toBe(true);
-		expect(orgResult.content[0]?.text).toContain("requires ANIMA_MASTER_KEY");
-		expect(securityResult.isError).toBe(true);
-		expect(securityResult.content[0]?.text).toContain(
+		expect(domainResult.isError).toBe(true);
+		expect(domainResult.content[0]?.text).toContain(
 			"requires ANIMA_MASTER_KEY",
 		);
 	});
@@ -345,70 +408,21 @@ describe("tool behavior integration", () => {
 		const noMasterHarness = createHarness(false);
 		noMasterHarness.registerAll();
 
-		const orgGet = getTool(noMasterHarness.registeredTools, "org_get");
-		const result = await orgGet({ id: "org_42" });
+		const agentGet = getTool(noMasterHarness.registeredTools, "agent_get");
+		const result = await agentGet({ id: "agent_42" });
 
 		expect(result.isError).toBeUndefined();
-		expect(noMasterHarness.client.get).toHaveBeenCalledWith("/orgs/org_42");
+		expect(noMasterHarness.client.get).toHaveBeenCalledWith("/v1/agents/agent_42");
 	});
 
 	test("api error is converted to toolError format", async () => {
 		harness.client.get.mockRejectedValueOnce(new Error("network down"));
-		const handler = getTool(harness.registeredTools, "org_get");
-		const result = await handler({ id: "org_9" });
+		const handler = getTool(harness.registeredTools, "agent_get");
+		const result = await handler({ id: "agent_9" });
 
 		expect(result.isError).toBe(true);
 		expect(result.content[0]?.type).toBe("text");
 		expect(result.content[0]?.text).toBe("Error: network down");
-	});
-
-	test("batch_mark_read sends array of IDs", async () => {
-		const handler = getTool(harness.registeredTools, "batch_mark_read");
-		await handler({ ids: ["m1", "m2", "m3"] });
-		expect(harness.client.post).toHaveBeenCalledWith("/email/batch/read", {
-			ids: ["m1", "m2", "m3"],
-		});
-	});
-
-	test("manage_contacts list action calls GET /contacts", async () => {
-		const handler = getTool(harness.registeredTools, "manage_contacts");
-		await handler({ action: "list" });
-		expect(harness.client.get).toHaveBeenCalledWith("/contacts");
-	});
-
-	test("manage_contacts create action calls POST /contacts", async () => {
-		const handler = getTool(harness.registeredTools, "manage_contacts");
-		await handler({ action: "create", email: "c@example.com", name: "Contact" });
-		expect(harness.client.post).toHaveBeenCalledWith("/contacts", {
-			email: "c@example.com",
-			name: "Contact",
-		});
-	});
-
-	test("inbox_digest formats response with summary and count", async () => {
-		harness.client.get.mockResolvedValueOnce({
-			items: [
-				{
-					from: "alice@example.com",
-					subject: "Status",
-					date: "2026-01-01T00:00:00Z",
-					snippet: "Update ready",
-				},
-			],
-		});
-
-		const handler = getTool(harness.registeredTools, "inbox_digest");
-		const result = await handler({ limit: 1 });
-		const payload = parseTextPayload(result) as {
-			count: number;
-			items: Array<{ from: string; subject: string; date: string; snippet: string }>;
-			summary: string;
-		};
-
-		expect(payload.count).toBe(1);
-		expect(payload.items[0]?.from).toBe("alice@example.com");
-		expect(payload.summary).toContain("alice@example.com");
-		expect(payload.summary).toContain("Status");
 	});
 
 	test("tool handlers return MCP text content format", async () => {
@@ -429,24 +443,4 @@ describe("tool behavior integration", () => {
 		expect(result.content[0]?.text).toContain("Original email payload is missing or invalid");
 	});
 
-	test("message_send_email maps text/html into unified message payload", async () => {
-		const handler = getTool(harness.registeredTools, "message_send_email");
-		await handler({
-			agentId: "agent_7",
-			to: "m@example.com",
-			subject: "Mapped",
-			html: "<p>H</p>",
-		});
-
-		expect(harness.client.post).toHaveBeenCalledWith(
-			"/messages/email",
-			expect.objectContaining({
-				agentId: "agent_7",
-				to: ["m@example.com"],
-				subject: "Mapped",
-				body: "<p>H</p>",
-				bodyHtml: "<p>H</p>",
-			}),
-		);
-	});
 });

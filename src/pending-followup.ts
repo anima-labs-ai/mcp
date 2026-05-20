@@ -101,7 +101,7 @@ async function fire(entry: TrackedPending): Promise<void> {
 		isFinalBeforeCooldown,
 		message: isFinalBeforeCooldown
 			? `⚠️ FINAL REMINDER${cycleInfo}: Email to ${entry.recipient} "${entry.subject}" is still blocked (attempt ${attempt}). Next reminder in 3 days.`
-			: `🔔 Reminder${cycleInfo}: Email to ${entry.recipient} "${entry.subject}" is still blocked (attempt ${attempt}). Use manage_pending_emails to review.`,
+			: `🔔 Reminder${cycleInfo}: Email to ${entry.recipient} "${entry.subject}" is still blocked (attempt ${attempt}). Use pending_manage to review.`,
 	});
 
 	entry.step += 1;

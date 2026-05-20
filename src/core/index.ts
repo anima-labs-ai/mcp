@@ -57,11 +57,21 @@ export {
 	type SessionRegistry,
 	type SessionRegistryOptions,
 } from "./session-registry.js";
+// Output schemas
+export {
+	deleteOutput,
+	listOutput,
+	objectOutput,
+	sendOutput,
+	statusOutput,
+} from "./output-schemas.js";
 // Tool helpers
 export {
 	type DomainRegistrar,
+	registerToolWithAliases,
 	requireMasterKeyGuard,
 	requiresMasterKey,
+	type ToolAnnotations,
 	type ToolContext,
 	type ToolRegistrationOptions,
 	toolError,

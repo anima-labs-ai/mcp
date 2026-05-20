@@ -3,16 +3,15 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ApiClient } from "../../api-client.js";
 import type { ToolContext, ToolRegistrationOptions } from "../../tool-helpers.js";
 import { MASTER_KEY_TOOLS } from "../../config.js";
-import { registerOrganizationTools } from "../../tools/organization/index.js";
 import { registerAgentTools } from "../../tools/agent/index.js";
 import { registerEmailTools } from "../../tools/email/index.js";
 import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
-import { registerMessageTools } from "../../tools/message/index.js";
+import { registerSmsTools } from "../../tools/sms/index.js";
+import { registerWorkspaceTools } from "../../tools/workspace/index.js";
+import { registerVaultTools } from "../../tools/vault/index.js";
 import { registerWebhookTools } from "../../tools/webhook/index.js";
-import { registerSecurityTools } from "../../tools/security/index.js";
-import { registerUtilityTools } from "../../tools/utility/index.js";
-import { registerVoiceTools } from "../../tools/voice/index.js";
+import { registerPhoneCallTools } from "../../tools/phone_call/index.js";
 import { registerResources } from "../../resources/index.js";
 
 type RegisteredTool = {
@@ -109,21 +108,12 @@ function createRegistrationHarness(hasMasterKey = true): {
 }
 
 const expectedDomainTools = {
-	organization: [
-		"org_create",
-		"org_get",
-		"org_update",
-		"org_delete",
-		"org_rotate_key",
-		"org_list",
-	],
 	agent: [
 		"agent_create",
 		"agent_get",
 		"agent_list",
 		"agent_update",
 		"agent_delete",
-		"agent_rotate_key",
 	],
 	email: [
 		"email_send",
@@ -131,100 +121,59 @@ const expectedDomainTools = {
 		"email_list",
 		"email_reply",
 		"email_forward",
-		"email_search",
-		"inbox_digest",
-		"email_mark_read",
-		"email_mark_unread",
-		"batch_mark_read",
-		"batch_mark_unread",
-		"batch_delete",
-		"batch_move",
-		"email_move",
-		"email_delete",
-		"manage_folders",
-		"manage_contacts",
-		"manage_templates",
-		"template_send",
+		"email_thread_get",
+		"email_attachment_get",
+		"email_draft_create",
+		"email_draft_get",
+		"email_draft_list",
+		"email_draft_send",
+		"email_draft_delete",
 	],
 	domain: [
-		"domain_add",
+		"domain_create",
 		"domain_verify",
 		"domain_get",
 		"domain_list",
 		"domain_delete",
-		"domain_dns_records",
 		"domain_update",
-		"domain_deliverability",
 		"domain_zone_file",
 	],
 	phone: [
-		"phone_search",
-		"phone_provision",
-		"phone_release",
-		"phone_list",
-		"phone_send_sms",
-		"voice_list_voices",
-		"phone_status",
+		"phone_number_list",
+		"phone_number_provision",
+		"phone_number_release",
 	],
-	message: [
-		"message_send_email",
-		"message_send_sms",
-		"message_get",
-		"message_list",
-		"message_search",
-		"message_semantic_search",
-		"conversation_search",
-		"message_upload_attachment",
-		"message_get_attachment",
+	sms: [
+		"sms_get",
+		"sms_list",
+		"sms_thread_list",
+		"sms_thread_get",
+		"sms_send",
+	],
+	workspace: ["account_overview", "usage_overview"],
+	vault: [
+		"vault_credential_list",
+		"vault_credential_get",
+		"vault_credential_create",
+		"vault_credential_update",
+		"vault_credential_delete",
+		"vault_credential_search",
+		"vault_credential_get_totp",
 	],
 	webhook: [
-		"webhook_create",
 		"webhook_get",
-		"webhook_update",
-		"webhook_delete",
 		"webhook_list",
+		"webhook_set",
+		"webhook_delete",
 		"webhook_test",
-		"webhook_list_deliveries",
-		"webhook_reenable",
-		"webhook_stats",
-		"webhook_event_types",
-		"webhook_list_dead_letters",
-		"webhook_replay_delivery",
 	],
-	security: [
-		"security_approve",
-		"security_list_events",
-		"security_get_policy",
-		"security_update_policy",
-		"security_scan_content",
-	],
-	utility: [
-		"whoami",
-		"check_health",
-		"list_agents",
-		"manage_pending",
-		"check_followups",
-		"message_agent",
-		"check_messages",
-		"wait_for_email",
-		"call_agent",
-		"update_metadata",
-		"setup_email_domain",
-		"send_test_email",
-		"manage_spam",
-		"check_tasks",
-	],
-	voice: [
-		"voice_catalog",
-		"voice_create_call",
-		"voice_list_calls",
-		"voice_get_call",
-		"voice_get_transcript",
-		"voice_get_recording",
-		"voice_get_summary",
-		"voice_get_score",
-		"voice_search_calls",
-		"voice_get_security_scan",
+	phone_call: [
+		"phone_call_create",
+		"phone_call_list",
+		"phone_call_get",
+		"phone_call_transcript_get",
+		"phone_call_recording_get",
+		"voice_list",
 	],
 } as const;
 
@@ -247,56 +196,49 @@ describe("tool registration integration", () => {
 		harness = createRegistrationHarness(true);
 	});
 
-	test("organization registers 6 tools", () => {
-		registerOrganizationTools(harness.options);
-		expect(harness.registeredTools.size).toBe(6);
-	});
-
-	test("agent registers 6 tools", () => {
+	test("agent registers 5 tools", () => {
 		registerAgentTools(harness.options);
-		expect(harness.registeredTools.size).toBe(6);
-	});
-
-	test("email registers 19 tools", () => {
-		registerEmailTools(harness.options);
-		expect(harness.registeredTools.size).toBe(19);
-	});
-
-	test("domain registers 9 tools", () => {
-		registerDomainTools(harness.options);
-		expect(harness.registeredTools.size).toBe(9);
-	});
-
-	test("phone registers 7 tools", () => {
-		registerPhoneTools(harness.options);
-		expect(harness.registeredTools.size).toBe(7);
-	});
-
-	test("message registers 9 tools", () => {
-		registerMessageTools(harness.options);
-		expect(harness.registeredTools.size).toBe(9);
-	});
-
-	test("webhook registers 12 tools", () => {
-		registerWebhookTools(harness.options);
-		expect(harness.registeredTools.size).toBe(12);
-	});
-
-	test("security registers 5 tools", () => {
-		registerSecurityTools(harness.options);
 		expect(harness.registeredTools.size).toBe(5);
 	});
 
-	test("utility registers 14 tools", () => {
-		registerUtilityTools(harness.options);
-		expect(harness.registeredTools.size).toBe(14);
+	test("email registers 12 tools", () => {
+		registerEmailTools(harness.options);
+		expect(harness.registeredTools.size).toBe(12);
 	});
 
-	test("organization tool names match expected snake_case names", () => {
-		registerOrganizationTools(harness.options);
-		expect([...harness.registeredTools.keys()].sort()).toEqual(
-			[...expectedDomainTools.organization].sort(),
-		);
+	test("domain registers 7 tools", () => {
+		registerDomainTools(harness.options);
+		expect(harness.registeredTools.size).toBe(7);
+	});
+
+	test("phone registers 3 tools", () => {
+		registerPhoneTools(harness.options);
+		expect(harness.registeredTools.size).toBe(3);
+	});
+
+	test("sms registers 5 tools", () => {
+		registerSmsTools(harness.options);
+		expect(harness.registeredTools.size).toBe(5);
+	});
+
+	test("workspace registers 2 tools", () => {
+		registerWorkspaceTools(harness.options);
+		expect(harness.registeredTools.size).toBe(2);
+	});
+
+	test("vault registers 7 tools", () => {
+		registerVaultTools(harness.options);
+		expect(harness.registeredTools.size).toBe(7);
+	});
+
+	test("webhook registers 5 tools", () => {
+		registerWebhookTools(harness.options);
+		expect(harness.registeredTools.size).toBe(5);
+	});
+
+	test("phone_call registers 6 tools", () => {
+		registerPhoneCallTools(harness.options);
+		expect(harness.registeredTools.size).toBe(6);
 	});
 
 	test("agent tool names match expected snake_case names", () => {
@@ -327,10 +269,24 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("message tool names match expected snake_case names", () => {
-		registerMessageTools(harness.options);
+	test("sms tool names match expected snake_case names", () => {
+		registerSmsTools(harness.options);
 		expect([...harness.registeredTools.keys()].sort()).toEqual(
-			[...expectedDomainTools.message].sort(),
+			[...expectedDomainTools.sms].sort(),
+		);
+	});
+
+	test("workspace tool names match expected snake_case names", () => {
+		registerWorkspaceTools(harness.options);
+		expect([...harness.registeredTools.keys()].sort()).toEqual(
+			[...expectedDomainTools.workspace].sort(),
+		);
+	});
+
+	test("vault tool names match expected snake_case names", () => {
+		registerVaultTools(harness.options);
+		expect([...harness.registeredTools.keys()].sort()).toEqual(
+			[...expectedDomainTools.vault].sort(),
 		);
 	});
 
@@ -341,58 +297,37 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("security tool names match expected snake_case names", () => {
-		registerSecurityTools(harness.options);
+	test("phone_call tool names match expected snake_case names", () => {
+		registerPhoneCallTools(harness.options);
 		expect([...harness.registeredTools.keys()].sort()).toEqual(
-			[...expectedDomainTools.security].sort(),
+			[...expectedDomainTools.phone_call].sort(),
 		);
 	});
 
-	test("utility tool names match expected snake_case names", () => {
-		registerUtilityTools(harness.options);
-		expect([...harness.registeredTools.keys()].sort()).toEqual(
-			[...expectedDomainTools.utility].sort(),
-		);
-	});
-
-	test("voice registers 10 tools", () => {
-		registerVoiceTools(harness.options);
-		expect(harness.registeredTools.size).toBe(10);
-	});
-
-	test("voice tool names match expected snake_case names", () => {
-		registerVoiceTools(harness.options);
-		expect([...harness.registeredTools.keys()].sort()).toEqual(
-			[...expectedDomainTools.voice].sort(),
-		);
-	});
-
-	test("all domains combined register exactly 97 tools", () => {
-		registerOrganizationTools(harness.options);
+	test("all domains combined register exactly 52 tools", () => {
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
-		registerMessageTools(harness.options);
+		registerSmsTools(harness.options);
+		registerWorkspaceTools(harness.options);
+		registerVaultTools(harness.options);
 		registerWebhookTools(harness.options);
-		registerSecurityTools(harness.options);
-		registerUtilityTools(harness.options);
-		registerVoiceTools(harness.options);
+		registerPhoneCallTools(harness.options);
 
-		expect(harness.registeredTools.size).toBe(97);
+		expect(harness.registeredTools.size).toBe(52);
 	});
 
 	test("all registered tool names follow snake_case", () => {
-		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
-		registerMessageTools(harness.options);
+		registerSmsTools(harness.options);
+		registerWorkspaceTools(harness.options);
+		registerVaultTools(harness.options);
 		registerWebhookTools(harness.options);
-		registerSecurityTools(harness.options);
-		registerUtilityTools(harness.options);
-		registerVoiceTools(harness.options);
+		registerPhoneCallTools(harness.options);
 
 		for (const name of harness.registeredTools.keys()) {
 			expect(name).toMatch(/^[a-z]+(?:_[a-z0-9]+)*$/);
@@ -400,10 +335,6 @@ describe("tool registration integration", () => {
 	});
 
 	test("descriptions are non-empty for all tools in each domain", () => {
-		registerOrganizationTools(harness.options);
-		assertDescriptionsNonEmpty(expectedDomainTools.organization, harness.registeredTools);
-
-		harness = createRegistrationHarness(true);
 		registerAgentTools(harness.options);
 		assertDescriptionsNonEmpty(expectedDomainTools.agent, harness.registeredTools);
 
@@ -420,24 +351,24 @@ describe("tool registration integration", () => {
 		assertDescriptionsNonEmpty(expectedDomainTools.phone, harness.registeredTools);
 
 		harness = createRegistrationHarness(true);
-		registerMessageTools(harness.options);
-		assertDescriptionsNonEmpty(expectedDomainTools.message, harness.registeredTools);
+		registerSmsTools(harness.options);
+		assertDescriptionsNonEmpty(expectedDomainTools.sms, harness.registeredTools);
+
+		harness = createRegistrationHarness(true);
+		registerWorkspaceTools(harness.options);
+		assertDescriptionsNonEmpty(expectedDomainTools.workspace, harness.registeredTools);
+
+		harness = createRegistrationHarness(true);
+		registerVaultTools(harness.options);
+		assertDescriptionsNonEmpty(expectedDomainTools.vault, harness.registeredTools);
 
 		harness = createRegistrationHarness(true);
 		registerWebhookTools(harness.options);
 		assertDescriptionsNonEmpty(expectedDomainTools.webhook, harness.registeredTools);
 
 		harness = createRegistrationHarness(true);
-		registerSecurityTools(harness.options);
-		assertDescriptionsNonEmpty(expectedDomainTools.security, harness.registeredTools);
-
-		harness = createRegistrationHarness(true);
-		registerUtilityTools(harness.options);
-		assertDescriptionsNonEmpty(expectedDomainTools.utility, harness.registeredTools);
-
-		harness = createRegistrationHarness(true);
-		registerVoiceTools(harness.options);
-		assertDescriptionsNonEmpty(expectedDomainTools.voice, harness.registeredTools);
+		registerPhoneCallTools(harness.options);
+		assertDescriptionsNonEmpty(expectedDomainTools.phone_call, harness.registeredTools);
 	});
 
 	test("resources register correctly with 2 resources", () => {
@@ -448,16 +379,15 @@ describe("tool registration integration", () => {
 	});
 
 	test("MASTER_KEY_TOOLS are a subset of registered tools", () => {
-		registerOrganizationTools(harness.options);
 		registerAgentTools(harness.options);
 		registerEmailTools(harness.options);
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
-		registerMessageTools(harness.options);
+		registerSmsTools(harness.options);
+		registerWorkspaceTools(harness.options);
+		registerVaultTools(harness.options);
 		registerWebhookTools(harness.options);
-		registerSecurityTools(harness.options);
-		registerUtilityTools(harness.options);
-		registerVoiceTools(harness.options);
+		registerPhoneCallTools(harness.options);
 
 		for (const toolName of MASTER_KEY_TOOLS) {
 			expect(harness.registeredTools.has(toolName)).toBe(true);

@@ -66,8 +66,14 @@ const callAgentInput = z.object({
 		.describe("Timeout in seconds for waiting on reply (default 30)"),
 });
 
-const updateMetadataInput = z.object({
-	metadata: z.record(z.string()).describe("Metadata key-value pairs to set"),
+const usageOverviewInput = z.object({
+	period: z
+		.string()
+		.regex(/^\d{4}-\d{2}$/)
+		.optional()
+		.describe(
+			"Billing period in YYYY-MM format (e.g. '2026-05'). Defaults to the current calendar month in UTC.",
+		),
 });
 
 const manageSpamInput = z.object({
@@ -181,15 +187,16 @@ function findAgentByName(payload: unknown, agentName: string): JsonObject | unde
 	});
 }
 
-function registerWhoAmITool(options: ToolRegistrationOptions): void {
+function registerAccountOverviewTool(options: ToolRegistrationOptions): void {
 	const { server } = options;
 
 	server.registerTool(
-		"whoami",
+		"account_overview",
 		{
-			description: "Return identity details for the current API credential. Use this to verify which organization, agents, and scope the MCP server is operating under.",
+			description:
+				"Single-call workspace snapshot: organization context, credential identity, send-capability flags (canSendEmail / canSendSms), inventory counts (agents, domains, phones), and active blockers. Strict superset of the legacy whoami + workspace_health pair. Use this before any non-trivial workflow to answer 'who am I and can I do X right now?' without paying a real send to find out.",
 			inputSchema: noInput.shape,
-			outputSchema: statusOutput(),
+			outputSchema: objectOutput(),
 			annotations: {
 				readOnlyHint: true,
 				destructiveHint: false,
@@ -198,20 +205,56 @@ function registerWhoAmITool(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (_args, context) => {
-			// /orgs/me works for all key types (sk_live_, ak_, mk_)
-			const org = await context.client.get<Record<string, unknown>>("/v1/orgs/me");
-			const agents = await context.client.get<{ items: unknown[] }>("/v1/agents");
+			// Two parallel reads: /orgs/me gives the full org profile
+			// (slug, settings, keyRotatedAt) while /orgs/me/workspace-health
+			// gives status, capabilities, inventory, blockers, and the
+			// auth-context block that whoami used to surface. Merging at
+			// the MCP layer avoids adding a third API endpoint just to
+			// reshape the response.
+			const [org, health] = await Promise.all([
+				context.client.get<Record<string, unknown>>("/v1/orgs/me"),
+				context.client.get<Record<string, unknown>>("/v1/orgs/me/workspace-health"),
+			]);
 
 			return toolSuccess({
+				...health,
 				organization: {
 					id: org.id,
 					name: org.name,
 					slug: org.slug,
 					tier: org.tier,
+					keyRotatedAt: org.keyRotatedAt,
+					createdAt: org.createdAt,
 				},
-				agents: agents.items,
-				keyType: context.hasMasterKey ? "master" : "org",
 			});
+		}, options.context),
+	);
+}
+
+function registerUsageOverviewTool(options: ToolRegistrationOptions): void {
+	const { server } = options;
+
+	server.registerTool(
+		"usage_overview",
+		{
+			description:
+				"Usage rollup for a billing period. Returns counters keyed by usage type (e.g. 'email_sent', 'sms_sent', 'voice_call_minutes') plus the latest update timestamp. Defaults to the current calendar month in UTC when `period` is omitted. Use to answer 'where am I against my tier limits?' without paying for per-event detail.",
+			inputSchema: usageOverviewInput.shape,
+			outputSchema: objectOutput(),
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
+		},
+		withErrorHandling(async (args, context) => {
+			const params = new URLSearchParams();
+			if (args.period) params.set("period", args.period);
+			const qs = params.toString();
+			const url = qs ? `/v1/orgs/me/usage?${qs}` : "/v1/orgs/me/usage";
+			const result = await context.client.get(url);
+			return toolSuccess(result);
 		}, options.context),
 	);
 }
@@ -473,37 +516,11 @@ function registerCallAgentTool(options: ToolRegistrationOptions): void {
 	);
 }
 
-function registerUpdateMetadataTool(options: ToolRegistrationOptions): void {
-	const { server } = options;
-
-	server.registerTool(
-		"me_update",
-		{
-			description: "Update metadata for the current agent identity.",
-			inputSchema: updateMetadataInput.shape,
-			outputSchema: objectOutput(),
-			annotations: {
-				readOnlyHint: false,
-				destructiveHint: false,
-				idempotentHint: true,
-				openWorldHint: true,
-			},
-		},
-		withErrorHandling(async (args, context) => {
-			const agents = await context.client.get<{ items: Array<{ id: string }> }>("/v1/agents");
-			const agentId = agents.items?.[0]?.id;
-
-			if (!agentId) {
-				return toolError("No agents found in this organization. Create an agent first.");
-			}
-
-			const result = await context.client.patch(`/v1/agents/${agentId}`, {
-				metadata: args.metadata,
-			});
-			return toolSuccess(result);
-		}, options.context),
-	);
-}
+// me_update removed 2026-05-20: design bug — it mutated the FIRST agent in
+// the org's agent list (`agents.items[0]?.id`), not the agent the credential
+// actually belongs to. Anyone calling it on a multi-agent org silently
+// rewrote a different agent's metadata. The right path for explicit metadata
+// updates is agent_update({ id, metadata }) with the ID the caller knows.
 
 // setup_email_domain + send_test_email removed 2026-05-13: pure duplicates
 // of domain_add and email_send. Use those canonical tools instead.
@@ -577,7 +594,8 @@ function registerCheckTasksTool(options: ToolRegistrationOptions): void {
 }
 
 export function registerUtilityTools(options: ToolRegistrationOptions): void {
-	registerWhoAmITool(options);
+	registerAccountOverviewTool(options);
+	registerUsageOverviewTool(options);
 	registerCheckHealthTool(options);
 	registerManagePendingTool(options);
 	registerCheckFollowupsTool(options);
@@ -585,7 +603,6 @@ export function registerUtilityTools(options: ToolRegistrationOptions): void {
 	registerCheckMessagesTool(options);
 	registerWaitForEmailTool(options);
 	registerCallAgentTool(options);
-	registerUpdateMetadataTool(options);
 	registerManageSpamTool(options);
 	registerCheckTasksTool(options);
 }

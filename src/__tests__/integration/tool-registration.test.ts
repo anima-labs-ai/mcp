@@ -149,7 +149,8 @@ const expectedDomainTools = {
 		"sms_send",
 	],
 	utility: [
-		"whoami",
+		"account_overview",
+		"usage_overview",
 		"health_check",
 		"pending_manage",
 		"followups_check",
@@ -157,7 +158,6 @@ const expectedDomainTools = {
 		"messages_check",
 		"email_wait",
 		"agent_call",
-		"me_update",
 		"spam_manage",
 		"tasks_check",
 	],

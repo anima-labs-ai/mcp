@@ -188,10 +188,27 @@ describe("tool behavior integration", () => {
 		expect(harness.client.get).toHaveBeenCalledWith("/v1/phone/numbers");
 	});
 
-	test("whoami calls GET /orgs/me", async () => {
-		const handler = getTool(harness.registeredTools, "whoami");
+	test("account_overview reads /orgs/me and /orgs/me/workspace-health in parallel", async () => {
+		const handler = getTool(harness.registeredTools, "account_overview");
 		await handler({});
 		expect(harness.client.get).toHaveBeenCalledWith("/v1/orgs/me");
+		expect(harness.client.get).toHaveBeenCalledWith(
+			"/v1/orgs/me/workspace-health",
+		);
+	});
+
+	test("usage_overview calls GET /orgs/me/usage with no params when period omitted", async () => {
+		const handler = getTool(harness.registeredTools, "usage_overview");
+		await handler({});
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/orgs/me/usage");
+	});
+
+	test("usage_overview forwards period query param when provided", async () => {
+		const handler = getTool(harness.registeredTools, "usage_overview");
+		await handler({ period: "2026-05" });
+		expect(harness.client.get).toHaveBeenCalledWith(
+			"/v1/orgs/me/usage?period=2026-05",
+		);
 	});
 
 	test("health_check calls GET /health", async () => {

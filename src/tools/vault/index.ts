@@ -24,8 +24,10 @@ import {
  * through if a server version drifts. Invariant: "LLMs never see
  * plaintext through tools." Callers that need plaintext use the
  * autofill/proxy token flow at the credential-broker.
+ *
+ * Exported only for unit-testing the masking branches.
  */
-function maskCredentialFields(
+export function maskCredentialFields(
 	cred: Record<string, unknown>,
 ): Record<string, unknown> {
 	const masked = { ...cred };

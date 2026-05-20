@@ -7,6 +7,8 @@ import { registerEmailTools } from "../../tools/email/index.js";
 import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
 import { registerSmsTools } from "../../tools/sms/index.js";
+import { registerVaultTools } from "../../tools/vault/index.js";
+import { registerWebhookTools } from "../../tools/webhook/index.js";
 import { registerWorkspaceTools } from "../../tools/workspace/index.js";
 
 type ToolResult = {
@@ -89,6 +91,8 @@ function createHarness(hasMasterKey = true): {
 		registerDomainTools(options);
 		registerPhoneTools(options);
 		registerSmsTools(options);
+		registerVaultTools(options);
+		registerWebhookTools(options);
 		registerWorkspaceTools(options);
 	};
 
@@ -208,6 +212,182 @@ describe("tool behavior integration", () => {
 		await handler({ period: "2026-05" });
 		expect(harness.client.get).toHaveBeenCalledWith(
 			"/v1/orgs/me/usage?period=2026-05",
+		);
+	});
+
+	// ── Vault behavior ────────────────────────────────────────────────────
+	// Confirms URL shape for each renamed vault_credential_* tool. The
+	// security-critical masking logic is unit-tested in vault-mask.test.ts;
+	// here we just verify the handler hits the right endpoint.
+
+	test("vault_credential_list builds query string with agentId + type", async () => {
+		const handler = getTool(harness.registeredTools, "vault_credential_list");
+		await handler({ agentId: "agent_v1", type: "login" });
+		expect(harness.client.get).toHaveBeenCalledWith(
+			"/v1/vault/credentials?agentId=agent_v1&type=login",
+		);
+	});
+
+	test("vault_credential_get calls GET /vault/credentials/{id} and masks response", async () => {
+		harness.client.get.mockResolvedValueOnce({
+			id: "cr_1",
+			name: "GitHub",
+			login: { username: "diyan", password: "secret" },
+		});
+		const handler = getTool(harness.registeredTools, "vault_credential_get");
+		const result = await handler({ id: "cr_1" });
+
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/vault/credentials/cr_1");
+		// The handler should mask before returning. Parse the JSON in the
+		// tool result and confirm the password is "****", not "secret".
+		const parsed = JSON.parse(result.content[0]?.text as string) as {
+			login: { password: string };
+		};
+		expect(parsed.login.password).toBe("****");
+	});
+
+	test("vault_credential_create POSTs to /vault/credentials and masks the echo", async () => {
+		// The server now masks too, but the tool re-masks on the way out as
+		// defence in depth. Confirm a plaintext password in a hypothetical
+		// drift scenario still gets masked at the MCP layer.
+		harness.client.post.mockResolvedValueOnce({
+			id: "cr_2",
+			login: { password: "still-plaintext-from-server" },
+		});
+		const handler = getTool(harness.registeredTools, "vault_credential_create");
+		const result = await handler({
+			agentId: "agent_v1",
+			type: "login",
+			name: "Acme",
+			login: { username: "u", password: "p" },
+		});
+
+		expect(harness.client.post).toHaveBeenCalledWith(
+			"/v1/vault/credentials",
+			expect.objectContaining({ agentId: "agent_v1", type: "login", name: "Acme" }),
+		);
+		const parsed = JSON.parse(result.content[0]?.text as string) as {
+			login: { password: string };
+		};
+		expect(parsed.login.password).toBe("****");
+	});
+
+	test("vault_credential_update PUTs to /vault/credentials/{id} without `id` in body", async () => {
+		const handler = getTool(harness.registeredTools, "vault_credential_update");
+		await handler({ id: "cr_3", name: "Renamed" });
+		expect(harness.client.put).toHaveBeenCalledWith(
+			"/v1/vault/credentials/cr_3",
+			expect.objectContaining({ name: "Renamed" }),
+		);
+		// `id` is the path segment, not part of the body payload.
+		const putCall = harness.client.put.mock.calls[0];
+		expect((putCall?.[1] as Record<string, unknown>)?.id).toBeUndefined();
+	});
+
+	test("vault_credential_delete calls DELETE /vault/credentials/{id}", async () => {
+		const handler = getTool(harness.registeredTools, "vault_credential_delete");
+		await handler({ id: "cr_4" });
+		expect(harness.client.delete).toHaveBeenCalledWith("/v1/vault/credentials/cr_4");
+	});
+
+	test("vault_credential_search hits /vault/search (NOT /vault/credentials)", async () => {
+		// Search uses a separate endpoint — confirms the two access patterns
+		// (paginated list vs text search) are routed correctly.
+		const handler = getTool(harness.registeredTools, "vault_credential_search");
+		await handler({ agentId: "agent_v1", search: "github" });
+		expect(harness.client.get).toHaveBeenCalledWith(
+			"/v1/vault/search?agentId=agent_v1&search=github",
+		);
+	});
+
+	test("vault_credential_get_totp calls GET /vault/totp/{id}", async () => {
+		const handler = getTool(harness.registeredTools, "vault_credential_get_totp");
+		await handler({ id: "cr_5" });
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/vault/totp/cr_5");
+	});
+
+	// ── Webhook behavior ─────────────────────────────────────────────────
+	// The non-trivial logic is webhook_set's upsert routing: PUT when
+	// `id` is provided, POST when absent. Both test cases below.
+
+	test("webhook_get calls GET /webhooks/{id}", async () => {
+		const handler = getTool(harness.registeredTools, "webhook_get");
+		await handler({ id: "wh_1" });
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/webhooks/wh_1");
+	});
+
+	test("webhook_list with no params calls GET /webhooks (no trailing ?)", async () => {
+		// Edge case: empty URLSearchParams stringifies to "" — we should NOT
+		// emit "/v1/webhooks?" with a dangling question mark.
+		const handler = getTool(harness.registeredTools, "webhook_list");
+		await handler({});
+		expect(harness.client.get).toHaveBeenCalledWith("/v1/webhooks");
+	});
+
+	test("webhook_list forwards cursor + limit as query params", async () => {
+		const handler = getTool(harness.registeredTools, "webhook_list");
+		await handler({ cursor: "wh_5", limit: 20 });
+		expect(harness.client.get).toHaveBeenCalledWith(
+			"/v1/webhooks?cursor=wh_5&limit=20",
+		);
+	});
+
+	test("webhook_set WITHOUT id routes to POST /webhooks (create)", async () => {
+		// The upsert routing logic: id absent → create.
+		const handler = getTool(harness.registeredTools, "webhook_set");
+		await handler({
+			url: "https://example.com/hook",
+			events: ["message.received"],
+			description: "primary",
+		});
+		expect(harness.client.post).toHaveBeenCalledWith(
+			"/v1/webhooks",
+			expect.objectContaining({
+				url: "https://example.com/hook",
+				events: ["message.received"],
+				description: "primary",
+			}),
+		);
+		// PUT was NOT called — this is the create branch.
+		expect(harness.client.put).not.toHaveBeenCalled();
+	});
+
+	test("webhook_set WITH id routes to PUT /webhooks/{id} (update); id stripped from body", async () => {
+		// The upsert routing logic: id present → update. The id becomes the
+		// path segment and MUST NOT also appear in the body (PUT body is the
+		// update payload, not the resource identity).
+		const handler = getTool(harness.registeredTools, "webhook_set");
+		await handler({ id: "wh_9", active: false });
+		expect(harness.client.put).toHaveBeenCalledWith(
+			"/v1/webhooks/wh_9",
+			expect.objectContaining({ active: false }),
+		);
+		const putCall = harness.client.put.mock.calls[0];
+		expect((putCall?.[1] as Record<string, unknown>)?.id).toBeUndefined();
+		// POST was NOT called — this is the update branch.
+		expect(harness.client.post).not.toHaveBeenCalled();
+	});
+
+	test("webhook_delete calls DELETE /webhooks/{id}", async () => {
+		const handler = getTool(harness.registeredTools, "webhook_delete");
+		await handler({ id: "wh_10" });
+		expect(harness.client.delete).toHaveBeenCalledWith("/v1/webhooks/wh_10");
+	});
+
+	test("webhook_test POSTs empty body when no event is provided", async () => {
+		// Defensive: the test endpoint accepts an optional `event` field.
+		// When omitted, we should send {} (not undefined, not {event: undefined}).
+		const handler = getTool(harness.registeredTools, "webhook_test");
+		await handler({ id: "wh_11" });
+		expect(harness.client.post).toHaveBeenCalledWith("/v1/webhooks/wh_11/test", {});
+	});
+
+	test("webhook_test POSTs {event} when event is provided", async () => {
+		const handler = getTool(harness.registeredTools, "webhook_test");
+		await handler({ id: "wh_12", event: "email.bounced" });
+		expect(harness.client.post).toHaveBeenCalledWith(
+			"/v1/webhooks/wh_12/test",
+			{ event: "email.bounced" },
 		);
 	});
 

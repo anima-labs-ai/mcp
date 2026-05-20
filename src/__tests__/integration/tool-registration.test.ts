@@ -8,7 +8,7 @@ import { registerEmailTools } from "../../tools/email/index.js";
 import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
 import { registerSmsTools } from "../../tools/sms/index.js";
-import { registerUtilityTools } from "../../tools/utility/index.js";
+import { registerWorkspaceTools } from "../../tools/workspace/index.js";
 import { registerVaultTools } from "../../tools/vault/index.js";
 import { registerWebhookTools } from "../../tools/webhook/index.js";
 import { registerPhoneCallTools } from "../../tools/phone_call/index.js";
@@ -130,7 +130,7 @@ const expectedDomainTools = {
 		"email_draft_delete",
 	],
 	domain: [
-		"domain_add",
+		"domain_create",
 		"domain_verify",
 		"domain_get",
 		"domain_list",
@@ -150,7 +150,7 @@ const expectedDomainTools = {
 		"sms_thread_get",
 		"sms_send",
 	],
-	utility: ["account_overview", "usage_overview"],
+	workspace: ["account_overview", "usage_overview"],
 	vault: [
 		"vault_credential_list",
 		"vault_credential_get",
@@ -168,12 +168,12 @@ const expectedDomainTools = {
 		"webhook_test",
 	],
 	phone_call: [
-		"phone_call",
+		"phone_call_create",
 		"phone_call_list",
 		"phone_call_get",
 		"phone_call_transcript_get",
 		"phone_call_recording_get",
-		"voices_list",
+		"voice_list",
 	],
 } as const;
 
@@ -221,8 +221,8 @@ describe("tool registration integration", () => {
 		expect(harness.registeredTools.size).toBe(5);
 	});
 
-	test("utility registers 2 tools", () => {
-		registerUtilityTools(harness.options);
+	test("workspace registers 2 tools", () => {
+		registerWorkspaceTools(harness.options);
 		expect(harness.registeredTools.size).toBe(2);
 	});
 
@@ -276,10 +276,10 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("utility tool names match expected snake_case names", () => {
-		registerUtilityTools(harness.options);
+	test("workspace tool names match expected snake_case names", () => {
+		registerWorkspaceTools(harness.options);
 		expect([...harness.registeredTools.keys()].sort()).toEqual(
-			[...expectedDomainTools.utility].sort(),
+			[...expectedDomainTools.workspace].sort(),
 		);
 	});
 
@@ -310,7 +310,7 @@ describe("tool registration integration", () => {
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
 		registerSmsTools(harness.options);
-		registerUtilityTools(harness.options);
+		registerWorkspaceTools(harness.options);
 		registerVaultTools(harness.options);
 		registerWebhookTools(harness.options);
 		registerPhoneCallTools(harness.options);
@@ -324,7 +324,7 @@ describe("tool registration integration", () => {
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
 		registerSmsTools(harness.options);
-		registerUtilityTools(harness.options);
+		registerWorkspaceTools(harness.options);
 		registerVaultTools(harness.options);
 		registerWebhookTools(harness.options);
 		registerPhoneCallTools(harness.options);
@@ -355,8 +355,8 @@ describe("tool registration integration", () => {
 		assertDescriptionsNonEmpty(expectedDomainTools.sms, harness.registeredTools);
 
 		harness = createRegistrationHarness(true);
-		registerUtilityTools(harness.options);
-		assertDescriptionsNonEmpty(expectedDomainTools.utility, harness.registeredTools);
+		registerWorkspaceTools(harness.options);
+		assertDescriptionsNonEmpty(expectedDomainTools.workspace, harness.registeredTools);
 
 		harness = createRegistrationHarness(true);
 		registerVaultTools(harness.options);
@@ -384,7 +384,7 @@ describe("tool registration integration", () => {
 		registerDomainTools(harness.options);
 		registerPhoneTools(harness.options);
 		registerSmsTools(harness.options);
-		registerUtilityTools(harness.options);
+		registerWorkspaceTools(harness.options);
 		registerVaultTools(harness.options);
 		registerWebhookTools(harness.options);
 		registerPhoneCallTools(harness.options);

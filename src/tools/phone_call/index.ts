@@ -89,7 +89,7 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 	const { server } = options;
 
 	server.registerTool(
-		"phone_call",
+		"phone_call_create",
 		{
 			description:
 				"Initiate an outbound phone call from an agent (REST-style: returns a callId immediately). The agent must have a provisioned phone number. For real-time streaming of the call back through the tool invocation, use the hosted MCP server (mcp.useanima.sh) where this tool stays open for the call's lifetime.",
@@ -209,7 +209,7 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 	);
 
 	server.registerTool(
-		"voices_list",
+		"voice_list",
 		{
 			description:
 				"List available AI voices for placing phone calls. Filter by tier (basic for low-latency, premium for natural voices), gender, or language. Returns voice IDs needed for phone_call.",

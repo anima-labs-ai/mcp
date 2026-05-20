@@ -2,14 +2,12 @@ import { z } from "zod";
 import type { ToolRegistrationOptions } from "../../tool-helpers.js";
 import { objectOutput, toolSuccess, withErrorHandling } from "../../tool-helpers.js";
 
-// 2026-05-20: utility group reduced to two self-introspection tools.
-// Anything message-shaped (messages_check, tasks_check, spam_manage,
-// pending_manage), inter-agent (agent_message, agent_call), MCP-stateful
-// (followups_check, email_wait), or generic-debug (health_check) was
-// dropped to keep this group focused on "what is my workspace?" reads.
-// Earlier removals: whoami + me_update (folded into account_overview;
-// me_update had a design bug). setup_email_domain + send_test_email
-// removed 2026-05-13 as dupes of domain_add + email_send.
+// 2026-05-20: workspace group (renamed from "utility") holds the two
+// self-introspection tools. Anything message-shaped, inter-agent,
+// MCP-stateful, or generic-debug was dropped to keep this group focused
+// on "what is my workspace?" reads. Earlier removals: whoami + me_update
+// (folded into account_overview), setup_email_domain + send_test_email
+// (dupes of domain_create + email_send).
 
 const noInput = z.object({});
 
@@ -95,7 +93,7 @@ function registerUsageOverviewTool(options: ToolRegistrationOptions): void {
 	);
 }
 
-export function registerUtilityTools(options: ToolRegistrationOptions): void {
+export function registerWorkspaceTools(options: ToolRegistrationOptions): void {
 	registerAccountOverviewTool(options);
 	registerUsageOverviewTool(options);
 }

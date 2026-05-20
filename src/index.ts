@@ -20,7 +20,7 @@ import { registerDomainTools } from "./tools/domain/index.js";
 import { registerEmailTools } from "./tools/email/index.js";
 import { registerPhoneTools } from "./tools/phone/index.js";
 import { registerSmsTools } from "./tools/sms/index.js";
-import { registerUtilityTools } from "./tools/utility/index.js";
+import { registerWorkspaceTools } from "./tools/workspace/index.js";
 import { registerVaultTools } from "./tools/vault/index.js";
 // OAuth Apps / Connections removed from MCP surface on 2026-04-25 (credential-broker handles third-party auth via vault + vtk_ tokens).
 import { registerWebhookTools } from "./tools/webhook/index.js";
@@ -40,7 +40,7 @@ const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
 		sms: registerSmsTools,
 		vault: registerVaultTools,
 		webhook: registerWebhookTools,
-		utility: registerUtilityTools,
+		workspace: registerWorkspaceTools,
 		phone_call: registerPhoneCallTools,
 	};
 

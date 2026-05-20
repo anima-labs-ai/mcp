@@ -32,7 +32,7 @@
     "groups": [
       "agent", "domain",
       "email", "phone", "sms",
-      "utility", "vault", "webhook",
+      "workspace", "vault", "webhook",
       "phone_call"
     ]
   }

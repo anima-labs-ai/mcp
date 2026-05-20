@@ -60,7 +60,7 @@ describe("tool helpers", () => {
 
 	test("requiresMasterKey returns true for protected tools", () => {
 		expect(requiresMasterKey("agent_delete")).toBe(true);
-		expect(requiresMasterKey("domain_add")).toBe(true);
+		expect(requiresMasterKey("domain_create")).toBe(true);
 		expect(requiresMasterKey("domain_verify")).toBe(true);
 	});
 

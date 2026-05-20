@@ -7,7 +7,7 @@ import { registerEmailTools } from "../../tools/email/index.js";
 import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
 import { registerSmsTools } from "../../tools/sms/index.js";
-import { registerUtilityTools } from "../../tools/utility/index.js";
+import { registerWorkspaceTools } from "../../tools/workspace/index.js";
 
 type ToolResult = {
 	content: Array<{ type: "text"; text: string }>;
@@ -89,7 +89,7 @@ function createHarness(hasMasterKey = true): {
 		registerDomainTools(options);
 		registerPhoneTools(options);
 		registerSmsTools(options);
-		registerUtilityTools(options);
+		registerWorkspaceTools(options);
 	};
 
 	return { registeredTools, client, registerAll };
@@ -165,8 +165,8 @@ describe("tool behavior integration", () => {
 		);
 	});
 
-	test("domain_add calls POST /domains", async () => {
-		const handler = getTool(harness.registeredTools, "domain_add");
+	test("domain_create calls POST /v1/domains", async () => {
+		const handler = getTool(harness.registeredTools, "domain_create");
 		await handler({ domain: "example.com" });
 		expect(harness.client.post).toHaveBeenCalledWith(
 			"/v1/domains",
@@ -215,7 +215,7 @@ describe("tool behavior integration", () => {
 		const noMasterHarness = createHarness(false);
 		noMasterHarness.registerAll();
 
-		const domainAdd = getTool(noMasterHarness.registeredTools, "domain_add");
+		const domainAdd = getTool(noMasterHarness.registeredTools, "domain_create");
 		const domainResult = await domainAdd({ domain: "example.com" });
 
 		expect(domainResult.isError).toBe(true);

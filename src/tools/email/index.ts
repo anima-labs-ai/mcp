@@ -92,6 +92,27 @@ function stringifyValue(value: unknown): string {
 	return JSON.stringify(value);
 }
 
+// Attachment shape mirrors the API's EmailAttachmentInput contract.
+// Provide exactly one of `content` (base64-inline) or `url` (public URL
+// for server-fetch). Optional `contentId` for inline HTML images.
+const emailAttachmentSchema = z
+	.object({
+		filename: z.string().optional().describe("Filename presented to the recipient."),
+		contentId: z
+			.string()
+			.optional()
+			.describe("Content-ID for inline images referenced via `cid:<id>` in HTML body."),
+		contentType: z
+			.string()
+			.optional()
+			.describe("MIME type. Auto-detected from filename if omitted."),
+		content: z.string().optional().describe("Base64-encoded attachment bytes."),
+		url: z.string().optional().describe("Public URL the server fetches and attaches."),
+	})
+	.describe(
+		"File attachment for outbound email. Provide exactly one of `content` (base64-inline) or `url` (server-fetch).",
+	);
+
 const emailSendSchema = z.object({
 	agentId: z.string().describe("Agent ID sending the email."),
 	to: z.array(z.string()).describe("List of recipient email addresses."),
@@ -103,6 +124,13 @@ const emailSendSchema = z.object({
 		.describe("Optional HTML body content for rich email formatting."),
 	cc: z.array(z.string()).optional().describe("Optional CC recipient email addresses."),
 	bcc: z.array(z.string()).optional().describe("Optional BCC recipient email addresses."),
+	attachments: z
+		.array(emailAttachmentSchema)
+		.max(20)
+		.optional()
+		.describe(
+			"Optional file attachments (max 20 entries, 25MB total). Each entry must provide either `content` (base64-inline) or `url` (public URL for server-fetch). Use `contentId` for inline images.",
+		),
 	inReplyTo: z
 		.string()
 		.optional()
@@ -132,6 +160,11 @@ const emailReplySchema = z.object({
 		.boolean()
 		.optional()
 		.describe("When true, include additional participants from the original email."),
+	attachments: z
+		.array(emailAttachmentSchema)
+		.max(20)
+		.optional()
+		.describe("Optional file attachments on the reply (max 20 entries, 25MB total)."),
 });
 
 const emailForwardSchema = z.object({
@@ -145,6 +178,13 @@ const emailForwardSchema = z.object({
 		.string()
 		.optional()
 		.describe("Optional introductory text to prepend before forwarded content."),
+	attachments: z
+		.array(emailAttachmentSchema)
+		.max(20)
+		.optional()
+		.describe(
+			"Optional additional file attachments on the forward (max 20 entries, 25MB total). Original email's attachments are NOT auto-included.",
+		),
 });
 
 const emailThreadGetSchema = z.object({
@@ -231,6 +271,9 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 			if (args.bodyHtml) body.bodyHtml = args.bodyHtml;
 			if (args.cc) body.cc = args.cc;
 			if (args.bcc) body.bcc = args.bcc;
+			if (args.attachments && args.attachments.length > 0) {
+				body.attachments = args.attachments;
+			}
 			if (args.inReplyTo) body.inReplyTo = args.inReplyTo;
 			if (args.references) body.references = args.references;
 			const result = await context.client.post<unknown>("/v1/email/send", body);
@@ -341,6 +384,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 				cc?: string[];
 				inReplyTo?: string;
 				references?: string[];
+				attachments?: unknown;
 			} = {
 				agentId: args.agentId,
 				to: [replyToAddress],
@@ -351,6 +395,9 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 			if (args.html) payload.bodyHtml = args.html;
 			if (inReplyTo) payload.inReplyTo = inReplyTo;
 			if (references.length > 0) payload.references = references;
+			if (args.attachments && args.attachments.length > 0) {
+				payload.attachments = args.attachments;
+			}
 
 			if (args.replyAll) {
 				const ccList = dedupeStrings(
@@ -427,12 +474,22 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 				`Subject: ${subjectRaw}\n\n` +
 				`${originalText}`;
 
-			const payload = {
+			const payload: {
+				agentId: string;
+				to: string[];
+				subject: string;
+				body: string;
+				attachments?: unknown;
+			} = {
 				agentId: args.agentId,
 				to: args.to,
 				subject,
 				body: forwardedBody,
 			};
+
+			if (args.attachments && args.attachments.length > 0) {
+				payload.attachments = args.attachments;
+			}
 
 			const result = await context.client.post<unknown>("/v1/email/send", payload);
 			return toolSuccess(result);

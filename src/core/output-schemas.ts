@@ -33,7 +33,7 @@ import { z } from "zod";
  * GET/POST/PATCH endpoints).
  */
 export function objectOutput() {
-	return z.object({}).passthrough().shape;
+	return z.object({}).passthrough();
 }
 
 /**
@@ -53,7 +53,7 @@ export function listOutput() {
 			next_offset: z.number().optional(),
 			count: z.number().optional(),
 		})
-		.passthrough().shape;
+		.passthrough();
 }
 
 /**
@@ -67,7 +67,7 @@ export function sendOutput() {
 			messageId: z.string().optional(),
 			status: z.string().optional(),
 		})
-		.passthrough().shape;
+		.passthrough();
 }
 
 /**
@@ -80,7 +80,7 @@ export function deleteOutput() {
 			deleted: z.boolean().optional(),
 			id: z.string().optional(),
 		})
-		.passthrough().shape;
+		.passthrough();
 }
 
 /**
@@ -93,5 +93,5 @@ export function statusOutput() {
 			status: z.string().optional(),
 			ok: z.boolean().optional(),
 		})
-		.passthrough().shape;
+		.passthrough();
 }

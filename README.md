@@ -1,6 +1,6 @@
 # @anima-labs/mcp
 
-MCP (Model Context Protocol) server for Anima -- 89 tools across 11 categories for AI agent communication, identity, and security.
+MCP (Model Context Protocol) server for Anima -- 53 tools across 9 categories for AI agent communication, identity, and security.
 
 ## Installation
 
@@ -43,17 +43,15 @@ Available tool groups:
 
 | Group | Description |
 |-------|-------------|
-| `org` | Organization management |
-| `agent` | Agent CRUD and key rotation |
-| `email` | Email send, receive, search, folders, templates |
-| `domain` | Domain setup, DNS, verification, deliverability |
-| `phone` | Phone number provisioning, SMS, status |
+| `workspace` | Account overview and usage rollups |
+| `agent` | Agent CRUD and address/identity management |
+| `email` | Email send/receive, threads, drafts, attachments |
+| `domain` | Custom sending domains: DNS, verification, zone files |
+| `phone` | Phone number provisioning and release |
+| `phone_call` | Outbound calls, transcripts, recordings, voices |
+| `sms` | SMS/MMS send and conversation history |
 | `vault` | Credential vault management and TOTP |
-| `message` | Unified messaging (email + SMS) |
-| `webhook` | Webhook management and delivery logs |
-| `security` | Security events, policies, content scanning |
-| `utility` | Health checks, agent messaging, metadata |
-| `x402` | HTTP 402 payment protocol |
+| `webhook` | Webhook subscription management and testing |
 
 If `--tools` is not provided, all groups are registered (current default behavior).
 
@@ -133,156 +131,103 @@ With selective loading:
 
 ## Tool Reference
 
-### Organization (6 tools)
+### Workspace (2 tools)
 
 | Tool | Description |
 |------|-------------|
-| `org_create` | Create a new organization |
-| `org_get` | Get organization by ID |
-| `org_list` | List organizations |
-| `org_update` | Update organization settings |
-| `org_delete` | Delete an organization |
-| `org_rotate_key` | Rotate organization master key |
+| `account_overview` | Single-call workspace snapshot: context, send-capability flags, inventory counts, and blockers |
+| `usage_overview` | Usage rollup for a billing period |
 
-### Agent (6 tools)
+### Agent (5 tools)
 
 | Tool | Description |
 |------|-------------|
-| `agent_create` | Create a new agent with optional metadata |
-| `agent_get` | Get agent by ID |
-| `agent_list` | List agents with pagination |
-| `agent_update` | Update agent settings |
-| `agent_delete` | Delete an agent |
-| `agent_rotate_key` | Rotate agent API key |
+| `agent_create` | Create a new agent, optionally with metadata and an initial address |
+| `agent_get` | Get full detail for an agent: settings, metadata, status, addresses, and identities |
+| `agent_list` | List agents in the current account context with cursor pagination |
+| `agent_update` | Update an agent's name or metadata, and add/update/delete an address |
+| `agent_delete` | Delete an agent by ID |
 
-### Email (19 tools)
-
-| Tool | Description |
-|------|-------------|
-| `email_send` | Send an email |
-| `email_get` | Get email by ID |
-| `email_list` | List emails with filters |
-| `email_reply` | Reply to an email |
-| `email_forward` | Forward an email |
-| `email_search` | Search emails by query |
-| `inbox_digest` | Get inbox digest summary |
-| `email_mark_read` | Mark email as read |
-| `email_mark_unread` | Mark email as unread |
-| `batch_mark_read` | Batch mark emails as read |
-| `batch_mark_unread` | Batch mark emails as unread |
-| `batch_delete` | Batch delete emails |
-| `batch_move` | Batch move emails to folder |
-| `email_move` | Move a single email |
-| `email_delete` | Delete a single email |
-| `manage_folders` | Create, list, or delete email folders |
-| `manage_contacts` | Manage email contacts |
-| `manage_templates` | Manage email templates |
-| `template_send` | Send email using a template |
-
-### Domain (9 tools)
+### Email (12 tools)
 
 | Tool | Description |
 |------|-------------|
-| `domain_add` | Add a custom sending domain |
-| `domain_verify` | Verify domain DNS records |
-| `domain_get` | Get domain details |
-| `domain_list` | List all domains |
-| `domain_update` | Update domain configuration |
-| `domain_delete` | Delete a domain |
-| `domain_dns_records` | Get required DNS records |
-| `domain_deliverability` | Check domain deliverability |
-| `domain_zone_file` | Get full DNS zone file |
+| `email_send` | Send a new outbound email from the agent mailbox |
+| `email_get` | Get full detail for a single email by ID, including metadata and body |
+| `email_list` | List emails in a folder with pagination |
+| `email_reply` | Reply to an existing email thread with correct threading headers |
+| `email_forward` | Forward an existing email to another recipient |
+| `email_thread_get` | Fetch all messages in one or more email threads |
+| `email_attachment_get` | Get a temporary download URL for an email attachment |
+| `email_draft_create` | Create a new email draft (composed but not sent) |
+| `email_draft_get` | Get full detail for a single draft by ID |
+| `email_draft_list` | List email drafts with optional filters |
+| `email_draft_send` | Send a draft |
+| `email_draft_delete` | Discard a draft |
 
-### Phone (8 tools)
-
-| Tool | Description |
-|------|-------------|
-| `phone_search` | Search available phone numbers |
-| `phone_provision` | Provision a phone number |
-| `phone_release` | Release a phone number |
-| `phone_get` | Get phone number details by ID |
-| `phone_list` | List provisioned numbers |
-| `phone_update_config` | Update phone number configuration |
-| `phone_send_sms` | Send an SMS message |
-| `phone_status` | Get status of provisioned numbers |
-
-### Vault (12 tools)
+### Domain (7 tools)
 
 | Tool | Description |
 |------|-------------|
-| `vault_provision` | Provision vault for an agent |
-| `vault_deprovision` | Deprovision agent vault |
-| `vault_list_credentials` | List vault credentials |
-| `vault_get_credential` | Get credential by ID |
-| `vault_create_credential` | Create a new credential |
-| `vault_update_credential` | Update an existing credential |
-| `vault_delete_credential` | Delete a credential |
-| `vault_search` | Search credentials by keyword |
-| `vault_sync` | Force vault sync |
-| `vault_generate_password` | Generate a secure password |
-| `vault_get_totp` | Get current TOTP code |
-| `vault_status` | Check vault provisioning status |
+| `domain_create` | Register a custom sending domain in the workspace |
+| `domain_verify` | Trigger a verification check after DNS records are configured |
+| `domain_get` | Get full detail for a domain, including verification and config state |
+| `domain_list` | List all domains connected to the current workspace |
+| `domain_update` | Update mutable configuration on a domain |
+| `domain_delete` | Delete a domain from the workspace |
+| `domain_zone_file` | Get the full DNS zone file for a domain |
 
-### Message (9 tools)
+### Phone (3 tools)
 
 | Tool | Description |
 |------|-------------|
-| `message_send_email` | Send email via unified messaging |
-| `message_send_sms` | Send SMS via unified messaging |
-| `message_get` | Get message by ID |
-| `message_list` | List messages with filters |
-| `message_search` | Search messages |
-| `message_semantic_search` | Semantic search across messages |
-| `conversation_search` | Search conversations |
-| `message_upload_attachment` | Upload a message attachment |
-| `message_get_attachment` | Get attachment download URL |
+| `phone_number_list` | List provisioned phone numbers, optionally filtered by agent |
+| `phone_number_provision` | Provision a new phone number and assign it to an agent |
+| `phone_number_release` | Release a provisioned phone number back to the carrier pool |
 
-### Webhook (7 tools)
+### Phone Call (6 tools)
 
 | Tool | Description |
 |------|-------------|
-| `webhook_create` | Create a webhook endpoint |
-| `webhook_get` | Get webhook by ID |
-| `webhook_update` | Update webhook configuration |
-| `webhook_delete` | Delete a webhook |
-| `webhook_list` | List webhooks |
-| `webhook_test` | Send a test event to a webhook |
-| `webhook_list_deliveries` | List webhook delivery history |
+| `phone_call_create` | Initiate an outbound phone call from an agent (returns a callId immediately) |
+| `phone_call_list` | List phone calls with optional filters |
+| `phone_call_get` | Get full detail for a call: status, duration, participants, AI summary, and quality score |
+| `phone_call_transcript_get` | Get the full transcript with speaker labels, timestamps, and confidence scores |
+| `phone_call_recording_get` | Get a time-limited download URL for a call recording (WAV) |
+| `voice_list` | List available AI voices for placing phone calls |
 
-### Security (5 tools)
-
-| Tool | Description |
-|------|-------------|
-| `security_approve` | Approve a security event |
-| `security_list_events` | List security events |
-| `security_get_policy` | Get security policy |
-| `security_update_policy` | Update security policy |
-| `security_scan_content` | Scan content for threats |
-
-### Utility (14 tools)
+### SMS (5 tools)
 
 | Tool | Description |
 |------|-------------|
-| `whoami` | Get current agent identity |
-| `check_health` | Check API health status |
-| `list_agents` | Quick agent listing |
-| `manage_pending` | Manage pending follow-ups |
-| `check_followups` | Check pending follow-ups |
-| `message_agent` | Send inter-agent message |
-| `check_messages` | Check for new messages |
-| `wait_for_email` | Wait for an email to arrive |
-| `call_agent` | Call another agent |
-| `update_metadata` | Update agent metadata |
-| `setup_email_domain` | Quick email domain setup |
-| `send_test_email` | Send a test email |
-| `manage_spam` | Manage spam settings |
-| `check_tasks` | Check task status |
+| `sms_send` | Send an SMS, or an MMS by passing `mediaUrls` |
+| `sms_get` | Get full detail for a single SMS by ID (includes its `threadId`) |
+| `sms_list` | List SMS messages with optional filters |
+| `sms_thread_list` | List SMS conversations |
+| `sms_thread_get` | Get a specific SMS conversation with message history |
 
-### x402 (1 tool)
+### Vault (8 tools)
 
 | Tool | Description |
 |------|-------------|
-| `x402_fetch` | Fetch a resource using HTTP 402 payment protocol |
+| `vault_provision` | Provision a credential vault for an agent |
+| `vault_credential_list` | List credentials in an agent vault with optional type filter |
+| `vault_credential_get` | Get a single vault credential by ID |
+| `vault_credential_create` | Create a new credential in an agent vault |
+| `vault_credential_update` | Update an existing vault credential by ID |
+| `vault_credential_delete` | Delete a credential from vault storage by ID |
+| `vault_credential_search` | Search vault credentials by keyword across names and content |
+| `vault_credential_get_totp` | Get the current TOTP code for a credential with a TOTP secret |
+
+### Webhook (5 tools)
+
+| Tool | Description |
+|------|-------------|
+| `webhook_set` | Create or update a webhook subscription |
+| `webhook_get` | Get a webhook subscription by ID |
+| `webhook_list` | List webhook subscriptions with cursor pagination |
+| `webhook_delete` | Delete a webhook subscription by ID |
+| `webhook_test` | Send a test event to verify endpoint reachability and signature verification |
 
 ## Community
 

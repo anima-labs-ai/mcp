@@ -1,6 +1,6 @@
 {
 	"name": "@anima-labs/mcp",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"type": "module",
 	"description": "Anima MCP server — 53 tools for AI agent communication, with email attachment support",
 	"license": "MIT",

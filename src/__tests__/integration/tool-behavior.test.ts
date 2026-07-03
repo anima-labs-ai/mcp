@@ -368,6 +368,27 @@ describe("tool behavior integration", () => {
 		expect(harness.client.post).not.toHaveBeenCalled();
 	});
 
+	test("webhook_set forwards auth + throttle advanced settings in the body", async () => {
+		// The advanced settings (endpoint auth + delivery throttle) must reach
+		// the API body unchanged — the handler spreads the whole input.
+		const handler = getTool(harness.registeredTools, "webhook_set");
+		await handler({
+			url: "https://example.com/hook",
+			events: ["message.received"],
+			authConfig: { type: "bearer", token: "tok_secret" },
+			rateLimitPerMinute: 120,
+			maxAttempts: 5,
+		});
+		expect(harness.client.post).toHaveBeenCalledWith(
+			"/v1/webhooks",
+			expect.objectContaining({
+				authConfig: { type: "bearer", token: "tok_secret" },
+				rateLimitPerMinute: 120,
+				maxAttempts: 5,
+			}),
+		);
+	});
+
 	test("webhook_delete calls DELETE /webhooks/{id}", async () => {
 		const handler = getTool(harness.registeredTools, "webhook_delete");
 		await handler({ id: "wh_10" });

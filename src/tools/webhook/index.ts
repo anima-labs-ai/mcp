@@ -58,6 +58,52 @@ const webhookSetInput = z.object({
 		.boolean()
 		.optional()
 		.describe("Whether the webhook is active. Defaults to true on create."),
+	authConfig: z
+		.discriminatedUnion("type", [
+			z.object({ type: z.literal("none") }),
+			z.object({
+				type: z.literal("bearer"),
+				token: z.string().min(1).max(4096),
+			}),
+			z.object({
+				type: z.literal("basic"),
+				username: z.string().min(1).max(256),
+				password: z.string().min(1).max(1024),
+			}),
+			z.object({
+				type: z.literal("custom_header"),
+				headerName: z
+					.string()
+					.min(1)
+					.max(128)
+					.regex(/^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/, "Must be a valid HTTP header name"),
+				value: z.string().min(1).max(4096),
+			}),
+		])
+		.optional()
+		.describe(
+			"Auth the platform presents to your endpoint on each delivery, IN ADDITION to the always-on X-Anima-Signature HMAC. One of: { type: 'none' }, { type: 'bearer', token }, { type: 'basic', username, password }, { type: 'custom_header', headerName, value }. Pass { type: 'none' } to remove existing auth.",
+		),
+	rateLimitPerMinute: z
+		.number()
+		.int()
+		.positive()
+		.max(100000)
+		.nullable()
+		.optional()
+		.describe(
+			"Max deliveries per minute to this endpoint. Omit for unlimited; pass null on update to clear it.",
+		),
+	maxAttempts: z
+		.number()
+		.int()
+		.min(1)
+		.max(10)
+		.nullable()
+		.optional()
+		.describe(
+			"Max delivery attempts before dead-lettering (1-10, default 3). Pass null on update to reset to the default.",
+		),
 });
 
 const webhookTestInput = z.object({

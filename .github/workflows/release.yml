@@ -26,7 +26,12 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Publish to npm
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # Trusted Publishing (OIDC) — no NPM_TOKEN. npm >= 11.5.1 exchanges the
+      # workflow's id-token for a short-lived credential and attaches provenance
+      # automatically (so no --provenance flag / NODE_AUTH_TOKEN). Requires an
+      # npm trusted publisher configured for @anima-labs/mcp:
+      # GitHub Actions -> anima-labs-ai/mcp -> release.yml.
+      - name: Publish to npm (trusted publishing)
+        run: |
+          npm install -g npm@latest
+          npm publish --access public

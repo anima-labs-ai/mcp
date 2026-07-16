@@ -2,6 +2,17 @@
 
 MCP (Model Context Protocol) server for Anima -- 53 tools across 9 categories for AI agent communication, identity, and security.
 
+## Hosted vs local (which one do I want?)
+
+Anima runs a **hosted MCP gateway** at `https://mcp.useanima.sh/mcp` -- nothing to install, always current, and it carries the fullest tool surface (it adds inbox management and other tools beyond this package's 53). If your client speaks remote MCP (Cursor, VS Code, Claude Code `--transport http`), point it there with `Authorization: Bearer ak_...` and you're done. See the [MCP docs](https://docs.useanima.sh/mcp-servers).
+
+This npm package is the **stdio bridge** for clients without remote-MCP support and for pinned/air-gapped configs. Same platform, same auth, smaller tool set.
+
+```bash
+anima setup-mcp install --all            # hosted gateway (default)
+anima setup-mcp install --all --mode stdio  # this package
+```
+
 ## Installation
 
 ```bash
@@ -27,7 +38,7 @@ npx @anima-labs/mcp --tools=email,vault,phone
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANIMA_API_URL` | No | API server URL (default: `http://127.0.0.1:3100`) |
+| `ANIMA_API_URL` | No | API server URL (default: `https://api.useanima.sh`) |
 | `ANIMA_API_KEY` | Yes | Agent API key (`ak_` prefix) |
 | `ANIMA_MASTER_KEY` | No | Master key (`mk_` prefix) for admin tools |
 

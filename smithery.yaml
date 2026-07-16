@@ -1,23 +1,32 @@
 # Smithery Registry Manifest
 # https://smithery.ai/docs/manifest
+#
+# Tool names/groups below are the REAL registered tools of this package
+# (extracted from registerTool calls in src/tools/**). Keep them in sync —
+# a previous version of this manifest advertised a ~3x inflated count with
+# invented names and whole invented groups (x402, wallet, pods, registry,
+# "USPS validation"); competitive-parity spec E4 removed all of it.
+# src/__tests__/unit/smithery-manifest.test.ts enforces the sync.
 
 name: "@anima-labs/mcp"
 display_name: "Anima — AI Agent Identity Platform"
 description: >
-  Give your AI agents real-world capabilities: email, voice, phone,
-  credential vault, addresses, agent-to-agent messaging. 153 tools for
-  autonomous agent operations.
-version: "0.1.0"
+  Give your AI agents real-world capabilities: email inboxes, phone
+  numbers, SMS, voice calls, custom domains, webhooks, and an encrypted
+  credential vault. 53 tools for autonomous agent operations. Prefer the
+  hosted server at https://mcp.useanima.sh/mcp for zero-install use; this
+  package is the stdio bridge for local/offline-config clients.
+version: "0.5.2"
 license: "MIT"
 
 author:
   name: "Anima Labs"
-  url: "https://animalabs.ai"
-  email: "support@animalabs.ai"
+  url: "https://useanima.sh"
+  email: "support@useanima.sh"
 
 repository: "https://github.com/anima-labs-ai/mcp"
 homepage: "https://useanima.sh"
-documentation: "https://docs.useanima.sh"
+documentation: "https://docs.useanima.sh/mcp-servers"
 
 icon: "https://useanima.sh/icon.png"
 
@@ -35,18 +44,19 @@ tags:
   - phone-sms
   - agent-identity
   - mcp-server
-  - x402
-  - agent-to-agent
 
 install:
   command: "npx"
   args: ["-y", "@anima-labs/mcp"]
   env:
     ANIMA_API_KEY:
-      description: "Your Anima API key"
+      description: "Your Anima agent API key (ak_...)"
       required: true
-    ANIMA_BASE_URL:
-      description: "Custom API base URL"
+    ANIMA_MASTER_KEY:
+      description: "Org master key (mk_...) — unlocks admin tools (agent_delete, domain management)"
+      required: false
+    ANIMA_API_URL:
+      description: "API base URL override (defaults to https://api.useanima.sh)"
       required: false
 
 transports:
@@ -54,66 +64,36 @@ transports:
     description: "Default transport for Claude Desktop, Cursor, and similar tools"
   - type: "http"
     description: "HTTP transport for web-based MCP clients"
-    args: ["--transport=http", "--port=3100"]
+    args: ["--http", "--port=8014"]
 
 tool_groups:
+  - name: "workspace"
+    description: "Account overview and usage rollups"
+    tools: ["account_overview", "usage_overview"]
   - name: "agent"
     description: "Create and manage AI agent identities"
-    tools: ["create_agent", "list_agents", "get_agent", "delete_agent", "rotate_agent_key", "update_agent"]
+    tools: ["agent_create", "agent_get", "agent_list", "agent_update", "agent_delete"]
   - name: "email"
-    description: "Send, receive, and manage email messages"
-    tools: ["send_email", "get_email", "list_emails", "search_emails", "get_email_headers"]
-  - name: "message"
-    description: "Inbox messaging operations"
-    tools: ["send_message", "list_messages", "get_message", "search_messages"]
-  - name: "vault"
-    description: "Encrypted credential storage"
-    tools: ["provision_vault", "deprovision_vault", "vault_status", "create_credential", "get_credential", "list_credentials", "update_credential", "delete_credential", "search_credentials", "vault_sync", "generate_password", "get_totp"]
-  - name: "phone"
-    description: "Phone numbers and SMS"
-    tools: ["search_phone_numbers", "provision_phone", "release_phone", "send_sms", "list_phones", "get_phone", "update_phone_config"]
-  - name: "webhook"
-    description: "Real-time event subscriptions"
-    tools: ["create_webhook", "list_webhooks", "get_webhook", "delete_webhook", "test_webhook", "list_deliveries"]
+    description: "Send, receive, reply, forward; drafts, threads, attachments"
+    tools: ["email_send", "email_get", "email_list", "email_reply", "email_forward", "email_thread_get", "email_attachment_get", "email_draft_create", "email_draft_get", "email_draft_list", "email_draft_send", "email_draft_delete"]
   - name: "domain"
-    description: "Custom email domain management"
-    tools: ["create_domain", "list_domains", "get_domain", "update_domain", "delete_domain", "verify_domain", "domain_zone_file"]
-  - name: "security"
-    description: "Security policy configuration"
-    tools: ["list_security_events", "scan_content", "get_security_policies", "update_security_policies"]
-  - name: "x402"
-    description: "HTTP 402 payment protocol"
-    tools: ["fetch_x402"]
-  - name: "voice"
-    description: "Inbound and outbound voice calls with transcription, scoring, and summaries"
-    tools: ["voice_create_call", "voice_get_call", "voice_list_calls", "voice_search_calls", "voice_get_transcript", "voice_get_recording", "voice_get_summary", "voice_get_score", "voice_list_voices", "voice_catalog", "voice_get_security_scan"]
-  - name: "address"
-    description: "Billing and shipping addresses with USPS validation"
-    tools: ["create_address", "list_addresses", "get_address", "update_address", "delete_address", "validate_address"]
-  - name: "wallet"
-    description: "Agent wallet operations (balance, transactions, x402 fetch)"
-    tools: ["get_wallet", "wallet_pay", "wallet_transactions", "wallet_x402_fetch", "create_wallet", "freeze_wallet", "unfreeze_wallet"]
-  - name: "registry"
-    description: "Agent discovery registry — DID resolution, agent cards, A2A submissions"
-    tools: ["register_agent", "lookup_agent", "search_registry", "discover_agent", "resolve_did", "get_agent_card", "submit_a2a_task", "get_a2a_task", "list_a2a_tasks", "cancel_a2a_task", "get_did", "rotate_keys", "verify_credential", "unlist_agent", "update_registry"]
-  - name: "a2a"
-    description: "Agent-to-agent direct messaging"
-    tools: ["message_agent", "list_agents"]
-  - name: "identity"
-    description: "Identity verification and credentials"
-    tools: ["list_credentials"]
-  - name: "pod"
-    description: "Compute pod management"
-    tools: ["create_pod", "get_pod", "list_pods", "update_pod", "delete_pod", "pod_usage"]
-  - name: "extension"
-    description: "Anima Chrome extension integration"
-    tools: ["setup_extension", "get_extension_settings", "update_extension_settings"]
-  - name: "organization"
-    description: "Tenant / organization management"
-    tools: ["org_create", "org_get", "org_update", "org_delete", "org_list", "org_rotate_key"]
-  - name: "utility"
-    description: "Health checks, conversation search, follow-ups, task management"
-    tools: ["whoami", "check_health", "check_messages", "check_followups", "wait_for_email", "call_agent", "update_metadata", "manage_pending", "manage_spam", "conversation_search", "check_tasks", "send_test_email", "setup_email_domain"]
+    description: "Custom email domain management: DNS records, verification, zone files"
+    tools: ["domain_create", "domain_get", "domain_list", "domain_update", "domain_delete", "domain_verify", "domain_zone_file"]
+  - name: "phone"
+    description: "Phone number provisioning and release"
+    tools: ["phone_number_provision", "phone_number_list", "phone_number_release"]
+  - name: "phone_call"
+    description: "Outbound voice calls, transcripts, recordings, voice catalog"
+    tools: ["phone_call_create", "phone_call_get", "phone_call_list", "phone_call_transcript_get", "phone_call_recording_get", "voice_list"]
+  - name: "sms"
+    description: "SMS send and conversation threads"
+    tools: ["sms_send", "sms_get", "sms_list", "sms_thread_get", "sms_thread_list"]
+  - name: "vault"
+    description: "Encrypted credential vault: CRUD, search, TOTP"
+    tools: ["vault_provision", "vault_credential_create", "vault_credential_get", "vault_credential_list", "vault_credential_update", "vault_credential_delete", "vault_credential_search", "vault_credential_get_totp"]
+  - name: "webhook"
+    description: "Webhook subscription management and testing"
+    tools: ["webhook_set", "webhook_get", "webhook_list", "webhook_delete", "webhook_test"]
 
 features:
   selective_loading: true

@@ -123,7 +123,7 @@ async function main() {
 	if (config.httpMode) {
 		await startHttpServer(config, toolGroups);
 	} else {
-		// Resolve API key: CLI flag → env var → cached → browser auth
+		// Resolve API key: CLI flag → env var → cached credentials
 		const apiKey = await resolveApiKey();
 		const client = new ApiClient({
 			baseUrl: config.apiUrl,

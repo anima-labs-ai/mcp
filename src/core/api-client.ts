@@ -169,8 +169,10 @@ export class ApiClient {
  * Create an API client from environment variables.
  */
 export function createApiClientFromEnv(): ApiClient {
-	const baseUrl =
-		process.env.ANIMA_API_URL ?? "http://127.0.0.1:3100";
+	// Keep in sync with DEFAULTS.apiUrl (config.ts) — this fallback used to
+	// point at a localhost dev port, which silently broke anyone relying on
+	// this helper without ANIMA_API_URL set.
+	const baseUrl = process.env.ANIMA_API_URL ?? "https://api.useanima.sh";
 	const apiKey = process.env.ANIMA_API_KEY ?? "";
 	const masterKey = process.env.ANIMA_MASTER_KEY;
 

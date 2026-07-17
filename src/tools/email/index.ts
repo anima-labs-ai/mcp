@@ -581,17 +581,21 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 				body,
 			);
 
+			// This route answers with `{results: [...]}`, NOT the `{items, pagination}`
+			// every other list-shaped route returns. Re-keying to `items` gives
+			// email_search ONE output shape across both modes; reading the wrong key
+			// here silently skips the channel filter below and hands back SMS as mail.
+			// `channel` arrives as the Postgres enum cast to text, i.e. uppercase.
 			const record = asRecord(result);
-			const items = Array.isArray(record?.items) ? (record.items as unknown[]) : null;
-			if (!items) return toolSuccess(result);
+			const rows = Array.isArray(record?.results) ? (record.results as unknown[]) : null;
+			if (!rows) return toolSuccess(result);
 
-			const emails = items.filter((item) => asRecord(item)?.channel === "EMAIL");
+			const emails = rows.filter((row) => asRecord(row)?.channel === "EMAIL");
 			return toolSuccess({
-				...record,
 				items: emails,
-				...(emails.length < items.length
+				...(emails.length < rows.length
 					? {
-							note: `${items.length - emails.length} non-email result(s) from other channels were dropped; re-run with a higher limit if you expected more.`,
+							note: `${rows.length - emails.length} non-email result(s) from other channels were dropped; re-run with a higher limit if you expected more.`,
 						}
 					: {}),
 			});

@@ -38,18 +38,23 @@ const phoneCallSchema = z.object({
 		.string()
 		.optional()
 		.describe("Source number to call from (defaults to agent's primary number)."),
-	voiceId: z
-		.string()
-		.optional()
-		.describe("AI voice ID from voices_list to use for the call."),
+	// 2026-07-17: `voiceId` removed — POST /voice/calls accepts
+	// {agentId, fromNumber, greeting, systemPrompt, tier, to} and Zod-strips the
+	// rest, so every call placed with a hand-picked voice silently used the
+	// default. That made the whole voice_list catalog unreachable from this
+	// bridge. Restore this param only once the API contract carries voiceId
+	// through to the provider.
 });
 
+// 2026-07-17: `numberId` and `search` removed. GET /voice/calls accepts
+// {agentId, direction, limit, offset, state}: `numberId` went out as
+// `phoneIdentityId` and `search` as `search`, neither of which the route has, so
+// both were Zod-stripped and the model got an UNFILTERED list it believed was
+// filtered — the worst failure shape, since the answer looks right. `search`
+// even documented this ("server-side support pending; pass-through for now") in
+// a description only the model reads. Restore each when its route accepts it.
 const phoneCallListSchema = z.object({
 	agentId: z.string().optional().describe("Filter by agent ID."),
-	numberId: z
-		.string()
-		.optional()
-		.describe("Filter by phone identity ID (the number that placed/received the call)."),
 	direction: z
 		.enum(["INBOUND", "OUTBOUND"])
 		.optional()
@@ -58,10 +63,6 @@ const phoneCallListSchema = z.object({
 		.string()
 		.optional()
 		.describe("Filter by call state (INITIATING, RINGING, ACTIVE, ENDED, etc.)."),
-	search: z
-		.string()
-		.optional()
-		.describe("Free-text search across transcripts. Note: server-side support pending; pass-through for now."),
 	limit: z.number().int().positive().optional().describe("Max results (default: 20)."),
 	offset: z.number().int().nonnegative().optional().describe("Offset for pagination."),
 });
@@ -107,7 +108,6 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 			if (args.agentId) body.agentId = args.agentId;
 			if (args.tier) body.tier = args.tier;
 			if (args.fromNumber) body.fromNumber = args.fromNumber;
-			if (args.voiceId) body.voiceId = args.voiceId;
 			const result = await context.client.post<unknown>("/v1/voice/calls", body);
 			return toolSuccess(result);
 		}, options.context),
@@ -130,10 +130,9 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
 			if (args.agentId) params.set("agentId", args.agentId);
-			if (args.numberId) params.set("phoneIdentityId", args.numberId);
 			if (args.direction) params.set("direction", args.direction);
+			// The route's filter is `state`; `status` is this tool's public name for it.
 			if (args.status) params.set("state", args.status);
-			if (args.search) params.set("search", args.search);
 			if (args.limit !== undefined) params.set("limit", String(args.limit));
 			if (args.offset !== undefined) params.set("offset", String(args.offset));
 			const path = params.toString() ? `/v1/voice/calls?${params}` : "/v1/voice/calls";

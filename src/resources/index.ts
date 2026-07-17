@@ -106,7 +106,13 @@ export function registerResources(options: ToolRegistrationOptions): void {
 			description: "Recent emails in inbox",
 		},
 		async (uri) => {
-			const emails = await options.context.client.get("/email?limit=20");
+			// 2026-07-17 (C8): was "/email?limit=20". The client's base URL carries
+			// no prefix and the API mounts every route under /v1, so this resource
+			// 404'd for every user of the published package since it shipped. The
+			// /v1 repair landed on the tools and missed the resources — nothing
+			// caught it because the only test here asserted that the resource
+			// REGISTERED, never that it could read.
+			const emails = await options.context.client.get("/v1/email?limit=20");
 			const text = toText(formatEmails(emails));
 
 			return {
@@ -128,8 +134,8 @@ export function registerResources(options: ToolRegistrationOptions): void {
 			description: "Current authenticated identity and agent details",
 		},
 		async (uri) => {
-			const org = await options.context.client.get("/orgs/me");
-			const agents = await options.context.client.get<{ items: unknown[] }>("/agents");
+			const org = await options.context.client.get("/v1/orgs/me");
+			const agents = await options.context.client.get<{ items: unknown[] }>("/v1/agents");
 			const identity = { org, agents: agents.items };
 			const text = toText(formatAgentIdentity(identity));
 

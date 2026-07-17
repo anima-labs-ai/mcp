@@ -19,10 +19,11 @@ const domainIdSchema = z.object({
 	id: z.string().describe("Unique domain ID."),
 });
 
-const domainListSchema = z.object({
-	cursor: z.string().optional().describe("Pagination cursor from a previous list response."),
-	limit: z.number().int().positive().optional().describe("Max domains to return."),
-});
+// 2026-07-17: `cursor` and `limit` were fictional — GET /domains takes no
+// input at all and returns every domain in the workspace, so the model was
+// offered a pagination handle that did nothing. Domains are a small,
+// non-paginated set; the tool now says so instead of pretending.
+const domainListSchema = z.object({});
 
 export function registerDomainTools(options: ToolRegistrationOptions): void {
 	const { server } = options;
@@ -95,7 +96,7 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 		"domain_list",
 		{
 			description:
-				"List all domains connected to the current workspace. Use this to audit configured sender domains and choose one for follow-up actions.",
+				"List every domain connected to the current workspace (unpaginated). Use this to audit configured sender domains and choose one for follow-up actions.",
 			inputSchema: domainListSchema.shape,
 			outputSchema: listOutput(),
 			annotations: {
@@ -105,12 +106,8 @@ export function registerDomainTools(options: ToolRegistrationOptions): void {
 				openWorldHint: true,
 			},
 		},
-		withErrorHandling(async (args, context) => {
-			const params = new URLSearchParams();
-			if (args.cursor) params.set("cursor", args.cursor);
-			if (args.limit !== undefined) params.set("limit", String(args.limit));
-			const path = params.toString() ? `/v1/domains?${params}` : "/v1/domains";
-			const result = await context.client.get<unknown>(path);
+		withErrorHandling(async (_args, context) => {
+			const result = await context.client.get<unknown>("/v1/domains");
 			return toolSuccess(result);
 		}, options.context),
 	);

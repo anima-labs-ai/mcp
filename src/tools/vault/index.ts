@@ -129,11 +129,12 @@ const vaultFieldSchema = z.object({
 	linkedId: z.string().optional().describe("Optional linked field identifier."),
 });
 
+// 2026-07-17: `type` removed — GET /vault/credentials takes {agentId} only and
+// Zod-strips the rest, so a model asking for just the LOGIN credentials was
+// handed the entire vault listing and told it was filtered. Restore once the
+// route accepts a type filter; until then, filter the returned `items`.
 const vaultListInput = z.object({
 	agentId: z.string().describe("Agent ID whose vault credentials should be listed."),
-	type: vaultCredentialTypeSchema
-		.optional()
-		.describe("Optional credential type filter."),
 });
 
 const vaultIdInput = z.object({
@@ -206,7 +207,7 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		"vault_credential_list",
 		{
 			description:
-				"List credentials in an agent vault with optional type filter. Use this to browse stored secrets before reading, updating, or deleting entries. Sensitive fields in the response are masked.",
+				"List every credential in an agent vault. Use this to browse stored secrets before reading, updating, or deleting entries. Each item carries a `type`, so filter the returned list client-side. Sensitive fields in the response are masked.",
 			inputSchema: vaultListInput.shape,
 			outputSchema: listOutput(),
 			annotations: {
@@ -219,7 +220,6 @@ export function registerVaultTools(options: ToolRegistrationOptions): void {
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
 			params.set("agentId", args.agentId);
-			if (args.type) params.set("type", args.type);
 			const result = await context.client.get<unknown>(
 				`/v1/vault/credentials?${params.toString()}`,
 			);

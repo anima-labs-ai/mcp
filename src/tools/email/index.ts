@@ -4,7 +4,6 @@ import {
 	deleteOutput,
 	listOutput,
 	objectOutput,
-	requireMasterKeyGuard,
 	sendOutput,
 	toolSuccess,
 	withErrorHandling,
@@ -145,10 +144,17 @@ const emailGetSchema = z.object({
 	id: z.string().describe("Email ID. Returns full metadata and body."),
 });
 
+// 2026-07-17: `folder` and `offset` were fictional — GET /email accepts
+// {agentId, cursor, limit} and Zod-strips everything else, so the server
+// answered 200 with the unfiltered first page while the model believed it had
+// asked for "sent" or for page 3. Replaced with the params the route really has.
 const emailListSchema = z.object({
-	folder: z.string().optional().describe("Folder filter (e.g. inbox, sent)."),
+	agentId: z.string().optional().describe("Only return emails belonging to this agent."),
+	cursor: z
+		.string()
+		.optional()
+		.describe("Pagination cursor from a previous email_list response."),
 	limit: z.number().int().positive().optional().describe("Max emails to return."),
-	offset: z.number().int().nonnegative().optional().describe("Pagination offset."),
 });
 
 const emailReplySchema = z.object({
@@ -185,6 +191,35 @@ const emailForwardSchema = z.object({
 		.describe(
 			"Optional additional file attachments on the forward (max 20 entries, 25MB total). Original email's attachments are NOT auto-included.",
 		),
+});
+
+const emailSearchSchema = z.object({
+	query: z
+		.string()
+		.min(1)
+		.describe(
+			"What to look for. In semantic mode this is a natural-language description of the message ('the invoice dispute from last week'); in fulltext mode it is matched literally against subject and body.",
+		),
+	mode: z
+		.enum(["semantic", "fulltext"])
+		.optional()
+		.describe(
+			"semantic (default): meaning-based vector search — finds messages that match the IDEA even with no shared keywords. fulltext: literal keyword match, for exact strings like an order number.",
+		),
+	agentId: z.string().optional().describe("Only search messages belonging to this agent."),
+	direction: z
+		.enum(["INBOUND", "OUTBOUND"])
+		.optional()
+		.describe("Restrict to received (INBOUND) or sent (OUTBOUND) mail. Fulltext mode only."),
+	threshold: z
+		.number()
+		.min(0)
+		.max(1)
+		.optional()
+		.describe(
+			"Semantic mode only: minimum similarity, 0-1 (default 0.7). Lower to widen recall, raise to demand a closer match.",
+		),
+	limit: z.number().int().positive().max(50).optional().describe("Max results to return."),
 });
 
 const emailThreadGetSchema = z.object({
@@ -306,7 +341,7 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		"email_list",
 		{
 			description:
-				"List emails in a folder with pagination. Returns lightweight per-email records — use email_get for the full body.",
+				"List emails with cursor pagination, optionally scoped to one agent. Returns lightweight per-email records — use email_get for the full body, or email_search to find a specific message by content. Ordering is not guaranteed: page with `cursor` rather than assuming the first page is the newest mail.",
 			inputSchema: emailListSchema.shape,
 			outputSchema: listOutput(),
 			annotations: {
@@ -318,9 +353,9 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
-			if (args.folder) params.set("folder", args.folder);
+			if (args.agentId) params.set("agentId", args.agentId);
+			if (args.cursor) params.set("cursor", args.cursor);
 			if (args.limit !== undefined) params.set("limit", String(args.limit));
-			if (args.offset !== undefined) params.set("offset", String(args.offset));
 			const path = params.toString() ? `/v1/email?${params}` : "/v1/email";
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
@@ -342,8 +377,12 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 			},
 		},
 		withErrorHandling(async (args, context) => {
-			requireMasterKeyGuard(context);
-
+			// 2026-07-17: dropped a hardcoded requireMasterKeyGuard here. Replying is
+			// an ordinary agent action — email_send and email_forward make the very
+			// same GET + POST /email/send calls with no guard, and MASTER_KEY_TOOLS
+			// never listed email_reply. It only ever meant that anyone running the
+			// stdio bridge without ANIMA_MASTER_KEY (i.e. the documented setup)
+			// could send and forward mail but not reply.
 			const originalPath = `/v1/email/${encodeURIComponent(args.originalId)}`;
 			const originalData = await context.client.get<unknown>(originalPath);
 			const original = asRecord(originalData);
@@ -493,6 +532,69 @@ export function registerEmailTools(options: ToolRegistrationOptions): void {
 
 			const result = await context.client.post<unknown>("/v1/email/send", payload);
 			return toolSuccess(result);
+		}, options.context),
+	);
+
+	server.registerTool(
+		"email_search",
+		{
+			description:
+				"Search email by MEANING (default) or by literal keyword. Semantic mode uses vector search, so 'the invoice dispute' finds the message even when it never says 'invoice' or 'dispute' — use it when you know what a message was ABOUT but not what it said. Use fulltext mode for exact strings (order numbers, error codes). Prefer this over paging email_list when looking for something specific.",
+			inputSchema: emailSearchSchema.shape,
+			outputSchema: listOutput(),
+			annotations: {
+				readOnlyHint: true,
+				destructiveHint: false,
+				idempotentHint: true,
+				openWorldHint: true,
+			},
+		},
+		withErrorHandling(async (args, context) => {
+			const limit = args.limit ?? 20;
+
+			if (args.mode === "fulltext") {
+				const filters: Record<string, unknown> = { channel: "EMAIL" };
+				if (args.agentId) filters.agentId = args.agentId;
+				if (args.direction) filters.direction = args.direction;
+
+				const result = await context.client.post<unknown>("/v1/messages/search", {
+					query: args.query,
+					filters,
+					pagination: { limit },
+				});
+				return toolSuccess(result);
+			}
+
+			// Semantic. Unlike the fulltext route, /messages/search/semantic has no
+			// channel filter — it ranks across every channel the org has. Narrowing
+			// to EMAIL here keeps this tool true to its name, at the cost of
+			// returning fewer than `limit` rows when SMS outranks mail. `direction`
+			// is fulltext-only and is deliberately NOT applied client-side: silently
+			// re-implementing a filter over a truncated top-N would drop matches the
+			// caller had every reason to expect.
+			const body: Record<string, unknown> = { query: args.query, limit };
+			if (args.agentId) body.agentId = args.agentId;
+			if (args.threshold !== undefined) body.threshold = args.threshold;
+
+			const result = await context.client.post<unknown>(
+				"/v1/messages/search/semantic",
+				body,
+			);
+
+			const record = asRecord(result);
+			const items = Array.isArray(record?.items) ? (record.items as unknown[]) : null;
+			if (!items) return toolSuccess(result);
+
+			const emails = items.filter((item) => asRecord(item)?.channel === "EMAIL");
+			return toolSuccess({
+				...record,
+				items: emails,
+				...(emails.length < items.length
+					? {
+							note: `${items.length - emails.length} non-email result(s) from other channels were dropped; re-run with a higher limit if you expected more.`,
+						}
+					: {}),
+			});
 		}, options.context),
 	);
 

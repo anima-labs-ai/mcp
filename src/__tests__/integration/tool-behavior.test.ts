@@ -140,6 +140,85 @@ describe("tool behavior integration", () => {
 		);
 	});
 
+	test("email_reply works without a master key, like send and forward", async () => {
+		// email_reply carried a hardcoded master-key guard its siblings didn't, so
+		// the documented stdio setup (ANIMA_API_KEY only) could send and forward
+		// mail but never reply. Every other test in this file runs the harness with
+		// hasMasterKey=true, which is precisely why nothing caught it — so this one
+		// runs WITHOUT one.
+		const noMasterKey = createHarness(false);
+		noMasterKey.registerAll();
+		noMasterKey.client.get.mockResolvedValueOnce({
+			id: "orig_1",
+			subject: "Question",
+			fromAddress: "sender@example.com",
+			direction: "INBOUND",
+		});
+
+		const handler = getTool(noMasterKey.registeredTools, "email_reply");
+		const result = await handler({
+			agentId: "agent_1",
+			originalId: "orig_1",
+			text: "Answer",
+		});
+
+		expect(result.isError).toBeUndefined();
+		expect(noMasterKey.client.post).toHaveBeenCalledWith(
+			"/v1/email/send",
+			expect.objectContaining({ to: ["sender@example.com"], subject: "Re: Question" }),
+		);
+	});
+
+	// B11 — semantic search is the differentiator that was reachable from zero
+	// clients. These pin the two things a caller cannot verify for itself: that
+	// the mode actually selects a different backing route, and that an
+	// email_search result only ever contains email.
+	test("email_search defaults to the semantic route, not fulltext", async () => {
+		const handler = getTool(harness.registeredTools, "email_search");
+		await handler({ query: "the invoice dispute" });
+
+		expect(harness.client.post).toHaveBeenCalledWith(
+			"/v1/messages/search/semantic",
+			expect.objectContaining({ query: "the invoice dispute" }),
+		);
+	});
+
+	test("email_search fulltext mode uses the keyword route and scopes it to EMAIL", async () => {
+		const handler = getTool(harness.registeredTools, "email_search");
+		await handler({ query: "INV-42", mode: "fulltext", direction: "INBOUND" });
+
+		expect(harness.client.post).toHaveBeenCalledWith("/v1/messages/search", {
+			query: "INV-42",
+			// channel is the guard that keeps an "email_search" honest: without it
+			// the keyword route happily returns SMS.
+			filters: { channel: "EMAIL", direction: "INBOUND" },
+			pagination: { limit: 20 },
+		});
+	});
+
+	test("email_search never returns a non-email as an email", async () => {
+		// The semantic route has no channel filter — it ranks across every
+		// channel — so an unfiltered passthrough would hand the model an SMS and
+		// call it mail.
+		harness.client.post.mockResolvedValueOnce({
+			items: [
+				{ id: "m1", channel: "EMAIL", subject: "Invoice" },
+				{ id: "m2", channel: "SMS", body: "invoice paid" },
+			],
+		});
+
+		const handler = getTool(harness.registeredTools, "email_search");
+		const result = await handler({ query: "invoice" });
+		const parsed = JSON.parse(result.content[0]?.text as string) as {
+			items: Array<{ id: string; channel: string }>;
+			note?: string;
+		};
+
+		expect(parsed.items.map((item) => item.id)).toEqual(["m1"]);
+		// Dropping results silently would just relocate the lie, so the caller is told.
+		expect(parsed.note).toContain("1 non-email result");
+	});
+
 	test("email_reply fetches original email then sends reply", async () => {
 		harness.client.get.mockImplementation((path: string) => {
 			if (path === "/v1/email/orig_1") {
@@ -220,11 +299,17 @@ describe("tool behavior integration", () => {
 	// security-critical masking logic is unit-tested in vault-mask.test.ts;
 	// here we just verify the handler hits the right endpoint.
 
-	test("vault_credential_list builds query string with agentId + type", async () => {
+	// Was: "builds query string with agentId + type", asserting the request URL
+	// carried `&type=login`. It did — and GET /vault/credentials, whose input is
+	// {agentId} alone, Zod-stripped it and returned the WHOLE vault. The test
+	// passed for the entire life of the bug because it asserted the mechanism
+	// (we built a query string) rather than the intent (the caller gets what it
+	// asked for). `type` is gone from the tool; the M3 gate now keeps it gone.
+	test("vault_credential_list scopes the read to the requested agent", async () => {
 		const handler = getTool(harness.registeredTools, "vault_credential_list");
-		await handler({ agentId: "agent_v1", type: "login" });
+		await handler({ agentId: "agent_v1" });
 		expect(harness.client.get).toHaveBeenCalledWith(
-			"/v1/vault/credentials?agentId=agent_v1&type=login",
+			"/v1/vault/credentials?agentId=agent_v1",
 		);
 	});
 

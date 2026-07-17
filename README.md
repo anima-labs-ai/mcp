@@ -1,10 +1,10 @@
 # @anima-labs/mcp
 
-MCP (Model Context Protocol) server for Anima -- 53 tools across 9 categories for AI agent communication, identity, and security.
+MCP (Model Context Protocol) server for Anima -- 54 tools across 9 categories for AI agent communication, identity, and security.
 
 ## Hosted vs local (which one do I want?)
 
-Anima runs a **hosted MCP gateway** at `https://mcp.useanima.sh/mcp` -- nothing to install, always current, and it carries the fullest tool surface (it adds inbox management and other tools beyond this package's 53). If your client speaks remote MCP (Cursor, VS Code, Claude Code `--transport http`), point it there with `Authorization: Bearer ak_...` and you're done. See the [MCP docs](https://docs.useanima.sh/mcp-servers).
+Anima runs a **hosted MCP gateway** at `https://mcp.useanima.sh/mcp` -- nothing to install, always current, and it carries the fullest tool surface (it adds inbox management and other tools beyond this package's 54). If your client speaks remote MCP (Cursor, VS Code, Claude Code `--transport http`), point it there with `Authorization: Bearer ak_...` and you're done. See the [MCP docs](https://docs.useanima.sh/mcp-servers).
 
 This npm package is the **stdio bridge** for clients without remote-MCP support and for pinned/air-gapped configs. Same platform, same auth, smaller tool set.
 
@@ -159,13 +159,14 @@ With selective loading:
 | `agent_update` | Update an agent's name or metadata, and add/update/delete an address |
 | `agent_delete` | Delete an agent by ID |
 
-### Email (12 tools)
+### Email (13 tools)
 
 | Tool | Description |
 |------|-------------|
 | `email_send` | Send a new outbound email from the agent mailbox |
 | `email_get` | Get full detail for a single email by ID, including metadata and body |
-| `email_list` | List emails in a folder with pagination |
+| `email_list` | List emails newest-first with cursor pagination, optionally scoped to one agent |
+| `email_search` | Search email by meaning (semantic vector search) or literal keyword |
 | `email_reply` | Reply to an existing email thread with correct threading headers |
 | `email_forward` | Forward an existing email to another recipient |
 | `email_thread_get` | Fetch all messages in one or more email threads |
@@ -239,6 +240,34 @@ With selective loading:
 | `webhook_list` | List webhook subscriptions with cursor pagination |
 | `webhook_delete` | Delete a webhook subscription by ID |
 | `webhook_test` | Send a test event to verify endpoint reachability and signature verification |
+
+## Contributing: the contract gates
+
+Every tool here is a thin client over the Anima REST API, which makes two lies easy
+to ship and nearly impossible to notice — both return a green `200`:
+
+- a tool calling a route the API doesn't have, and
+- a tool advertising a parameter its route ignores (the API validates with Zod,
+  which **strips** unknown input, so the server answers as if nothing was wrong
+  and the model believes its filter was applied).
+
+Two CI gates in `src/__tests__/integration/contract-parity.test.ts` make both
+impossible. They check `src/tool-routes.ts` — where each tool declares the routes
+it calls and any param it handles client-side — against
+`src/__tests__/fixtures/contract-routes.json`, a snapshot of the real
+`@anima/contracts` route surface.
+
+**Adding or changing a tool** means updating its entry in `src/tool-routes.ts`.
+If a gate fails, fix the tool: editing the declaration to match a lie, or parking a
+param in `clientParams`, re-opens the exact hole the gates close.
+
+**Refreshing the snapshot** (needs a checkout of the anima monorepo — it is private,
+so CI cannot do this for you):
+
+```bash
+bun run contracts:refresh -- --anima ../anima   # rewrite the snapshot
+bun run contracts:check   -- --anima ../anima   # diff only; non-zero on drift
+```
 
 ## Community
 

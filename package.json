@@ -1,8 +1,8 @@
 {
 	"name": "@anima-labs/mcp",
-	"version": "0.5.3",
+	"version": "0.5.4",
 	"type": "module",
-	"description": "Anima MCP server — 53 tools for AI agent communication, with email attachment support",
+	"description": "Anima MCP server — 54 tools for AI agent communication, with email attachment support",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -31,7 +31,9 @@
 		"typecheck": "tsc --noEmit",
 		"test": "bun test",
 		"test:unit": "bun test src/__tests__/unit",
-		"test:integration": "bun test src/__tests__/integration"
+		"test:integration": "bun test src/__tests__/integration",
+		"contracts:refresh": "bun run scripts/generate-contract-manifest.ts",
+		"contracts:check": "bun run scripts/generate-contract-manifest.ts --check"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.12.0",

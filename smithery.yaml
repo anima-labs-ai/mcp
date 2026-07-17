@@ -13,10 +13,10 @@ display_name: "Anima — AI Agent Identity Platform"
 description: >
   Give your AI agents real-world capabilities: email inboxes, phone
   numbers, SMS, voice calls, custom domains, webhooks, and an encrypted
-  credential vault. 53 tools for autonomous agent operations. Prefer the
+  credential vault. 54 tools for autonomous agent operations. Prefer the
   hosted server at https://mcp.useanima.sh/mcp for zero-install use; this
   package is the stdio bridge for local/offline-config clients.
-version: "0.5.3"
+version: "0.5.4"
 license: "MIT"
 
 author:
@@ -75,7 +75,7 @@ tool_groups:
     tools: ["agent_create", "agent_get", "agent_list", "agent_update", "agent_delete"]
   - name: "email"
     description: "Send, receive, reply, forward; drafts, threads, attachments"
-    tools: ["email_send", "email_get", "email_list", "email_reply", "email_forward", "email_thread_get", "email_attachment_get", "email_draft_create", "email_draft_get", "email_draft_list", "email_draft_send", "email_draft_delete"]
+    tools: ["email_send", "email_get", "email_list", "email_search", "email_reply", "email_forward", "email_thread_get", "email_attachment_get", "email_draft_create", "email_draft_get", "email_draft_list", "email_draft_send", "email_draft_delete"]
   - name: "domain"
     description: "Custom email domain management: DNS records, verification, zone files"
     tools: ["domain_create", "domain_get", "domain_list", "domain_update", "domain_delete", "domain_verify", "domain_zone_file"]

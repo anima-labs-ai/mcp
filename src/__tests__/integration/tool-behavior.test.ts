@@ -200,10 +200,16 @@ describe("tool behavior integration", () => {
 		// The semantic route has no channel filter — it ranks across every
 		// channel — so an unfiltered passthrough would hand the model an SMS and
 		// call it mail.
+		//
+		// The mock shape is load-bearing and is NOT the list shape used elsewhere:
+		// /messages/search/semantic answers `{results: [...]}` with `channel` as the
+		// enum cast to text. An earlier version of this test invented `{items: [...]}`,
+		// which passed while the real filter never ran — caught only by reading a
+		// live prod response.
 		harness.client.post.mockResolvedValueOnce({
-			items: [
-				{ id: "m1", channel: "EMAIL", subject: "Invoice" },
-				{ id: "m2", channel: "SMS", body: "invoice paid" },
+			results: [
+				{ id: "m1", channel: "EMAIL", content: "Invoice", similarity: 0.91 },
+				{ id: "m2", channel: "SMS", content: "invoice paid", similarity: 0.88 },
 			],
 		});
 

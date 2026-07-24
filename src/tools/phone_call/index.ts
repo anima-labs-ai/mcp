@@ -72,10 +72,6 @@ const phoneCallIdSchema = z.object({
 });
 
 const voicesListSchema = z.object({
-	tier: z
-		.enum(["basic", "premium"])
-		.optional()
-		.describe("Filter by pricing tier."),
 	gender: z
 		.enum(["male", "female", "neutral"])
 		.optional()
@@ -83,7 +79,9 @@ const voicesListSchema = z.object({
 	language: z
 		.string()
 		.optional()
-		.describe("Filter by language code (e.g. 'en-US', 'fr-FR')."),
+		.describe(
+			"Filter by language code (e.g. 'en', 'es', 'ja'). The catalog is multilingual.",
+		),
 });
 
 export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
@@ -211,7 +209,7 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 		"voice_list",
 		{
 			description:
-				"List available AI voices for placing phone calls. Filter by tier (basic for low-latency, premium for natural voices), gender, or language. Returns voice IDs needed for phone_call.",
+				"List available AI voices for placing phone calls. The catalog is multilingual — filter by language or gender. Each voice includes descriptive metadata and a vendor-neutral audio preview URL, plus the voice ID needed for phone_call.",
 			inputSchema: voicesListSchema.shape,
 			outputSchema: listOutput(),
 			annotations: {
@@ -223,7 +221,6 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 		},
 		withErrorHandling(async (args, context) => {
 			const params = new URLSearchParams();
-			if (args.tier) params.set("tier", args.tier);
 			if (args.gender) params.set("gender", args.gender);
 			if (args.language) params.set("language", args.language);
 			const path = params.toString() ? `/v1/voice/catalog?${params}` : "/v1/voice/catalog";

@@ -42,171 +42,190 @@ export interface ToolContractDeclaration {
 	readonly clientParams?: Readonly<Record<string, string>>;
 }
 
-export const TOOL_CONTRACTS: Readonly<Record<string, ToolContractDeclaration>> = {
-	// ---- agent ----
-	agent_create: {
-		// Composed: creates the agent, then optionally its postal address.
-		routes: ["POST /agents", "POST /addresses"],
-		clientParams: {
-			address:
-				"Bridge-side composition: a nested object destructured into the POST /addresses body after the agent exists.",
+export const TOOL_CONTRACTS: Readonly<Record<string, ToolContractDeclaration>> =
+	{
+		// ---- agent ----
+		agent_create: {
+			// Composed: creates the agent, then optionally its postal address.
+			routes: ["POST /agents", "POST /addresses"],
+			clientParams: {
+				address:
+					"Bridge-side composition: a nested object destructured into the POST /addresses body after the agent exists.",
+			},
 		},
-	},
-	agent_get: {
-		// Composed: agent record + its addresses, merged into one payload.
-		routes: ["GET /agents/{id}", "GET /addresses"],
-	},
-	agent_list: {
-		routes: ["GET /agents"],
-	},
-	agent_update: {
-		// Composed: patches the agent and reconciles address add/update/remove.
-		routes: [
-			"GET /agents/{id}",
-			"PATCH /agents/{id}",
-			"POST /addresses",
-			"PUT /addresses/{id}",
-			"DELETE /addresses/{id}",
-		],
-		clientParams: {
-			addAddress:
-				"Bridge-side composition: nested object destructured into the POST /addresses body.",
-			updateAddress:
-				"Bridge-side composition: nested object carrying addressId + the PUT /addresses/{id} body.",
-			deleteAddressId:
-				"Bridge-side verb: selects the DELETE /addresses/{id} target; sent in the path, not the body.",
+		agent_get: {
+			// Composed: agent record + its addresses, merged into one payload.
+			routes: ["GET /agents/{id}", "GET /addresses"],
 		},
-	},
-	agent_delete: {
-		routes: ["DELETE /agents/{id}"],
-	},
-
-	// ---- domain ----
-	domain_create: { routes: ["POST /domains"] },
-	domain_verify: { routes: ["POST /domains/{id}/verify"] },
-	domain_get: { routes: ["GET /domains/{id}"] },
-	domain_list: { routes: ["GET /domains"] },
-	domain_delete: { routes: ["DELETE /domains/{id}"] },
-	domain_update: { routes: ["PATCH /domains/{id}"] },
-	domain_zone_file: { routes: ["GET /domains/{id}/zone-file"] },
-
-	// ---- email ----
-	email_send: { routes: ["POST /email/send"] },
-	email_get: { routes: ["GET /email/{id}"] },
-	email_list: { routes: ["GET /email"] },
-	email_reply: {
-		// Composed: loads the original to derive recipient + threading headers,
-		// then sends.
-		routes: ["GET /email/{id}", "POST /email/send"],
-		paramAliases: { text: "body", html: "bodyHtml" },
-		clientParams: {
-			originalId:
-				"Bridge-side: selects the GET /email/{id} original; its id goes in the path, never the send body.",
-			replyAll:
-				"Bridge-side: derives the send body's `cc` from the original's participants.",
+		agent_list: {
+			routes: ["GET /agents"],
 		},
-	},
-	email_forward: {
-		// Composed: loads the original, renders a quoted body, then sends.
-		routes: ["GET /email/{id}", "POST /email/send"],
-		clientParams: {
-			originalId:
-				"Bridge-side: selects the GET /email/{id} original; its id goes in the path, never the send body.",
-			text: "Bridge-side: intro text prepended to the rendered forward body.",
+		agent_update: {
+			// Composed: patches the agent and reconciles address add/update/remove.
+			routes: [
+				"GET /agents/{id}",
+				"PATCH /agents/{id}",
+				"POST /addresses",
+				"PUT /addresses/{id}",
+				"DELETE /addresses/{id}",
+			],
+			clientParams: {
+				addAddress:
+					"Bridge-side composition: nested object destructured into the POST /addresses body.",
+				updateAddress:
+					"Bridge-side composition: nested object carrying addressId + the PUT /addresses/{id} body.",
+				deleteAddressId:
+					"Bridge-side verb: selects the DELETE /addresses/{id} target; sent in the path, not the body.",
+			},
 		},
-	},
-	email_search: {
-		// Composed: one tool over two backing routes, chosen by `mode`.
-		routes: ["POST /messages/search", "POST /messages/search/semantic"],
-		clientParams: {
-			mode: "Bridge-side switch: picks fulltext (POST /messages/search) vs semantic (POST /messages/search/semantic).",
-			direction:
-				"Bridge-side reshape: nested into the fulltext route's `filters` object rather than sent flat.",
+		agent_delete: {
+			routes: ["DELETE /agents/{id}"],
 		},
-	},
-	email_thread_get: {
-		// Composed: fans out one /messages read per threadId.
-		routes: ["GET /messages"],
-		paramAliases: { id: "threadId" },
-		clientParams: {
-			ids: "Bridge-side fan-out: one GET /messages call per thread, results merged.",
+
+		// ---- domain ----
+		domain_create: { routes: ["POST /domains"] },
+		domain_verify: { routes: ["POST /domains/{id}/verify"] },
+		domain_get: { routes: ["GET /domains/{id}"] },
+		domain_list: { routes: ["GET /domains"] },
+		domain_delete: { routes: ["DELETE /domains/{id}"] },
+		domain_update: { routes: ["PATCH /domains/{id}"] },
+		domain_zone_file: { routes: ["GET /domains/{id}/zone-file"] },
+
+		// ---- email ----
+		email_send: { routes: ["POST /email/send"] },
+		email_get: { routes: ["GET /email/{id}"] },
+		email_list: { routes: ["GET /email"] },
+		email_reply: {
+			// Composed: loads the original to derive recipient + threading headers,
+			// then sends.
+			routes: ["GET /email/{id}", "POST /email/send"],
+			paramAliases: { text: "body", html: "bodyHtml" },
+			clientParams: {
+				originalId:
+					"Bridge-side: selects the GET /email/{id} original; its id goes in the path, never the send body.",
+				replyAll:
+					"Bridge-side: derives the send body's `cc` from the original's participants.",
+			},
 		},
-	},
-	email_attachment_get: { routes: ["GET /attachments/{id}/download"] },
-	email_draft_create: { routes: ["POST /email/drafts"] },
-	email_draft_get: { routes: ["GET /email/drafts/{id}"] },
-	email_draft_list: { routes: ["GET /email/drafts"] },
-	email_draft_send: { routes: ["POST /email/drafts/{id}/send"] },
-	email_draft_delete: { routes: ["DELETE /email/drafts/{id}"] },
-
-	// ---- phone ----
-	phone_number_list: { routes: ["GET /phone/numbers"] },
-	phone_number_provision: { routes: ["POST /phone/provision"] },
-	phone_number_release: { routes: ["POST /phone/release"] },
-
-	// ---- phone_call ----
-	phone_call_create: { routes: ["POST /voice/calls"] },
-	phone_call_list: {
-		routes: ["GET /voice/calls"],
-		// The tool surfaces `status` but sends `state`, which is the real filter.
-		paramAliases: { status: "state" },
-	},
-	phone_call_get: {
-		routes: ["GET /voice/calls/{callId}"],
-		paramAliases: { id: "callId" },
-	},
-	phone_call_transcript_get: {
-		routes: ["GET /voice/calls/{callId}/transcript"],
-		paramAliases: { id: "callId" },
-	},
-	phone_call_recording_get: {
-		routes: ["GET /voice/calls/{callId}/recording"],
-		paramAliases: { id: "callId" },
-	},
-	voice_list: { routes: ["GET /voice/catalog"] },
-
-	// ---- sms ----
-	sms_get: { routes: ["GET /messages/{id}"] },
-	sms_list: { routes: ["GET /messages"] },
-	sms_thread_list: {
-		// Composed: there is no /sms/threads route — a page of messages is
-		// fetched, then grouped and paginated bridge-side.
-		routes: ["GET /messages"],
-		clientParams: {
-			offset:
-				"Bridge-side pagination: slices the locally-aggregated thread list; the fetch itself is a fixed-size page.",
+		email_forward: {
+			// Composed: loads the original, renders a quoted body, then sends.
+			routes: ["GET /email/{id}", "POST /email/send"],
+			clientParams: {
+				originalId:
+					"Bridge-side: selects the GET /email/{id} original; its id goes in the path, never the send body.",
+				text: "Bridge-side: intro text prepended to the rendered forward body.",
+			},
 		},
-	},
-	sms_thread_get: {
-		routes: ["GET /messages"],
-		paramAliases: { id: "threadId" },
-	},
-	sms_send: { routes: ["POST /phone/send-sms"] },
+		email_search: {
+			// Composed: one tool over two backing routes, chosen by `mode`.
+			routes: ["POST /messages/search", "POST /messages/search/semantic"],
+			clientParams: {
+				mode: "Bridge-side switch: picks fulltext (POST /messages/search) vs semantic (POST /messages/search/semantic).",
+				direction:
+					"Bridge-side reshape: nested into the fulltext route's `filters` object rather than sent flat.",
+			},
+		},
+		email_thread_get: {
+			// Composed: fans out one /messages read per threadId.
+			routes: ["GET /messages"],
+			paramAliases: { id: "threadId" },
+			clientParams: {
+				ids: "Bridge-side fan-out: one GET /messages call per thread, results merged.",
+			},
+		},
+		email_attachment_get: { routes: ["GET /attachments/{id}/download"] },
+		email_draft_create: { routes: ["POST /email/drafts"] },
+		email_draft_get: { routes: ["GET /email/drafts/{id}"] },
+		email_draft_list: { routes: ["GET /email/drafts"] },
+		email_draft_send: { routes: ["POST /email/drafts/{id}/send"] },
+		email_draft_delete: { routes: ["DELETE /email/drafts/{id}"] },
 
-	// ---- vault ----
-	vault_provision: { routes: ["POST /vault/provision"] },
-	vault_credential_list: { routes: ["GET /vault/credentials"] },
-	vault_credential_get: { routes: ["GET /vault/credentials/{id}"] },
-	vault_credential_create: { routes: ["POST /vault/credentials"] },
-	vault_credential_update: { routes: ["PUT /vault/credentials/{id}"] },
-	vault_credential_delete: { routes: ["DELETE /vault/credentials/{id}"] },
-	vault_credential_search: { routes: ["GET /vault/search"] },
-	vault_credential_get_totp: { routes: ["GET /vault/totp/{id}"] },
+		// ---- phone ----
+		phone_number_list: { routes: ["GET /phone/numbers"] },
+		phone_number_provision: { routes: ["POST /phone/provision"] },
+		phone_number_release: { routes: ["POST /phone/release"] },
 
-	// ---- webhook ----
-	webhook_get: { routes: ["GET /webhooks/{id}"] },
-	webhook_list: { routes: ["GET /webhooks"] },
-	webhook_set: {
-		// Upsert: PUT when `id` is supplied, POST otherwise.
-		routes: ["POST /webhooks", "PUT /webhooks/{id}"],
-	},
-	webhook_delete: { routes: ["DELETE /webhooks/{id}"] },
-	webhook_test: { routes: ["POST /webhooks/{id}/test"] },
+		// ---- phone_call ----
+		phone_call_create: { routes: ["POST /voice/calls"] },
+		phone_call_list: {
+			routes: ["GET /voice/calls"],
+			// The tool surfaces `status` but sends `state`, which is the real filter.
+			paramAliases: { status: "state" },
+		},
+		phone_call_get: {
+			routes: ["GET /voice/calls/{callId}"],
+			paramAliases: { id: "callId" },
+		},
+		phone_call_transcript_get: {
+			routes: ["GET /voice/calls/{callId}/transcript"],
+			paramAliases: { id: "callId" },
+		},
+		phone_call_recording_get: {
+			routes: ["GET /voice/calls/{callId}/recording"],
+			paramAliases: { id: "callId" },
+		},
+		voice_list: { routes: ["GET /voice/catalog"] },
 
-	// ---- workspace ----
-	account_overview: {
-		// Composed: org profile + workspace health, merged into one snapshot.
-		routes: ["GET /orgs/me", "GET /orgs/me/workspace-health"],
-	},
-	usage_overview: { routes: ["GET /orgs/me/usage"] },
-};
+		// ---- sms ----
+		sms_get: { routes: ["GET /messages/{id}"] },
+		sms_list: { routes: ["GET /messages"] },
+		sms_thread_list: {
+			// Composed: there is no /sms/threads route — a page of messages is
+			// fetched, then grouped and paginated bridge-side.
+			routes: ["GET /messages"],
+			clientParams: {
+				offset:
+					"Bridge-side pagination: slices the locally-aggregated thread list; the fetch itself is a fixed-size page.",
+			},
+		},
+		sms_thread_get: {
+			routes: ["GET /messages"],
+			paramAliases: { id: "threadId" },
+		},
+		sms_send: { routes: ["POST /phone/send-sms"] },
+
+		// ---- vault ----
+		vault_provision: { routes: ["POST /vault/provision"] },
+		vault_credential_list: { routes: ["GET /vault/credentials"] },
+		vault_credential_get: { routes: ["GET /vault/credentials/{id}"] },
+		vault_credential_create: { routes: ["POST /vault/credentials"] },
+		vault_credential_update: { routes: ["PUT /vault/credentials/{id}"] },
+		vault_credential_delete: { routes: ["DELETE /vault/credentials/{id}"] },
+		vault_credential_search: { routes: ["GET /vault/search"] },
+		vault_credential_get_totp: { routes: ["GET /vault/totp/{id}"] },
+
+		// ---- provisioning ----
+		// approve/decline are deliberately absent from the tool surface (see
+		// tools/provisioning/index.ts), so they are absent here too.
+		provisioning_request_create: {
+			routes: ["POST /provisioning-requests"],
+			// The tool surfaces countryCode/areaCode flat because a nested object is
+			// awkward for an LLM to fill; both are sent under the contract's
+			// `options` key, which is the name that reaches the wire.
+			paramAliases: { countryCode: "options", areaCode: "options" },
+		},
+		provisioning_request_list: { routes: ["GET /provisioning-requests"] },
+		provisioning_request_status: {
+			routes: ["GET /provisioning-requests/{requestId}"],
+		},
+		provisioning_request_cancel: {
+			routes: ["POST /provisioning-requests/{requestId}/cancel"],
+		},
+
+		// ---- webhook ----
+		webhook_get: { routes: ["GET /webhooks/{id}"] },
+		webhook_list: { routes: ["GET /webhooks"] },
+		webhook_set: {
+			// Upsert: PUT when `id` is supplied, POST otherwise.
+			routes: ["POST /webhooks", "PUT /webhooks/{id}"],
+		},
+		webhook_delete: { routes: ["DELETE /webhooks/{id}"] },
+		webhook_test: { routes: ["POST /webhooks/{id}/test"] },
+
+		// ---- workspace ----
+		account_overview: {
+			// Composed: org profile + workspace health, merged into one snapshot.
+			routes: ["GET /orgs/me", "GET /orgs/me/workspace-health"],
+		},
+		usage_overview: { routes: ["GET /orgs/me/usage"] },
+	};

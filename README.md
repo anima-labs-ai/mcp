@@ -1,6 +1,6 @@
 # @anima-labs/mcp
 
-MCP (Model Context Protocol) server for Anima -- 54 tools across 9 categories for AI agent communication, identity, and security.
+MCP (Model Context Protocol) server for Anima -- 58 tools across 10 categories for AI agent communication, identity, and security.
 
 ## Hosted vs local (which one do I want?)
 
@@ -61,6 +61,7 @@ Available tool groups:
 | `phone` | Phone number provisioning and release |
 | `phone_call` | Outbound calls, transcripts, recordings, voices |
 | `sms` | SMS/MMS send and conversation history |
+| `provisioning` | Ask your human owner for a vault or phone number |
 | `vault` | Credential vault management and TOTP |
 | `webhook` | Webhook subscription management and testing |
 
@@ -217,6 +218,25 @@ With selective loading:
 | `sms_list` | List SMS messages with optional filters |
 | `sms_thread_list` | List SMS conversations |
 | `sms_thread_get` | Get a specific SMS conversation with message history |
+
+### Provisioning (4 tools)
+
+An agent cannot provision its own vault or phone number -- `vault_provision`
+and `phone_number_provision` are master-key-only, and an MCP session is
+authenticated as the agent. These tools file the ask instead; the owner decides
+in the Anima console.
+
+Approve and decline are deliberately NOT exposed as tools. An MCP tool is
+something the model can decide to call, and a prompt-injected agent able to
+approve its own request could grant itself a billable phone number -- exactly
+the escalation the flow exists to prevent.
+
+| Tool | Description |
+|------|-------------|
+| `provisioning_request_create` | Ask your owner to provision a vault or phone number |
+| `provisioning_request_list` | List requests you have filed and their status |
+| `provisioning_request_status` | Check one request; a decline carries the owner's reason |
+| `provisioning_request_cancel` | Withdraw a pending request you no longer need |
 
 ### Vault (8 tools)
 

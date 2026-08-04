@@ -28,16 +28,25 @@ const phoneCallSchema = z.object({
 	agentId: z
 		.string()
 		.optional()
-		.describe("Agent ID to call from (defaults to current agent if using an agent key)."),
-	to: z.string().describe("Destination phone number in E.164 format (e.g. +14155551234)."),
-	tier: z
-		.enum(["basic", "premium"])
-		.optional()
-		.describe("Voice quality tier (default: basic)."),
+		.describe(
+			"Agent ID to call from (defaults to current agent if using an agent key).",
+		),
+	to: z
+		.string()
+		.describe("Destination phone number in E.164 format (e.g. +14155551234)."),
+	// 2026-08-04: `tier` removed, same reason `voiceId` was below. The
+	// contract's CreateCallInput is {to, agentId, greeting, fromNumber} — no
+	// `tier` — so every call requesting "premium" was Zod-stripped and placed
+	// at the default, while the model believed it had asked for better audio.
+	// Found by the M3 gate the moment the contract manifest was refreshed; it
+	// stayed invisible because the manifest was pinned to an anima ref from
+	// before `tier` left the contract. Restore only when the route accepts it.
 	fromNumber: z
 		.string()
 		.optional()
-		.describe("Source number to call from (defaults to agent's primary number)."),
+		.describe(
+			"Source number to call from (defaults to agent's primary number).",
+		),
 	// 2026-07-17: `voiceId` removed — POST /voice/calls accepts
 	// {agentId, fromNumber, greeting, systemPrompt, tier, to} and Zod-strips the
 	// rest, so every call placed with a hand-picked voice silently used the
@@ -62,9 +71,21 @@ const phoneCallListSchema = z.object({
 	status: z
 		.string()
 		.optional()
-		.describe("Filter by call state (INITIATING, RINGING, ACTIVE, ENDED, etc.)."),
-	limit: z.number().int().positive().optional().describe("Max results (default: 20)."),
-	offset: z.number().int().nonnegative().optional().describe("Offset for pagination."),
+		.describe(
+			"Filter by call state (INITIATING, RINGING, ACTIVE, ENDED, etc.).",
+		),
+	limit: z
+		.number()
+		.int()
+		.positive()
+		.optional()
+		.describe("Max results (default: 20)."),
+	offset: z
+		.number()
+		.int()
+		.nonnegative()
+		.optional()
+		.describe("Offset for pagination."),
 });
 
 const phoneCallIdSchema = z.object({
@@ -104,9 +125,11 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 		withErrorHandling(async (args, context) => {
 			const body: Record<string, unknown> = { to: args.to };
 			if (args.agentId) body.agentId = args.agentId;
-			if (args.tier) body.tier = args.tier;
 			if (args.fromNumber) body.fromNumber = args.fromNumber;
-			const result = await context.client.post<unknown>("/v1/voice/calls", body);
+			const result = await context.client.post<unknown>(
+				"/v1/voice/calls",
+				body,
+			);
 			return toolSuccess(result);
 		}, options.context),
 	);
@@ -133,7 +156,9 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 			if (args.status) params.set("state", args.status);
 			if (args.limit !== undefined) params.set("limit", String(args.limit));
 			if (args.offset !== undefined) params.set("offset", String(args.offset));
-			const path = params.toString() ? `/v1/voice/calls?${params}` : "/v1/voice/calls";
+			const path = params.toString()
+				? `/v1/voice/calls?${params}`
+				: "/v1/voice/calls";
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),
@@ -223,7 +248,9 @@ export function registerPhoneCallTools(options: ToolRegistrationOptions): void {
 			const params = new URLSearchParams();
 			if (args.gender) params.set("gender", args.gender);
 			if (args.language) params.set("language", args.language);
-			const path = params.toString() ? `/v1/voice/catalog?${params}` : "/v1/voice/catalog";
+			const path = params.toString()
+				? `/v1/voice/catalog?${params}`
+				: "/v1/voice/catalog";
 			const result = await context.client.get<unknown>(path);
 			return toolSuccess(result);
 		}, options.context),

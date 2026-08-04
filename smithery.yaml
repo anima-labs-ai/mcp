@@ -13,7 +13,7 @@ display_name: "Anima — AI Agent Identity Platform"
 description: >
   Give your AI agents real-world capabilities: email inboxes, phone
   numbers, SMS, voice calls, custom domains, webhooks, and an encrypted
-  credential vault. 54 tools for autonomous agent operations. Prefer the
+  credential vault. 58 tools for autonomous agent operations. Prefer the
   hosted server at https://mcp.useanima.sh/mcp for zero-install use; this
   package is the stdio bridge for local/offline-config clients.
 version: "0.6.0"
@@ -88,6 +88,9 @@ tool_groups:
   - name: "sms"
     description: "SMS send and conversation threads"
     tools: ["sms_send", "sms_get", "sms_list", "sms_thread_get", "sms_thread_list"]
+  - name: "provisioning"
+    description: "Ask your human owner to provision a vault or phone number — neither can be created by an agent alone"
+    tools: ["provisioning_request_create", "provisioning_request_list", "provisioning_request_status", "provisioning_request_cancel"]
   - name: "vault"
     description: "Encrypted credential vault: CRUD, search, TOTP"
     tools: ["vault_provision", "vault_credential_create", "vault_credential_get", "vault_credential_list", "vault_credential_update", "vault_credential_delete", "vault_credential_search", "vault_credential_get_totp"]

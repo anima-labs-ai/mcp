@@ -29,13 +29,17 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ApiClient } from "../../api-client.js";
-import type { ToolContext, ToolRegistrationOptions } from "../../tool-helpers.js";
+import type {
+	ToolContext,
+	ToolRegistrationOptions,
+} from "../../tool-helpers.js";
 import { TOOL_CONTRACTS } from "../../tool-routes.js";
 import { registerAgentTools } from "../../tools/agent/index.js";
 import { registerDomainTools } from "../../tools/domain/index.js";
 import { registerEmailTools } from "../../tools/email/index.js";
 import { registerPhoneTools } from "../../tools/phone/index.js";
 import { registerPhoneCallTools } from "../../tools/phone_call/index.js";
+import { registerProvisioningTools } from "../../tools/provisioning/index.js";
 import { registerSmsTools } from "../../tools/sms/index.js";
 import { registerVaultTools } from "../../tools/vault/index.js";
 import { registerWebhookTools } from "../../tools/webhook/index.js";
@@ -82,6 +86,7 @@ function registerAllTools(): Map<string, string[]> {
 		registerEmailTools,
 		registerPhoneTools,
 		registerPhoneCallTools,
+		registerProvisioningTools,
 		registerSmsTools,
 		registerVaultTools,
 		registerWebhookTools,
@@ -126,12 +131,16 @@ describe("M2 — every tool maps to a live contract route", () => {
 	});
 
 	test("every registered tool declares its backing routes", () => {
-		const undeclared = [...registeredTools.keys()].filter((name) => !TOOL_CONTRACTS[name]);
+		const undeclared = [...registeredTools.keys()].filter(
+			(name) => !TOOL_CONTRACTS[name],
+		);
 		expect(undeclared).toEqual([]);
 	});
 
 	test("no declaration outlives the tool it describes", () => {
-		const orphaned = Object.keys(TOOL_CONTRACTS).filter((name) => !registeredTools.has(name));
+		const orphaned = Object.keys(TOOL_CONTRACTS).filter(
+			(name) => !registeredTools.has(name),
+		);
 		expect(orphaned).toEqual([]);
 	});
 
@@ -165,7 +174,9 @@ describe("M2 — every tool maps to a live contract route", () => {
 					match[1].replace(/\$\{[^}]*\}/g, "{}").split("?")[0],
 				).replace(/^\/v1/, "");
 				if (!declaredShapes.has(shape)) {
-					undeclaredCalls.push(`${file.replace(TOOLS_DIR, "tools")}: ${match[1]}`);
+					undeclaredCalls.push(
+						`${file.replace(TOOLS_DIR, "tools")}: ${match[1]}`,
+					);
 				}
 			}
 		}
@@ -183,7 +194,8 @@ describe("M2 — every tool maps to a live contract route", () => {
 			for (const match of source.matchAll(
 				/client\.(?:get|post|patch|put|delete)(?:<[^>]*>)?\(\s*["'`](\/[^"'`]*)["'`]/g,
 			)) {
-				if (!match[1].startsWith("/v1/")) barePaths.push(`${file}: ${match[1]}`);
+				if (!match[1].startsWith("/v1/"))
+					barePaths.push(`${file}: ${match[1]}`);
 			}
 		}
 		expect(barePaths).toEqual([]);
@@ -220,9 +232,13 @@ describe("M3 — tool params are a subset of the backing contract schema", () =>
 		for (const [tool, decl] of Object.entries(TOOL_CONTRACTS)) {
 			const props = registeredTools.get(tool) ?? [];
 			const contractProps = contractPropsFor(decl.routes);
-			for (const [toolParam, contractParam] of Object.entries(decl.paramAliases ?? {})) {
+			for (const [toolParam, contractParam] of Object.entries(
+				decl.paramAliases ?? {},
+			)) {
 				if (!props.includes(toolParam)) {
-					broken.push(`${tool}.paramAliases: '${toolParam}' is not a param of this tool`);
+					broken.push(
+						`${tool}.paramAliases: '${toolParam}' is not a param of this tool`,
+					);
 				}
 				if (!contractProps.has(contractParam)) {
 					broken.push(
@@ -244,7 +260,9 @@ describe("M3 — tool params are a subset of the backing contract schema", () =>
 			const contractProps = contractPropsFor(decl.routes);
 			for (const [param, reason] of Object.entries(decl.clientParams ?? {})) {
 				if (!props.includes(param)) {
-					problems.push(`${tool}.clientParams: '${param}' is not a param of this tool`);
+					problems.push(
+						`${tool}.clientParams: '${param}' is not a param of this tool`,
+					);
 				}
 				if (contractProps.has(param)) {
 					problems.push(

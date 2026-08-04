@@ -14,37 +14,14 @@ import {
 } from "./http-transport.js";
 import { cancelAllFollowUps } from "./pending-followup.js";
 import { registerResources } from "./resources/index.js";
-import type { ToolRegistrationOptions } from "./tool-helpers.js";
-import { registerAgentTools } from "./tools/agent/index.js";
-import { registerDomainTools } from "./tools/domain/index.js";
-import { registerEmailTools } from "./tools/email/index.js";
-import { registerPhoneTools } from "./tools/phone/index.js";
-import { registerPhoneCallTools } from "./tools/phone_call/index.js";
-import { registerProvisioningTools } from "./tools/provisioning/index.js";
-import { registerSmsTools } from "./tools/sms/index.js";
-import { registerVaultTools } from "./tools/vault/index.js";
 // OAuth Apps / Connections removed from MCP surface on 2026-04-25 (credential-broker handles third-party auth via vault + vtk_ tokens).
-import { registerWebhookTools } from "./tools/webhook/index.js";
-import { registerWorkspaceTools } from "./tools/workspace/index.js";
+import { TOOL_GROUPS } from "./tool-groups.js";
+import type { ToolRegistrationOptions } from "./tool-helpers.js";
 
 export { marketplaceMetadata } from "./marketplace.js";
 
 const VALID_KEY_PREFIXES = ["ak_", "mk_", "sk_live_", "sk_test_"];
 
-/** Map of tool group names to their registration functions */
-const TOOL_GROUPS: Record<string, (options: ToolRegistrationOptions) => void> =
-	{
-		agent: registerAgentTools,
-		email: registerEmailTools,
-		domain: registerDomainTools,
-		phone: registerPhoneTools,
-		sms: registerSmsTools,
-		vault: registerVaultTools,
-		provisioning: registerProvisioningTools,
-		webhook: registerWebhookTools,
-		workspace: registerWorkspaceTools,
-		phone_call: registerPhoneCallTools,
-	};
 
 /**
  * Parse --tools flag from command line args.

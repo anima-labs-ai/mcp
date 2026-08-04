@@ -12,6 +12,7 @@ import { registerWorkspaceTools } from "../../tools/workspace/index.js";
 import { registerVaultTools } from "../../tools/vault/index.js";
 import { registerWebhookTools } from "../../tools/webhook/index.js";
 import { registerPhoneCallTools } from "../../tools/phone_call/index.js";
+import { TOOL_GROUPS } from "../../tool-groups.js";
 import { registerResources } from "../../resources/index.js";
 
 type RegisteredTool = {
@@ -306,18 +307,18 @@ describe("tool registration integration", () => {
 		);
 	});
 
-	test("all domains combined register exactly 54 tools", () => {
-		registerAgentTools(harness.options);
-		registerEmailTools(harness.options);
-		registerDomainTools(harness.options);
-		registerPhoneTools(harness.options);
-		registerSmsTools(harness.options);
-		registerWorkspaceTools(harness.options);
-		registerVaultTools(harness.options);
-		registerWebhookTools(harness.options);
-		registerPhoneCallTools(harness.options);
+	// Iterates TOOL_GROUPS — the same map the server registers from — rather
+	// than re-listing the registrars. The hand-listed version silently omitted
+	// `provisioning` when that group was added, so it kept asserting 54 and
+	// passed while the real server registered 58. A completeness test that a
+	// new domain can escape is not a completeness test.
+	test("every group in TOOL_GROUPS is registered, totalling 58 tools", () => {
+		for (const register of Object.values(TOOL_GROUPS)) {
+			register(harness.options);
+		}
 
-		expect(harness.registeredTools.size).toBe(54);
+		expect(Object.keys(TOOL_GROUPS)).toContain("provisioning");
+		expect(harness.registeredTools.size).toBe(58);
 	});
 
 	test("all registered tool names follow snake_case", () => {

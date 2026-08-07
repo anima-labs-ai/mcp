@@ -64,9 +64,11 @@ const listInput = z.object({
 		.optional()
 		.describe("Filter by lifecycle status."),
 	resource: z
-		.enum(["VAULT", "PHONE_NUMBER"])
+		.enum(["VAULT", "PHONE_NUMBER", "GENERIC"])
 		.optional()
-		.describe("Filter by requested resource."),
+		.describe(
+			"Filter by requested resource. GENERIC rows are master-gated operations you attempted that need your owner's approval — they are filed by the server, not by you.",
+		),
 	limit: z
 		.number()
 		.int()

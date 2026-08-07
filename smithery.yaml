@@ -16,7 +16,7 @@ description: >
   credential vault. 58 tools for autonomous agent operations. Prefer the
   hosted server at https://mcp.useanima.sh/mcp for zero-install use; this
   package is the stdio bridge for local/offline-config clients.
-version: "0.7.0"
+version: "0.8.0"
 license: "MIT"
 
 author:

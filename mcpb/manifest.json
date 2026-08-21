@@ -1,0 +1,293 @@
+{
+  "manifest_version": "0.3",
+  "name": "anima-mcp",
+  "display_name": "Anima — AI Agent Identity Platform",
+  "version": "0.8.0",
+  "description": "Give your AI agents real-world capabilities: email inboxes, phone numbers, SMS, voice calls, custom domains, webhooks, and an encrypted credential vault. 58 tools for autonomous agent operations.",
+  "author": {
+    "name": "Anima Labs",
+    "url": "https://useanima.sh"
+  },
+  "homepage": "https://useanima.sh",
+  "documentation": "https://docs.useanima.sh",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anima-labs-ai/mcp"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "keywords": [
+    "ai-agent",
+    "email",
+    "voice",
+    "phone",
+    "sms",
+    "vault",
+    "identity",
+    "webhook"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/dist/index.js"
+      ],
+      "env": {
+        "ANIMA_API_KEY": "${user_config.api_key}",
+        "ANIMA_MASTER_KEY": "${user_config.master_key}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "account_overview",
+      "description": "Single-call workspace snapshot: organization context, credential identity, send-capability flags (canSendEmail / canSendSms), inventory counts (agents, domains, phones), and active blockers."
+    },
+    {
+      "name": "agent_create",
+      "description": "Create a new agent with optional metadata, and optionally attach an initial address."
+    },
+    {
+      "name": "agent_delete",
+      "description": "Delete an agent by ID."
+    },
+    {
+      "name": "agent_get",
+      "description": "Fetch full detail for a single agent by ID: settings, metadata, status, and the full addresses[] / emailIdentities[] / phoneIdentities[] lists."
+    },
+    {
+      "name": "agent_list",
+      "description": "List agents in the current account context with cursor pagination."
+    },
+    {
+      "name": "agent_update",
+      "description": "Update an agent's name or metadata, and/or add/update/delete an address."
+    },
+    {
+      "name": "domain_create",
+      "description": "Register a custom sending domain in the workspace so it can be configured for email traffic."
+    },
+    {
+      "name": "domain_delete",
+      "description": "Delete a domain from the workspace when it is no longer needed."
+    },
+    {
+      "name": "domain_get",
+      "description": "Fetch full detail for a single domain by ID, including verification and configuration state."
+    },
+    {
+      "name": "domain_list",
+      "description": "List every domain connected to the current workspace (unpaginated)."
+    },
+    {
+      "name": "domain_update",
+      "description": "Update mutable configuration on a domain."
+    },
+    {
+      "name": "domain_verify",
+      "description": "Trigger a verification check for a domain after DNS records are configured."
+    },
+    {
+      "name": "domain_zone_file",
+      "description": "Get the full DNS zone file for a domain."
+    },
+    {
+      "name": "email_attachment_get",
+      "description": "Get a temporary download URL for an email attachment."
+    },
+    {
+      "name": "email_draft_create",
+      "description": "Create a new email draft (composed but not sent)."
+    },
+    {
+      "name": "email_draft_delete",
+      "description": "Discard a draft."
+    },
+    {
+      "name": "email_draft_get",
+      "description": "Fetch full detail for a single draft by ID."
+    },
+    {
+      "name": "email_draft_list",
+      "description": "List email drafts with optional filters."
+    },
+    {
+      "name": "email_draft_send",
+      "description": "Send a draft."
+    },
+    {
+      "name": "email_forward",
+      "description": "Forward an existing email to another recipient by loading the original content first."
+    },
+    {
+      "name": "email_get",
+      "description": "Fetch full detail for a single email by ID, including metadata and body."
+    },
+    {
+      "name": "email_list",
+      "description": "List emails with cursor pagination, optionally scoped to one agent."
+    },
+    {
+      "name": "email_reply",
+      "description": "Reply to an existing email thread by first loading the original message and setting threading headers."
+    },
+    {
+      "name": "email_search",
+      "description": "Search email by MEANING (default) or by literal keyword."
+    },
+    {
+      "name": "email_send",
+      "description": "Send a new outbound email from the agent mailbox."
+    },
+    {
+      "name": "email_thread_get",
+      "description": "Fetch all email messages in one or more threads."
+    },
+    {
+      "name": "phone_call_create",
+      "description": "Initiate an outbound phone call from an agent (REST-style: returns a callId immediately)."
+    },
+    {
+      "name": "phone_call_get",
+      "description": "Get full detail for a single phone call: status, duration, participants, tier, AI-generated summary (one-liner, topics, action items, decisions, open questions, next steps), and quality score."
+    },
+    {
+      "name": "phone_call_list",
+      "description": "List phone calls with optional filters."
+    },
+    {
+      "name": "phone_call_recording_get",
+      "description": "Get a time-limited download URL for a call recording (WAV format)."
+    },
+    {
+      "name": "phone_call_transcript_get",
+      "description": "Get the full transcript of a phone call with speaker labels, timestamps, and confidence scores."
+    },
+    {
+      "name": "phone_number_list",
+      "description": "List provisioned phone numbers, optionally filtered by agent."
+    },
+    {
+      "name": "phone_number_provision",
+      "description": "Provision a new phone number from the carrier pool and assign it to an agent."
+    },
+    {
+      "name": "phone_number_release",
+      "description": "Release a previously provisioned phone number back to the carrier pool."
+    },
+    {
+      "name": "provisioning_request_cancel",
+      "description": "Withdraw a pending request you no longer need, so your owner is not left deciding something nobody wants."
+    },
+    {
+      "name": "provisioning_request_create",
+      "description": "Ask your human owner to provision a vault or a phone number for you."
+    },
+    {
+      "name": "provisioning_request_list",
+      "description": "List provisioning requests you have filed and their current status."
+    },
+    {
+      "name": "provisioning_request_status",
+      "description": "Check one provisioning request."
+    },
+    {
+      "name": "sms_get",
+      "description": "Fetch full detail for a single SMS by ID (includes its `threadId` for joining the conversation)."
+    },
+    {
+      "name": "sms_list",
+      "description": "List SMS messages with optional filters."
+    },
+    {
+      "name": "sms_send",
+      "description": "Send an SMS to a phone number, or an MMS by passing `mediaUrls`."
+    },
+    {
+      "name": "sms_thread_get",
+      "description": "Get a specific SMS conversation with message history."
+    },
+    {
+      "name": "sms_thread_list",
+      "description": "List SMS conversations."
+    },
+    {
+      "name": "usage_overview",
+      "description": "Usage rollup for a billing period."
+    },
+    {
+      "name": "vault_credential_create",
+      "description": "Create a new credential in an agent vault."
+    },
+    {
+      "name": "vault_credential_delete",
+      "description": "Delete a credential from vault storage by ID."
+    },
+    {
+      "name": "vault_credential_get",
+      "description": "Get a single vault credential by ID."
+    },
+    {
+      "name": "vault_credential_get_totp",
+      "description": "Get the current TOTP code for a credential that has a TOTP secret configured."
+    },
+    {
+      "name": "vault_credential_list",
+      "description": "List every credential in an agent vault."
+    },
+    {
+      "name": "vault_credential_search",
+      "description": "Search vault credentials by keyword across names and content."
+    },
+    {
+      "name": "vault_credential_update",
+      "description": "Update an existing vault credential by ID."
+    },
+    {
+      "name": "vault_provision",
+      "description": "Provision a credential vault for an agent."
+    },
+    {
+      "name": "voice_list",
+      "description": "List available AI voices for placing phone calls."
+    },
+    {
+      "name": "webhook_delete",
+      "description": "Delete a webhook subscription by ID."
+    },
+    {
+      "name": "webhook_get",
+      "description": "Get a webhook subscription by ID."
+    },
+    {
+      "name": "webhook_list",
+      "description": "List webhook subscriptions for the calling org with cursor pagination."
+    },
+    {
+      "name": "webhook_set",
+      "description": "Create or update a webhook subscription."
+    },
+    {
+      "name": "webhook_test",
+      "description": "Send a test event payload to a webhook to verify the endpoint is reachable and the signature verification on the receiver side works."
+    }
+  ],
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "API Key",
+      "description": "Your Anima agent API key (ak_...). Create one at https://console.useanima.sh, or run `am init`.",
+      "required": true,
+      "sensitive": true
+    },
+    "master_key": {
+      "type": "string",
+      "title": "Master Key (optional)",
+      "description": "Org master key (mk_...). Only needed for admin tools such as agent_delete and domain management. Leave blank otherwise.",
+      "required": false,
+      "sensitive": true
+    }
+  }
+}

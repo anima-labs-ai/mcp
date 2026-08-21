@@ -92,3 +92,133 @@ describe("smithery.yaml manifest truth", () => {
 		}
 	});
 });
+
+/**
+ * WHY: `startCommand` is the only part of this manifest Smithery executes.
+ * The rest is listing copy, and the tests above already pin it. Nothing
+ * checked the run config, so a broken `commandFunction` would look fine in
+ * review and fail at install time on the registry — the one place where a
+ * first impression cannot be retried.
+ */
+describe("smithery.yaml run config", () => {
+	function loadStartCommand(): {
+		type: string;
+		configSchema: { required?: string[]; properties: Record<string, unknown> };
+		commandFunction: string;
+	} {
+		return (Bun.YAML.parse(readFileSync(manifestPath, "utf-8")) as Record<string, unknown>)
+			.startCommand as ReturnType<typeof loadStartCommand>;
+	}
+
+	function runCommandFunction(config: Record<string, string>): {
+		command: string;
+		args: string[];
+		env: Record<string, string>;
+	} {
+		const fn = new Function(`return (${loadStartCommand().commandFunction})`)();
+		return fn(config);
+	}
+
+	it("declares a transport Smithery understands", () => {
+		expect(["stdio", "http"]).toContain(loadStartCommand().type);
+	});
+
+	it("requires only the agent key, since everything else has a fallback", () => {
+		// auth.ts hard-fails without ANIMA_API_KEY, but api-client.ts defaults
+		// ANIMA_API_URL and treats ANIMA_MASTER_KEY as optional. Marking either
+		// of those required would make the listing demand credentials a user
+		// does not need, which is a install-time drop-off we would never see.
+		expect(loadStartCommand().configSchema.required).toEqual(["animaApiKey"]);
+	});
+
+	it("starts the published package with just the agent key", () => {
+		const result = runCommandFunction({ animaApiKey: "ak_test" });
+
+		expect(result.command).toBe("npx");
+		expect(result.args).toEqual(["-y", "@anima-labs/mcp"]);
+		expect(result.env).toEqual({ ANIMA_API_KEY: "ak_test" });
+	});
+
+	it("omits optional env vars rather than setting them empty", () => {
+		// api-client.ts reads ANIMA_MASTER_KEY as presence-or-absence. An empty
+		// string is present, so `ANIMA_MASTER_KEY: ""` would read as "a master
+		// key was supplied" and route the caller down the admin path with a
+		// credential that cannot authenticate.
+		const env = runCommandFunction({ animaApiKey: "ak_test" }).env;
+
+		expect(Object.hasOwn(env, "ANIMA_MASTER_KEY")).toBe(false);
+		expect(Object.hasOwn(env, "ANIMA_API_URL")).toBe(false);
+	});
+
+	it("passes through the optional config it advertises", () => {
+		// `features.selective_loading` claims --tools works. If configSchema
+		// accepts `tools` but commandFunction drops it, the manifest advertises
+		// a feature the listing cannot actually deliver.
+		const result = runCommandFunction({
+			animaApiKey: "ak_test",
+			animaMasterKey: "mk_test",
+			animaApiUrl: "https://api.example",
+			tools: "email,vault",
+		});
+
+		expect(result.args).toContain("--tools=email,vault");
+		expect(result.env.ANIMA_MASTER_KEY).toBe("mk_test");
+		expect(result.env.ANIMA_API_URL).toBe("https://api.example");
+	});
+});
+
+/**
+ * WHY: smithery.yaml is not the only manifest this repo publishes. mcp.json
+ * (MCP registry) and marketplace.json (Cline) describe the same package to
+ * different registries, and nothing guarded them — so they drifted to "53
+ * tools" against a real 58, stale versions (0.1.0 and 0.5.2 against a
+ * published 0.8.0), and in mcp.json's case a groups list missing
+ * `provisioning` entirely.
+ *
+ * That is the same failure the tests above exist to prevent, one file over.
+ * A count is only safe to publish if something checks it.
+ */
+describe("sibling manifest truth", () => {
+	const siblings = ["mcp.json", "marketplace.json"] as const;
+
+	function readSibling(file: string): string {
+		return readFileSync(join(repoRoot, file), "utf-8");
+	}
+
+	function packageVersion(): string {
+		return (JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf-8")) as { version: string })
+			.version;
+	}
+
+	for (const file of siblings) {
+		it(`${file} advertises the real tool count`, () => {
+			const registered = extractRegisteredToolNames().size;
+			// Every "N tools" phrase and every numeric tool count in the file
+			// has to agree with reality — marketplace.json states it twice, in
+			// prose and as a field, and they drifted together.
+			const claims = [...readSibling(file).matchAll(/(\d+) tools|"(?:count|tools)":\s*(\d+)/g)].map(
+				(m) => Number(m[1] ?? m[2]),
+			);
+
+			expect(claims.length).toBeGreaterThan(0);
+			for (const claim of claims) expect(claim).toBe(registered);
+		});
+
+		it(`${file} matches the published package version`, () => {
+			// A registry listing pinned to a version we no longer ship tells
+			// users they are installing something they are not.
+			expect(readSibling(file)).toContain(`"version": "${packageVersion()}"`);
+		});
+	}
+
+	it("mcp.json lists every tool group, and invents none", () => {
+		// The missing group is what made the count wrong: mcp.json omitted
+		// `provisioning`, so anyone reconciling groups against the count would
+		// have found them consistent with each other and both wrong.
+		const real = readdirSync(join(repoRoot, "src", "tools")).sort();
+		const declared = (JSON.parse(readSibling("mcp.json")) as { tools: { groups: string[] } }).tools
+			.groups;
+
+		expect([...declared].sort()).toEqual(real);
+	});
+});

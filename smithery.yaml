@@ -8,6 +8,52 @@
 # "USPS validation"); competitive-parity spec E4 removed all of it.
 # src/__tests__/unit/smithery-manifest.test.ts enforces the sync.
 
+# ── How Smithery runs this server ──────────────────────────────────────
+#
+# `startCommand` is the only part Smithery actually executes. Everything
+# below it is listing metadata, and is also what src/__tests__/unit/
+# smithery-manifest.test.ts pins against the real tool surface — do not
+# drop those keys to "clean up" this file.
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema for the config Smithery collects from the user and hands
+    # to commandFunction. Only the agent key is required: the server falls
+    # back to https://api.useanima.sh and runs without admin tools.
+    type: object
+    required:
+      - animaApiKey
+    properties:
+      animaApiKey:
+        type: string
+        description: "Anima agent API key (ak_...). Create one at https://console.useanima.sh, or run `am init`."
+      animaMasterKey:
+        type: string
+        description: "Org master key (mk_...). Optional — unlocks admin tools such as agent_delete and domain management."
+      animaApiUrl:
+        type: string
+        default: "https://api.useanima.sh"
+        description: "API base URL override. Optional; only needed against a non-production deployment."
+      tools:
+        type: string
+        description: "Comma-separated groups to load, e.g. email,vault,phone. Omit to load all 58 tools."
+  commandFunction:
+    # Produces the CLI command Smithery starts the server with. Optional env
+    # vars are omitted rather than set empty: api-client.ts reads
+    # ANIMA_MASTER_KEY as presence-or-absence, and an empty string would read
+    # as "a master key was supplied".
+    |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', '@anima-labs/mcp', ...(config.tools ? [`--tools=${config.tools}`] : [])],
+      env: Object.assign(
+        { ANIMA_API_KEY: config.animaApiKey },
+        config.animaMasterKey ? { ANIMA_MASTER_KEY: config.animaMasterKey } : {},
+        config.animaApiUrl ? { ANIMA_API_URL: config.animaApiUrl } : {}
+      )
+    })
+
+# ── Listing metadata ───────────────────────────────────────────────────
 name: "@anima-labs/mcp"
 display_name: "Anima — AI Agent Identity Platform"
 description: >

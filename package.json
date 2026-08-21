@@ -2,7 +2,7 @@
 	"name": "@anima-labs/mcp",
 	"version": "0.8.0",
 	"type": "module",
-	"description": "Anima MCP server — 58 tools for AI agent communication, with email attachment support",
+	"description": "Anima MCP server \u2014 58 tools for AI agent communication, with email attachment support",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -33,7 +33,9 @@
 		"test:unit": "bun test src/__tests__/unit",
 		"test:integration": "bun test src/__tests__/integration",
 		"contracts:refresh": "bun run scripts/generate-contract-manifest.ts",
-		"contracts:check": "bun run scripts/generate-contract-manifest.ts --check"
+		"contracts:check": "bun run scripts/generate-contract-manifest.ts --check",
+		"gen:mcpb": "bun run scripts/build-mcpb-manifest.ts",
+		"pack:mcpb": "bun run gen:mcpb && bun run build && cp -r dist mcpb/dist && mcpb pack mcpb mcpb/anima-mcp.mcpb && rm -rf mcpb/dist"
 	},
 	"dependencies": {
 		"@modelcontextprotocol/sdk": "^1.12.0",
@@ -41,6 +43,7 @@
 		"zod": "^3.24.0"
 	},
 	"devDependencies": {
+		"@anthropic-ai/mcpb": "2.1.2",
 		"@types/bun": "^1.2.0",
 		"typescript": "^5.7.0"
 	}

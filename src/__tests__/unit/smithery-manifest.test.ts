@@ -166,3 +166,59 @@ describe("smithery.yaml run config", () => {
 		expect(result.env.ANIMA_API_URL).toBe("https://api.example");
 	});
 });
+
+/**
+ * WHY: smithery.yaml is not the only manifest this repo publishes. mcp.json
+ * (MCP registry) and marketplace.json (Cline) describe the same package to
+ * different registries, and nothing guarded them — so they drifted to "53
+ * tools" against a real 58, stale versions (0.1.0 and 0.5.2 against a
+ * published 0.8.0), and in mcp.json's case a groups list missing
+ * `provisioning` entirely.
+ *
+ * That is the same failure the tests above exist to prevent, one file over.
+ * A count is only safe to publish if something checks it.
+ */
+describe("sibling manifest truth", () => {
+	const siblings = ["mcp.json", "marketplace.json"] as const;
+
+	function readSibling(file: string): string {
+		return readFileSync(join(repoRoot, file), "utf-8");
+	}
+
+	function packageVersion(): string {
+		return (JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf-8")) as { version: string })
+			.version;
+	}
+
+	for (const file of siblings) {
+		it(`${file} advertises the real tool count`, () => {
+			const registered = extractRegisteredToolNames().size;
+			// Every "N tools" phrase and every numeric tool count in the file
+			// has to agree with reality — marketplace.json states it twice, in
+			// prose and as a field, and they drifted together.
+			const claims = [...readSibling(file).matchAll(/(\d+) tools|"(?:count|tools)":\s*(\d+)/g)].map(
+				(m) => Number(m[1] ?? m[2]),
+			);
+
+			expect(claims.length).toBeGreaterThan(0);
+			for (const claim of claims) expect(claim).toBe(registered);
+		});
+
+		it(`${file} matches the published package version`, () => {
+			// A registry listing pinned to a version we no longer ship tells
+			// users they are installing something they are not.
+			expect(readSibling(file)).toContain(`"version": "${packageVersion()}"`);
+		});
+	}
+
+	it("mcp.json lists every tool group, and invents none", () => {
+		// The missing group is what made the count wrong: mcp.json omitted
+		// `provisioning`, so anyone reconciling groups against the count would
+		// have found them consistent with each other and both wrong.
+		const real = readdirSync(join(repoRoot, "src", "tools")).sort();
+		const declared = (JSON.parse(readSibling("mcp.json")) as { tools: { groups: string[] } }).tools
+			.groups;
+
+		expect([...declared].sort()).toEqual(real);
+	});
+});

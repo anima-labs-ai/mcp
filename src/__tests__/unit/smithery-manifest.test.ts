@@ -92,3 +92,77 @@ describe("smithery.yaml manifest truth", () => {
 		}
 	});
 });
+
+/**
+ * WHY: `startCommand` is the only part of this manifest Smithery executes.
+ * The rest is listing copy, and the tests above already pin it. Nothing
+ * checked the run config, so a broken `commandFunction` would look fine in
+ * review and fail at install time on the registry — the one place where a
+ * first impression cannot be retried.
+ */
+describe("smithery.yaml run config", () => {
+	function loadStartCommand(): {
+		type: string;
+		configSchema: { required?: string[]; properties: Record<string, unknown> };
+		commandFunction: string;
+	} {
+		return (Bun.YAML.parse(readFileSync(manifestPath, "utf-8")) as Record<string, unknown>)
+			.startCommand as ReturnType<typeof loadStartCommand>;
+	}
+
+	function runCommandFunction(config: Record<string, string>): {
+		command: string;
+		args: string[];
+		env: Record<string, string>;
+	} {
+		const fn = new Function(`return (${loadStartCommand().commandFunction})`)();
+		return fn(config);
+	}
+
+	it("declares a transport Smithery understands", () => {
+		expect(["stdio", "http"]).toContain(loadStartCommand().type);
+	});
+
+	it("requires only the agent key, since everything else has a fallback", () => {
+		// auth.ts hard-fails without ANIMA_API_KEY, but api-client.ts defaults
+		// ANIMA_API_URL and treats ANIMA_MASTER_KEY as optional. Marking either
+		// of those required would make the listing demand credentials a user
+		// does not need, which is a install-time drop-off we would never see.
+		expect(loadStartCommand().configSchema.required).toEqual(["animaApiKey"]);
+	});
+
+	it("starts the published package with just the agent key", () => {
+		const result = runCommandFunction({ animaApiKey: "ak_test" });
+
+		expect(result.command).toBe("npx");
+		expect(result.args).toEqual(["-y", "@anima-labs/mcp"]);
+		expect(result.env).toEqual({ ANIMA_API_KEY: "ak_test" });
+	});
+
+	it("omits optional env vars rather than setting them empty", () => {
+		// api-client.ts reads ANIMA_MASTER_KEY as presence-or-absence. An empty
+		// string is present, so `ANIMA_MASTER_KEY: ""` would read as "a master
+		// key was supplied" and route the caller down the admin path with a
+		// credential that cannot authenticate.
+		const env = runCommandFunction({ animaApiKey: "ak_test" }).env;
+
+		expect(Object.hasOwn(env, "ANIMA_MASTER_KEY")).toBe(false);
+		expect(Object.hasOwn(env, "ANIMA_API_URL")).toBe(false);
+	});
+
+	it("passes through the optional config it advertises", () => {
+		// `features.selective_loading` claims --tools works. If configSchema
+		// accepts `tools` but commandFunction drops it, the manifest advertises
+		// a feature the listing cannot actually deliver.
+		const result = runCommandFunction({
+			animaApiKey: "ak_test",
+			animaMasterKey: "mk_test",
+			animaApiUrl: "https://api.example",
+			tools: "email,vault",
+		});
+
+		expect(result.args).toContain("--tools=email,vault");
+		expect(result.env.ANIMA_MASTER_KEY).toBe("mk_test");
+		expect(result.env.ANIMA_API_URL).toBe("https://api.example");
+	});
+});
